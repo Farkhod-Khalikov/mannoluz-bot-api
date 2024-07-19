@@ -1,0 +1,53 @@
+import { BlobOptions } from "buffer";
+import User, { IUser } from "../models/users";
+
+export class UserService {
+  public static async findUserByChatId(chatId: number): Promise<IUser | null> {
+    return User.findOne({ chatId });
+  }
+
+  public static async findUserByContact(
+    phoneNumber: string
+  ): Promise<IUser | null> {
+    return User.findOne({ phone: phoneNumber });
+  }
+
+  public static async createUser(
+    chatId: number,
+    name: string,
+    phone: string,
+    language: string
+  ): Promise<void> {
+    const user = new User({
+      chatId,
+      name,
+      phone,
+      language,
+    });
+    await user.save();
+  }
+
+  public static async setAdmin(
+    chatId: number,
+    isAdmin: boolean
+  ): Promise<void> {
+    const user = await User.findOne({ chatId });
+    if (user) {
+      user.isAdmin = isAdmin;
+      await user.save();
+    }
+  }
+
+  public static async isUserAdmin(chatId: number): Promise<boolean> {
+    const user = await User.findOne({ chatId });
+    const isAdmin = user?.isAdmin;
+     return isAdmin ? true : false;
+  }
+  public static async isUserRegistered(chatId: number): Promise<boolean> {
+    return (await User.findOne({ chatId })) ? true : false;
+  }
+
+  public static async getAllUsers(): Promise<IUser[]> {
+    return User.find({});
+  }
+}
