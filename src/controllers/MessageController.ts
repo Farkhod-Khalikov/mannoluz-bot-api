@@ -1,6 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/UserService";
-import { generateAndSaveQRCodePng } from "../utils/qrcode";
+import { generateAndSaveQRCodePng } from "../utils/creditCardGeneration";
 import i18n from "../utils/i18n";
 
 export default class MessageController {
@@ -86,6 +86,7 @@ export default class MessageController {
     } else {
       const user = await UserService.findUserByChatId(chatId);
       i18n.changeLanguage(user?.language);
+      
       this.sendMainMenu(chatId);
     }
   }
@@ -152,7 +153,7 @@ export default class MessageController {
 
     if (user) {
       const balance = user.balance;
-      const filePath = await generateAndSaveQRCodePng(chatId, user.phone);
+      const filePath = await generateAndSaveQRCodePng(user.phone);
       this.bot
         .sendPhoto(chatId, filePath, { caption: `${i18n.t("balance_caption")}: ${balance}` })
         .catch((error) => console.error("Failed to send QR code:", error));
