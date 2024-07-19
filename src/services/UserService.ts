@@ -40,8 +40,7 @@ export class UserService {
 
   public static async isUserAdmin(chatId: number): Promise<boolean> {
     const user = await User.findOne({ chatId });
-    const isAdmin = user?.isAdmin;
-     return isAdmin ? true : false;
+     return user?.isAdmin ? true : false;
   }
   public static async isUserRegistered(chatId: number): Promise<boolean> {
     return (await User.findOne({ chatId })) ? true : false;

@@ -5,6 +5,10 @@ i18next.init({
   resources: {
     "en-US": {
       translation: {
+        provide_post_title:"Post Title:",
+        provide_post_message: "Post Message:",
+        confirm_button: "Confirm",
+        post_sent:"Succesfully send",
         registration_on_start:"Register ME",
         send_post_button:"Send Post",
         balance_caption:"Your balance",
@@ -49,6 +53,10 @@ Thank you for choosing MANNOL!`,
     },
     "ru-RU": {
       translation: {
+        provide_post_title:"Заголовок Поста:",
+        provide_post_message: "Содержание Поста:",
+        post_sent:"Пост отправлен!",
+        confirm_button: "Подвтердить",
         registration_on_start:"Регистрация",
         send_post_button:"Отправить Пост",
         balance_caption:"Ваш баланс",

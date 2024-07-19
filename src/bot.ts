@@ -16,6 +16,7 @@ const messageController = new MessageController(bot);
 
 bot.on("message", (msg) => messageController.handleMessage(msg));
 
-// bot.on("callback_query", (callbackQuery) =>
-//   callbackQueryController.handleCallbackQuery(callbackQuery)
-// );
+
+bot.on("callback_query", (callbackQuery) =>
+  messageController.handleCallbackQuery(callbackQuery)
+);

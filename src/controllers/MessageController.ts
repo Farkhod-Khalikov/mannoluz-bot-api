@@ -1,17 +1,19 @@
 import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/UserService";
-import { generateAndSaveQRCodePng } from "../utils/creditCardGeneration";
 import i18n from "../utils/i18n";
+import { generateAndSaveQRCodePng } from "../utils/creditCardGeneration";
 
 export default class MessageController {
   private bot: TelegramBot;
   private newUserLanguages: Map<number, string>;
-  private adminPostData: Map<number, { title: string | null; message: string | null }>;
+  private adminPostData: Map<number, {
+    title: string | null;
+    message: string | null;
+  }> = new Map();
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.newUserLanguages = new Map<number, string>();
-    this.adminPostData = new Map<number, { title: string | null; message: string | null }>();
   }
 
   public async handleMessage(msg: TelegramBot.Message) {
@@ -86,9 +88,34 @@ export default class MessageController {
     } else {
       const user = await UserService.findUserByChatId(chatId);
       i18n.changeLanguage(user?.language);
-      
       this.sendMainMenu(chatId);
     }
+  }
+
+  private async handleChangeLanguage(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
+
+    // Prompt user to choose a new language
+    const languageKeyboard = [[{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }]];
+    this.bot.sendMessage(chatId, i18n.t("choose_language"), {
+      reply_markup: {
+        keyboard: languageKeyboard,
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    });
+  }
+
+  private async handleContactUs(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
+    const contactUsMessage = i18n.t("contact_us_information");
+    this.bot.sendMessage(chatId, contactUsMessage);
+  }
+
+  private async handleAboutUs(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
+    const aboutUsMessage = i18n.t("about_us_information");
+    this.bot.sendMessage(chatId, aboutUsMessage);
   }
 
   private async handleLanguageSelection(
@@ -169,10 +196,7 @@ export default class MessageController {
       [{ text: i18n.t("change_language_button") }],
       [{ text: i18n.t("back_button") }],
     ];
-    
-    if (isAdmin) {
-      settingsKeyboard.push([{ text: i18n.t("send_post_button") }]);
-    }
+
 
     this.bot.sendMessage(msg.chat.id, i18n.t("settings_menu_prompt"), {
       reply_markup: {
@@ -185,86 +209,100 @@ export default class MessageController {
 
   private async handleSendPost(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
+
     this.bot.sendMessage(chatId, i18n.t("provide_post_title"), {
       reply_markup: {
         force_reply: true,
       },
     });
 
-    // Prepare for title input
     this.adminPostData.set(chatId, { title: null, message: null });
   }
 
   private async handleAdminPostData(chatId: number, text: string) {
-    const postData = this.adminPostData.get(chatId);
+    const currentPostData = this.adminPostData.get(chatId);
 
-    if (postData) {
-      if (!postData.title) {
-        postData.title = text;
+    if (currentPostData) {
+      if (!currentPostData.title) {
+        currentPostData.title = text;
         this.bot.sendMessage(chatId, i18n.t("provide_post_message"), {
           reply_markup: {
             force_reply: true,
           },
         });
-      } else if (!postData.message) {
-        postData.message = text;
-
-        // Send the post to all users
-        const users = await UserService.getAllUsers();
-        for (const user of users) {
-          this.bot.sendMessage(user.chatId, `${postData.title}\n\n${postData.message}`);
-        }
-
-        this.bot.sendMessage(chatId, i18n.t("post_sent"));
-        this.adminPostData.delete(chatId);
+      } else if (!currentPostData.message) {
+        currentPostData.message = text;
+        const postSummary = `
+*Title:* ${currentPostData.title}
+*Message:* ${currentPostData.message}
+        `;
+        this.bot.sendMessage(chatId, postSummary, {
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [
+              [{ text: i18n.t("confirm_button"), callback_data: "confirm_post" }],
+              [{ text: i18n.t("back_button"), callback_data: "go_back" }],
+            ],
+          },
+        });
       }
     }
   }
 
-  private async handleChangeLanguage(msg: TelegramBot.Message) {
-    const chatId = msg.chat.id;
-    const user = await UserService.findUserByChatId(chatId);
+  public async handleCallbackQuery(callbackQuery: TelegramBot.CallbackQuery) {
+    const chatId = callbackQuery.message?.chat.id;
+    const data = callbackQuery.data;
 
-    if (user) {
-      this.bot.sendMessage(chatId, i18n.t("choose_language"), {
-        reply_markup: {
-          keyboard: [
-            [{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }],
-          ],
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
-      });
-    } else {
-      this.bot.sendMessage(chatId, i18n.t("user_not_found"));
+    if (chatId) {
+      switch (data) {
+        case 'confirm_post':
+          // Share the post to all users
+          const postData = this.adminPostData.get(chatId);
+          if (postData && postData.title && postData.message) {
+            const users = await UserService.getAllUsers();
+            for (const user of users) {        // You can provide format here
+              this.bot.sendMessage(user.chatId,`${postData.title}\n${postData.message}`, {
+                parse_mode: "Markdown",
+              });
+            }
+            this.bot.sendMessage(chatId, i18n.t("post_sent"));
+            this.sendMainMenu(chatId);
+          }
+          this.adminPostData.delete(chatId);
+          break;
+
+        case 'go_back':
+          this.bot.sendMessage(chatId, i18n.t("post_creation_cancelled"));
+          this.adminPostData.delete(chatId);
+          this.sendMainMenu(chatId);
+          break;
+
+        default:
+          this.bot.sendMessage(chatId, i18n.t("command_not_recognized"));
+      }
     }
   }
 
-  private async handleContactUs(msg: TelegramBot.Message) {
-    this.bot.sendMessage(msg.chat.id, i18n.t("contact_us_information"));
-  }
-
-  private async handleAboutUs(msg: TelegramBot.Message) {
-    this.bot.sendMessage(msg.chat.id, i18n.t("about_us_information"));
-  }
-
   private async sendMainMenu(chatId: number) {
-    const isAdmin = await UserService.isUserAdmin(chatId);
+    const user = await UserService.findUserByChatId(chatId);
+    const isAdmin = user && await UserService.isUserAdmin(chatId);
+
     const mainMenuKeyboard = [
       [{ text: i18n.t("credit_card_button") }],
       [{ text: i18n.t("settings_button") }],
-      [
-        { text: i18n.t("contact_us_button") },
-        { text: i18n.t("about_us_button") },
-      ],
+      [{ text: i18n.t("contact_us_button") },{ text: i18n.t("about_us_button") }],
     ];
 
-    // if (isAdmin) {
-    //   mainMenuKeyboard.push([{ text: i18n.t("send_post_button") }]);
-    // }
+    if (isAdmin) {
+      mainMenuKeyboard.push([{ text: i18n.t("send_post_button") }]);
+    }
 
     this.bot.sendMessage(chatId, i18n.t("choose_option"), {
-      reply_markup: { keyboard: mainMenuKeyboard, resize_keyboard: true },
+      reply_markup: {
+        keyboard: mainMenuKeyboard,
+        resize_keyboard: true,
+        one_time_keyboard: false,
+      },
     });
-  }
+  } 
 }
