@@ -113,56 +113,70 @@ export default class MessageController {
     });
   }
 
+  private async handleListProducts(msg: TelegramBot.Message) {
+    try {
+      const chatId = msg.chat.id;
+      const products = await UserService.getAllProducts();
 
-private async handleListProducts(msg: TelegramBot.Message) {
-  try {
-    const chatId = msg.chat.id;
-    const products = await UserService.getAllProducts();
-    
-    if (products.length === 0) {
-      this.bot.sendMessage(chatId, "No products available.");
-      return;
-    }
-
-    // Initialize the current page for the user
-    if (!this.userProductPages.has(chatId)) {
-      this.userProductPages.set(chatId, 1);
-    }
-
-    const currentPage = this.userProductPages.get(chatId) || 1;
-    const itemsPerPage = 5;
-    const totalPages = Math.ceil(products.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-
-    const productPage = products.slice(startIndex, endIndex).map((product: any) => 
-      `*Name:* ${product.name}\n*Price:* ${product.price} UZS`).join('\n\n');
-
-    const paginationButtons = [];
-
-    if (currentPage > 1) {
-      paginationButtons.push({ text: 'Previous', callback_data: 'prev_page' });
-    }
-
-    for (let i = 1; i <= totalPages; i++) {
-      paginationButtons.push({ text: `${i}`, callback_data: `page_${i}` });
-    }
-
-    if (currentPage < totalPages) {
-      paginationButtons.push({ text: 'Next', callback_data: 'next_page' });
-    }
-
-    await this.bot.sendMessage(chatId, `*Available Products (Page ${currentPage} of ${totalPages}):*\n\n${productPage}`, {
-      parse_mode: "Markdown",
-      reply_markup: {
-        inline_keyboard: [paginationButtons]
+      if (products.length === 0) {
+        this.bot.sendMessage(chatId, "No products available.");
+        return;
       }
-    });
-  } catch (error) {
-    console.error("Error fetching products:", error);
-    this.bot.sendMessage(msg.chat.id, "There was an error fetching the product list. Please try again later.");
+
+      // Initialize the current page for the user
+      if (!this.userProductPages.has(chatId)) {
+        this.userProductPages.set(chatId, 1);
+      }
+
+      const currentPage = this.userProductPages.get(chatId) || 1;
+      const itemsPerPage = 5;
+      const totalPages = Math.ceil(products.length / itemsPerPage);
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+
+      const productPage = products
+        .slice(startIndex, endIndex)
+        .map(
+          (product: any) =>
+            `*Name:* ${product.name}\n*Price:* ${product.price} UZS`
+        )
+        .join("\n\n");
+
+      const paginationButtons = [];
+
+      if (currentPage > 1) {
+        paginationButtons.push({
+          text: "Previous",
+          callback_data: "prev_page",
+        });
+      }
+
+      for (let i = 1; i <= totalPages; i++) {
+        paginationButtons.push({ text: `${i}`, callback_data: `page_${i}` });
+      }
+
+      if (currentPage < totalPages) {
+        paginationButtons.push({ text: "Next", callback_data: "next_page" });
+      }
+
+      await this.bot.sendMessage(
+        chatId,
+        `*Available Products (Page ${currentPage} of ${totalPages}):*\n\n${productPage}`,
+        {
+          parse_mode: "Markdown",
+          reply_markup: {
+            inline_keyboard: [paginationButtons],
+          },
+        }
+      );
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      this.bot.sendMessage(
+        msg.chat.id,
+        "There was an error fetching the product list. Please try again later."
+      );
+    }
   }
-}
   //Send Message ContactUs
   private async handleContactUs(msg: TelegramBot.Message) {
     this.bot.sendMessage(msg.chat.id, i18n.t("contact_us_information"));
@@ -234,7 +248,7 @@ private async handleListProducts(msg: TelegramBot.Message) {
 
     if (user) {
       const balance = user.balance;
-      const filePath = await generateCreditCard(user.phone);
+      const filePath = await generateCreditCard(user.phone, user.id);
       this.bot
         .sendPhoto(chatId, filePath, {
           caption: `${i18n.t("balance_caption")}: ${balance}`,
@@ -341,24 +355,36 @@ private async handleListProducts(msg: TelegramBot.Message) {
           }
           this.adminPostData.delete(chatId);
           break;
-         case "prev_page":
-        this.userProductPages.set(chatId, (this.userProductPages.get(chatId) || 1) - 1);
-        await this.handleListProducts({ chat: { id: chatId } } as TelegramBot.Message);
-        break;
+        case "prev_page":
+          this.userProductPages.set(
+            chatId,
+            (this.userProductPages.get(chatId) || 1) - 1
+          );
+          await this.handleListProducts({
+            chat: { id: chatId },
+          } as TelegramBot.Message);
+          break;
 
-      case "next_page":
-        this.userProductPages.set(chatId, (this.userProductPages.get(chatId) || 1) + 1);
-        await this.handleListProducts({ chat: { id: chatId } } as TelegramBot.Message);
-        break;
+        case "next_page":
+          this.userProductPages.set(
+            chatId,
+            (this.userProductPages.get(chatId) || 1) + 1
+          );
+          await this.handleListProducts({
+            chat: { id: chatId },
+          } as TelegramBot.Message);
+          break;
 
-      default:
-        if (data?.startsWith("page_")) {
-          const page = parseInt(data.split("_")[1], 10);
-          this.userProductPages.set(chatId, page);
-          await this.handleListProducts({ chat: { id: chatId } } as TelegramBot.Message);
-        } else {
-          this.bot.sendMessage(chatId, i18n.t("command_not_recognized"));
-        } 
+        default:
+          if (data?.startsWith("page_")) {
+            const page = parseInt(data.split("_")[1], 10);
+            this.userProductPages.set(chatId, page);
+            await this.handleListProducts({
+              chat: { id: chatId },
+            } as TelegramBot.Message);
+          } else {
+            this.bot.sendMessage(chatId, i18n.t("command_not_recognized"));
+          }
       }
     }
   }
@@ -369,7 +395,10 @@ private async handleListProducts(msg: TelegramBot.Message) {
 
     const mainMenuKeyboard = [
       [{ text: i18n.t("credit_card_button") }],
-      [{ text: i18n.t("settings_button") }, {text: i18n.t("btn_list_products")}],
+      [
+        { text: i18n.t("settings_button") },
+        { text: i18n.t("btn_list_products") },
+      ],
       [
         { text: i18n.t("contact_us_button") },
         { text: i18n.t("about_us_button") },

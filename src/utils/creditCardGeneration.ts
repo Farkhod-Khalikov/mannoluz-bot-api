@@ -8,7 +8,7 @@ import bwipjs from 'bwip-js';
 // const writeFile = promisify(fs.writeFile);
 const exists = promisify(fs.exists);
 
-const TEMP_DIR = path.join(__dirname, '../temp'); // Adjust the path if needed
+const TEMP_DIR = path.join(__dirname, '../temp/credit-cards'); // Adjust the path if needed
 
 export const generateQRCodeText = (
   phoneNumber: string
@@ -36,9 +36,10 @@ const generateBarcodeImage = async (text: string): Promise<Buffer> => {
 };
 
 export const generateCreditCard = async (
-  phoneNumber: string
+  phoneNumber: string,
+  userId:string
 ): Promise<string> => {
-  const fileName = `creditCard_${phoneNumber.replace(/\+/g, '')}.png`;
+  const fileName = `${userId}_${phoneNumber.replace(/\+/g, '')}.png`;
   const filePath = path.join(TEMP_DIR, fileName);
 
   if (await exists(filePath)) {
