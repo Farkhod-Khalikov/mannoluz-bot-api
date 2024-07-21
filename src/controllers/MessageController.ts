@@ -1,7 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/UserService";
 import i18n from "../utils/i18n";
-import { generateAndSaveQRCodePng } from "../utils/creditCardGeneration";
+import { generateCreditCard } from "../utils/creditCardGeneration";
 
 export default class MessageController {
   private bot: TelegramBot;
@@ -44,6 +44,9 @@ export default class MessageController {
         break;
       case i18n.t("settings_button"):
         await this.handleSettings(msg);
+        break;
+      case i18n.t("btn_list_products"):
+        await this.handleListProducts(msg);
         break;
       case i18n.t("change_language_button"):
         await this.handleChangeLanguage(msg);
@@ -109,6 +112,25 @@ export default class MessageController {
     });
   }
 
+private async handleListProducts(msg: TelegramBot.Message) {
+  try {
+    const products = await UserService.getAllProducts();
+
+    if (products.length === 0) {
+      this.bot.sendMessage(msg.chat.id, "No products available.");
+      return;
+    }
+
+    const productList = products.map((product: any) => 
+      `Name: ${product.name},\nPrice: ${product.price} UZS`).join('\n\n');
+
+    this.bot.sendMessage(msg.chat.id, `*Available Products:*\n\n${productList}`, { parse_mode: "Markdown" });
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    this.bot.sendMessage(msg.chat.id, "There was an error fetching the product list. Please try again later.");
+  }
+}
+
   //Send Message ContactUs
   private async handleContactUs(msg: TelegramBot.Message) {
     this.bot.sendMessage(msg.chat.id, i18n.t("contact_us_information"));
@@ -162,7 +184,6 @@ export default class MessageController {
     if (contact) {
       const phoneNumber = contact.phone_number;
       const name = contact.first_name;
-
       if (await UserService.findUserByPhoneNumber(phoneNumber)) {
         this.bot.sendMessage(chatId, i18n.t("user_already_exists"));
       } else {
@@ -181,7 +202,7 @@ export default class MessageController {
 
     if (user) {
       const balance = user.balance;
-      const filePath = await generateAndSaveQRCodePng(user.phone);
+      const filePath = await generateCreditCard(user.phone);
       this.bot
         .sendPhoto(chatId, filePath, {
           caption: `${i18n.t("balance_caption")}: ${balance}`,
@@ -307,7 +328,7 @@ export default class MessageController {
 
     const mainMenuKeyboard = [
       [{ text: i18n.t("credit_card_button") }],
-      [{ text: i18n.t("settings_button") }],
+      [{ text: i18n.t("settings_button") }, {text: i18n.t("btn_list_products")}],
       [
         { text: i18n.t("contact_us_button") },
         { text: i18n.t("about_us_button") },

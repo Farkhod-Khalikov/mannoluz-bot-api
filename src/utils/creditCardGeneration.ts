@@ -35,7 +35,7 @@ const generateBarcodeImage = async (text: string): Promise<Buffer> => {
   });
 };
 
-export const generateAndSaveQRCodePng = async (
+export const generateCreditCard = async (
   phoneNumber: string
 ): Promise<string> => {
   const fileName = `creditCard_${phoneNumber.replace(/\+/g, '')}.png`;

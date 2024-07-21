@@ -8,6 +8,7 @@ export interface IUser extends Document {
   language: string;
   balance?: number;
   isAdmin?: boolean;
+  // createdAt?: Date;
   updatedAt?: Date;
 }
 
@@ -19,6 +20,7 @@ const userSchema = new Schema<IUser>({
   language: { type: String, required: true },
   balance: { type: Number, default: 0 },
   isAdmin: { type: Boolean, default: false },
+  // createdAt: { type: Boolean, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 

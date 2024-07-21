@@ -1,3 +1,4 @@
+import Product, { IProduct } from "../models/products";
 import User, { IUser } from "../models/users";
 
 export class UserService {
@@ -47,5 +48,8 @@ export class UserService {
 
   public static async getAllUsers(): Promise<IUser[]> {
     return User.find({});
+  }
+  public static async getAllProducts(): Promise<IProduct[]>{
+    return Product.find({});
   }
 }
