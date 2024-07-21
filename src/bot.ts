@@ -8,7 +8,8 @@ dotenv.config();
 
 const token = process.env.TOKEN || "";
 const bot = new TelegramBot(token, { polling: true });
-
+if (!bot) console.log("[FAILED] Bot is not initialized.");
+console.log("[SUCCESS] Bot is started.");
 initDB();
 
 const messageController = new MessageController(bot);
