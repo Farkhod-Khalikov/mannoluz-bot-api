@@ -7,10 +7,10 @@ i18next.init({
       translation: {
         provide_post_title:"Post Title:",
         provide_post_message: "Post Message:",
-        confirm_button: "Confirm",
-        post_sent:"Succesfully send",
+        confirm_button: "✅Confirm",
+        post_sent:"✅Succesfully send",
         registration_on_start:"Register ME",
-        send_post_button:"Send Post",
+        send_post_button:"✍️Send Post",
         balance_caption:"Your balance",
         choose_language:
           "🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.",
@@ -22,6 +22,8 @@ i18next.init({
         settings_menu_prompt: "⚙️Please choose settings to update",
         change_language_button: "🌐Change System Language",
         contact_us_button: "📞Contact Us",
+        post_creation_cancelled: "❌Post NOT send.",
+        btn_cancel_post_creation: "❌Cancel",
         contact_us_information: `Our contacts:
 
 Tashkent: 100002, 
@@ -55,10 +57,10 @@ Thank you for choosing MANNOL!`,
       translation: {
         provide_post_title:"Заголовок Поста:",
         provide_post_message: "Содержание Поста:",
-        post_sent:"Пост отправлен!",
-        confirm_button: "Подвтердить",
+        post_sent:"✅Пост отправлен!",
+        confirm_button: "✅Подтвердить",
         registration_on_start:"Регистрация",
-        send_post_button:"Отправить Пост",
+        send_post_button:"✍️Отправить Пост",
         balance_caption:"Ваш баланс",
          choose_language:
           "🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.",
@@ -72,6 +74,11 @@ Thank you for choosing MANNOL!`,
         change_language_button: "🌐Изменить язык",
         contact_us_button: "📞Связаться с нами",
         about_us_button: "📃О нас",
+        choose_option: "Меню",
+        language_changed: "✅Язык изменен.",
+        post_creation_cancelled: "❌Пост НЕ отправлен.",
+        btn_cancel_post_creation: "❌Отмена",
+
         about_us_information: `Добро пожаловать на официальную страницу MANNOL!
 
 Являясь официальным дистрибьютором SCT-Vertriebs GmbH и MANNOL в Узбекистане, мы находимся в Ташкенте. Наша миссия — быстро и по доступной цене предоставлять высококачественную автомобильную продукцию нашим партнерам и клиентам.
@@ -81,6 +88,7 @@ Thank you for choosing MANNOL!`,
 Мы приглашаем вас изучить новые возможности вместе с нами и заверяем вас, что ваши предложения будут тщательно рассмотрены. Наша цель — поддержать ваш успех с помощью эффективного обслуживания и широкого ассортимента продукции.
 
 Благодарим вас за выбор MANNOL!`,
+
         contact_us_information: `Наши Контакты:
 
 Ташкент: 100002, 
@@ -95,8 +103,6 @@ Thank you for choosing MANNOL!`,
 Почта: info@mannol.uz, Mannoloilsale@mail.ru.
 
 Сайт: mannol.uz .`,
-        choose_option: "Меню",
-        language_changed: "✅Язык изменен.",
       },
     },
   },

@@ -6,10 +6,13 @@ import { generateAndSaveQRCodePng } from "../utils/creditCardGeneration";
 export default class MessageController {
   private bot: TelegramBot;
   private newUserLanguages: Map<number, string>;
-  private adminPostData: Map<number, {
-    title: string | null;
-    message: string | null;
-  }> = new Map();
+  private adminPostData: Map<
+    number,
+    {
+      title: string | null;
+      message: string | null;
+    }
+  > = new Map();
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
@@ -106,16 +109,14 @@ export default class MessageController {
     });
   }
 
+  //Send Message ContactUs
   private async handleContactUs(msg: TelegramBot.Message) {
-    const chatId = msg.chat.id;
-    const contactUsMessage = i18n.t("contact_us_information");
-    this.bot.sendMessage(chatId, contactUsMessage);
+    this.bot.sendMessage(msg.chat.id, i18n.t("contact_us_information"));
   }
 
+  //Send Message AboutUs
   private async handleAboutUs(msg: TelegramBot.Message) {
-    const chatId = msg.chat.id;
-    const aboutUsMessage = i18n.t("about_us_information");
-    this.bot.sendMessage(chatId, aboutUsMessage);
+    this.bot.sendMessage(msg.chat.id, i18n.t("about_us_information"));
   }
 
   private async handleLanguageSelection(
@@ -162,7 +163,7 @@ export default class MessageController {
       const phoneNumber = contact.phone_number;
       const name = contact.first_name;
 
-      if (await UserService.findUserByContact(phoneNumber)) {
+      if (await UserService.findUserByPhoneNumber(phoneNumber)) {
         this.bot.sendMessage(chatId, i18n.t("user_already_exists"));
       } else {
         const language = this.newUserLanguages.get(chatId) || i18n.language;
@@ -182,7 +183,9 @@ export default class MessageController {
       const balance = user.balance;
       const filePath = await generateAndSaveQRCodePng(user.phone);
       this.bot
-        .sendPhoto(chatId, filePath, { caption: `${i18n.t("balance_caption")}: ${balance}` })
+        .sendPhoto(chatId, filePath, {
+          caption: `${i18n.t("balance_caption")}: ${balance}`,
+        })
         .catch((error) => console.error("Failed to send QR code:", error));
     } else {
       this.bot.sendMessage(chatId, i18n.t("user_not_found"));
@@ -196,7 +199,6 @@ export default class MessageController {
       [{ text: i18n.t("change_language_button") }],
       [{ text: i18n.t("back_button") }],
     ];
-
 
     this.bot.sendMessage(msg.chat.id, i18n.t("settings_menu_prompt"), {
       reply_markup: {
@@ -234,14 +236,25 @@ export default class MessageController {
         currentPostData.message = text;
         const postSummary = `
 *Title:* ${currentPostData.title}
+
 *Message:* ${currentPostData.message}
         `;
         this.bot.sendMessage(chatId, postSummary, {
           parse_mode: "Markdown",
           reply_markup: {
             inline_keyboard: [
-              [{ text: i18n.t("confirm_button"), callback_data: "confirm_post" }],
-              [{ text: i18n.t("back_button"), callback_data: "go_back" }],
+              [
+                {
+                  text: i18n.t("confirm_button"),
+                  callback_data: "confirm_post",
+                },
+              ],
+              [
+                {
+                  text: i18n.t("btn_cancel_post_creation"),
+                  callback_data: "go_back",
+                },
+              ],
             ],
           },
         });
@@ -255,15 +268,20 @@ export default class MessageController {
 
     if (chatId) {
       switch (data) {
-        case 'confirm_post':
+        case "confirm_post":
           // Share the post to all users
           const postData = this.adminPostData.get(chatId);
           if (postData && postData.title && postData.message) {
             const users = await UserService.getAllUsers();
-            for (const user of users) {        // You can provide format here
-              this.bot.sendMessage(user.chatId,`${postData.title}\n${postData.message}`, {
-                parse_mode: "Markdown",
-              });
+            for (const user of users) {
+              // You can provide format here
+              this.bot.sendMessage(
+                user.chatId,
+                `*${postData.title}*\n\n${postData.message}`,
+                {
+                  parse_mode: "Markdown",
+                }
+              );
             }
             this.bot.sendMessage(chatId, i18n.t("post_sent"));
             this.sendMainMenu(chatId);
@@ -271,7 +289,7 @@ export default class MessageController {
           this.adminPostData.delete(chatId);
           break;
 
-        case 'go_back':
+        case "go_back": //  update to post_creation_cancelled
           this.bot.sendMessage(chatId, i18n.t("post_creation_cancelled"));
           this.adminPostData.delete(chatId);
           this.sendMainMenu(chatId);
@@ -285,16 +303,21 @@ export default class MessageController {
 
   private async sendMainMenu(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
-    const isAdmin = user && await UserService.isUserAdmin(chatId);
+    const isAdmin = user && (await UserService.isUserAdmin(chatId));
 
     const mainMenuKeyboard = [
       [{ text: i18n.t("credit_card_button") }],
       [{ text: i18n.t("settings_button") }],
-      [{ text: i18n.t("contact_us_button") },{ text: i18n.t("about_us_button") }],
+      [
+        { text: i18n.t("contact_us_button") },
+        { text: i18n.t("about_us_button") },
+        // add a new button with 'Products'
+      ],
     ];
 
     if (isAdmin) {
       mainMenuKeyboard.push([{ text: i18n.t("send_post_button") }]);
+      // Add a new button to check sent posts
     }
 
     this.bot.sendMessage(chatId, i18n.t("choose_option"), {
@@ -304,5 +327,5 @@ export default class MessageController {
         one_time_keyboard: false,
       },
     });
-  } 
+  }
 }

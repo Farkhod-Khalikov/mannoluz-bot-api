@@ -5,7 +5,7 @@ import { promisify } from 'util';
 import Jimp from 'jimp';
 import bwipjs from 'bwip-js';
 
-const writeFile = promisify(fs.writeFile);
+// const writeFile = promisify(fs.writeFile);
 const exists = promisify(fs.exists);
 
 const TEMP_DIR = path.join(__dirname, '../temp'); // Adjust the path if needed
