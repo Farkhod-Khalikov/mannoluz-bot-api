@@ -20,8 +20,8 @@ const userSchema = new Schema<IUser>({
   language: { type: String, required: true },
   balance: { type: Number, default: 0 },
   isAdmin: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
-  updatedAt: { type: Date, default: Date.now },
+},{
+  timestamps: true
 });
 
 // Create the User model

@@ -2,7 +2,8 @@ import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/UserService";
 import i18n from "../utils/i18n";
 import { generateCreditCard } from "../utils/creditCardGeneration";
-
+//format for transactions as a caption
+// `${i18n.t("bonuses_addition")} | ${sum}${i18n.t("coins")} | ${i18n.t("transaction_date")}: ${transaction.createdAt}`
 export default class UserHandler {
   private bot: TelegramBot;
   public newUserLanguages: Map<number, string>;
@@ -162,7 +163,7 @@ export default class UserHandler {
       const filePath = await generateCreditCard(user.phone, user.id);
       this.bot
         .sendPhoto(chatId, filePath, {
-          caption: `${i18n.t("balance_caption")}: ${balance}`,
+          caption: `${i18n.t("balance_caption")}: ${balance} ${i18n.t("coins")}`,
         })
         .catch((error) => console.error("Failed to send QR code:", error));
     } else {

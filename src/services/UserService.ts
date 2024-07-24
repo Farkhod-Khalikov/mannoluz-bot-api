@@ -9,7 +9,7 @@ export class UserService {
   public static async findUserByPhoneNumber(
     phoneNumber: string
   ): Promise<IUser | null> {
-    return User.findOne({ phoneNumber: phoneNumber });
+    return User.findOne({ phone: phoneNumber });
   }
   public static async getAdminName(chatId: number): Promise<string> {
     try {
@@ -53,7 +53,7 @@ export class UserService {
       await user.save();
     }
   }
-
+  
   public static async isUserAdmin(chatId: number): Promise<boolean> {
     const user = await User.findOne({ chatId });
     return user?.isAdmin ? true : false;

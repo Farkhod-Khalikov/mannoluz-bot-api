@@ -1,49 +1,90 @@
-import { Request, Response } from 'express';
-import { UserService } from '../services/UserService';
+import { Request, Response } from "express";
+import { UserService } from "../services/UserService";
+import Transaction from "../models/transactions";
+import User from "../models/users";
+import mongoose, { Document, Schema, Types } from "mongoose";
+import TelegramBot from 'node-telegram-bot-api';
+import dotenv from 'dotenv';
+import i18n from "../utils/i18n";
+dotenv.config();
 
+const token = process.env.TOKEN || "";
+const bot = new TelegramBot(token);
 class UserController {
-  static addUser(req: Request, res: Response) {
-    // Add user logic will go here
-    res.json({ message: 'User added' });
-  }
-
-  static deleteUser(req: Request, res: Response) {
-    // Delete user logic will go here
-    const { id } = req.params;
-    res.json({ message: `User with ID ${id} deleted` });
-  }
-
-  static updateUser(req: Request, res: Response) {
-    // Update user logic will go here
-    const { id } = req.params;
-    res.json({ message: `User with ID ${id} updated` });
-  }
-  static async updateUserBalance(req: Request, res: Response) {
+  static async addBonuses(req: Request, res: Response) {
     try {
-      const { id } = req.params;
-      const { amount_number } = req.body;
+      const { phoneNumber, sum, description } = req.body;
 
-      if (!amount_number || isNaN(amount_number)) {
-        return res.status(400).json({ message: 'Invalid amount_number provided' });
+      if (!phoneNumber || isNaN(sum)) {
+        return res
+          .status(400)
+          .json({ message: "Invalid phoneNumber or sum provided" });
       }
 
-      // Calculate 2% of amount_number
-      const amountToAdd = amount_number * 0.02;
-
-      // Find user by ID
-      const user = await UserService.findUserByChatId(parseInt(id, 10));
+      // Find user by phoneNumber
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
       if (!user) {
-        return res.status(404).json({ message: 'User not found' });
+        return res.status(404).json({ message: "User not found" });
       }
+
+      // Create a new transaction
+       const transaction = await Transaction.create({
+        userId: user._id, // Ensure _id is a string
+        phoneNumber,
+        bonuses: sum,
+        description: description
+      });
+      // Update user's balance
+      user.balance = (user.balance || 0) + sum;
+      await user.save();
+      //Send a message to the User that his balance is updated
+      if (user.chatId) {
+        await bot.sendMessage(user.chatId, `${i18n.t("bonuses_addition")}: ${sum}${i18n.t("coins")}\n${i18n.t("transaction_date")}: ${transaction.createdAt}\n${i18n.t("description")}: ${transaction.description}`);
+      }
+      res.json({ message: "Bonuses added", newBalance: user.balance });
+    } catch (error) {
+      console.error("Error adding bonuses:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  static async removeBonuses(req: Request, res: Response) {
+    try {
+      const { phoneNumber, sum } = req.body;
+
+      if (!phoneNumber || isNaN(sum)) {
+        return res
+          .status(400)
+          .json({ message: "Invalid phoneNumber or sum provided" });
+      }
+
+      // Find user by phoneNumber
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if ((user.balance || 0) < sum) {
+        return res.status(400).json({ message: "Not enough bonuses" });
+      }
+      // Create a new transaction
+      await Transaction.create({
+        userId: user._id, // Ensure _id is a string
+        phoneNumber: phoneNumber,
+        bonuses: -sum,
+      });
 
       // Update user's balance
-      user.balance = (user.balance || 0) + amountToAdd;
+      user.balance = (user.balance || 0) - sum;
       await user.save();
-
-      res.json({ message: 'User balance updated', newBalance: user.balance });
+      //Send a message to the User that his balance is updated
+      if (user.chatId) {
+        await bot.sendMessage(user.chatId, `${sum} Bonuses removed from your balance`);
+      }
+      res.json({ message: "Bonuses removed", newBalance: user.balance });
     } catch (error) {
-      console.error('Error updating user balance:', error);
-      res.status(500).json({ message: 'Internal server error' });
+      console.error("Error removing bonuses:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   }
 }
