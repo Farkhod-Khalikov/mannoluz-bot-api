@@ -122,14 +122,10 @@ export default class AdminHandler {
       // Send post to all users
       const users = await UserService.getAllUsers();
       for (const user of users) {
-        this.bot.sendPhoto(
-          user.chatId,
-          postData.image,
-          {
-            caption: `*${postData.title}*\n\n${postData.message}`,
-            parse_mode: "Markdown",
-          }
-        );
+        this.bot.sendPhoto(user.chatId, postData.image, {
+          caption: `*${postData.title}*\n\n${postData.message}`,
+          parse_mode: "Markdown",
+        });
       }
       this.bot.sendMessage(chatId, i18n.t("post_sent"));
       this.sendMainMenu(chatId);

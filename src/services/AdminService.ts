@@ -1,0 +1,3 @@
+// getAdminName
+// getPosts
+// 
