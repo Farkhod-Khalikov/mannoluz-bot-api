@@ -1,37 +1,42 @@
 import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/UserService";
 import i18n from "../utils/i18n";
+import fs from "fs";
+import path from "path";
 
 export default class AdminHandler {
   private bot: TelegramBot;
   private adminPostData: Map<
     number,
-    { title: string | null; message: string | null; inProgress: boolean }
+    { title: string | null; message: string | null; image: string | null }
   > = new Map();
+
+  private tempDir: string;
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
+    this.tempDir = path.join(__dirname, "..", "temp"); // Ensure temp folder is created
+    if (!fs.existsSync(this.tempDir)) {
+      fs.mkdirSync(this.tempDir);
+    }
   }
 
   public async handleSendPost(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
 
-    if (await UserService.isUserAdmin(chatId)) {
-      this.adminPostData.set(chatId, { title: null, message: null, inProgress: true });
-      this.bot.sendMessage(chatId, i18n.t("provide_post_title"), {
-        reply_markup: {
-          force_reply: true,
-        },
-      });
-    } else {
-      this.bot.sendMessage(chatId, i18n.t("not_authorized"));
-    }
+    this.bot.sendMessage(chatId, i18n.t("provide_post_title"), {
+      reply_markup: {
+        force_reply: true,
+      },
+    });
+
+    this.adminPostData.set(chatId, { title: null, message: null, image: null });
   }
 
   public async handleAdminPostData(chatId: number, text: string) {
     const currentPostData = this.adminPostData.get(chatId);
 
-    if (currentPostData && currentPostData.inProgress) {
+    if (currentPostData) {
       if (!currentPostData.title) {
         currentPostData.title = text;
         this.bot.sendMessage(chatId, i18n.t("provide_post_message"), {
@@ -41,12 +46,43 @@ export default class AdminHandler {
         });
       } else if (!currentPostData.message) {
         currentPostData.message = text;
+        this.bot.sendMessage(chatId, i18n.t("provide_post_image"), {
+          reply_markup: {
+            force_reply: true,
+          },
+        });
+      } else if (!currentPostData.image) {
+        // Await for image file
+        this.bot.sendMessage(chatId, i18n.t("uploading_image"), {
+          reply_markup: {
+            force_reply: true,
+          },
+        });
+      }
+    }
+  }
+
+  public async handleImageUpload(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
+    const photo = msg.photo ? msg.photo[msg.photo.length - 1] : null;
+
+    if (photo) {
+      const fileId = photo.file_id;
+      const filePath = await this.bot.downloadFile(fileId, this.tempDir);
+      const fileName = path.basename(filePath);
+
+      // Update post data with the local image path
+      const currentPostData = this.adminPostData.get(chatId);
+      if (currentPostData) {
+        currentPostData.image = filePath;
+
         const postSummary = `
 *Title:* ${currentPostData.title}
 
 *Message:* ${currentPostData.message}
         `;
-        this.bot.sendMessage(chatId, postSummary, {
+        this.bot.sendPhoto(chatId, filePath, {
+          caption: postSummary,
           parse_mode: "Markdown",
           reply_markup: {
             inline_keyboard: [
@@ -71,29 +107,45 @@ export default class AdminHandler {
 
   public async handleConfirmPost(chatId: number) {
     const postData = this.adminPostData.get(chatId);
-    if (postData && postData.title && postData.message) {
+    if (postData && postData.title && postData.message && postData.image) {
       const users = await UserService.getAllUsers();
       for (const user of users) {
-        this.bot.sendMessage(
+        this.bot.sendPhoto(
           user.chatId,
-          `*${postData.title}*\n\n${postData.message}`,
+          postData.image,
           {
+            caption: `*${postData.title}*\n\n${postData.message}`,
             parse_mode: "Markdown",
           }
         );
       }
       this.bot.sendMessage(chatId, i18n.t("post_sent"));
       this.sendMainMenu(chatId);
-    } else {
-      this.bot.sendMessage(chatId, i18n.t("post_creation_failed"));
     }
+    this.cleanUpTempFiles();
     this.adminPostData.delete(chatId);
   }
 
   public async handleCancelPost(chatId: number) {
-    this.bot.sendMessage(chatId, i18n.t("post_creation_cancelled"));
-    this.sendMainMenu(chatId);
+    this.cleanUpTempFiles();
     this.adminPostData.delete(chatId);
+    this.sendMainMenu(chatId);
+  }
+
+  private cleanUpTempFiles() {
+    fs.readdir(this.tempDir, (err, files) => {
+      if (err) {
+        console.error('Failed to read temp directory:', err);
+        return;
+      }
+      files.forEach(file => {
+        fs.unlink(path.join(this.tempDir, file), err => {
+          if (err) {
+            console.error('Failed to delete temp file:', err);
+          }
+        });
+      });
+    });
   }
 
   public async sendMainMenu(chatId: number) {

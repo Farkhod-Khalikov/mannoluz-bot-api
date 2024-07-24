@@ -70,8 +70,9 @@ export default class MessageController {
             this.userHandler.sendMainMenu(chatId);
           }
       }
-    } else if (msg.contact) {
-      // Handle contact sharing here if needed
+    } else if (msg.photo) {
+      // Handle image uploads
+      await this.adminHandler.handleImageUpload(msg);
     }
   }
 
