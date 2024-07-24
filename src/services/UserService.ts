@@ -16,7 +16,7 @@ export class UserService {
     chatId: number,
     name: string,
     phone: string,
-    language: string
+    language: string,
   ): Promise<void> {
     const user = new User({
       chatId,
@@ -24,6 +24,7 @@ export class UserService {
       phone,
       language,
     });
+    user.createdAt = new Date();
     await user.save();
   }
 

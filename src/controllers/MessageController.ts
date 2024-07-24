@@ -12,6 +12,7 @@ export default class MessageController {
     {
       title: string | null;
       message: string | null;
+      // add picture here as well
     }
   > = new Map();
 
@@ -27,7 +28,7 @@ export default class MessageController {
     }
 
     const chatId = msg.chat.id;
-    const userIsAdmin = await UserService.isUserAdmin(chatId);
+    const isUserAdmin = await UserService.isUserAdmin(chatId);
 
     if (this.newUserLanguages.has(chatId)) {
       await this.handleLanguageSelection(chatId, msg.text || "", true);
@@ -69,7 +70,7 @@ export default class MessageController {
         await this.handleLanguageSelection(chatId, msg.text || "", false);
         break;
       case i18n.t("send_post_button"):
-        if (userIsAdmin) {
+        if (isUserAdmin) {
           await this.handleSendPost(msg);
         }
         break;
@@ -402,7 +403,6 @@ export default class MessageController {
       [
         { text: i18n.t("contact_us_button") },
         { text: i18n.t("about_us_button") },
-        // add a new button with 'Products'
       ],
     ];
 
