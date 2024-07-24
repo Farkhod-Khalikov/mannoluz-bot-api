@@ -5,12 +5,15 @@ import { generateCreditCard } from "../utils/creditCardGeneration";
 
 export default class UserHandler {
   private bot: TelegramBot;
-  private newUserLanguages: Map<number, string>;
-  private userProductPages: Map<number, number> = new Map();
+  public newUserLanguages: Map<number, string>;
+  private languageListeners: Map<number, (msg: TelegramBot.Message) => void>;
+  private contactListeners: Map<number, (msg: TelegramBot.Message) => void>;
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.newUserLanguages = new Map<number, string>();
+    this.languageListeners = new Map<number, (msg: TelegramBot.Message) => void>();
+    this.contactListeners = new Map<number, (msg: TelegramBot.Message) => void>();
   }
 
   public async handleStart(msg: TelegramBot.Message) {
@@ -18,25 +21,44 @@ export default class UserHandler {
     const isExisted = await UserService.isUserRegistered(chatId);
 
     if (!isExisted) {
-      const languageKeyboard = [[{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }]];
-      this.bot.sendMessage(chatId, i18n.t("choose_language"), {
-        reply_markup: {
-          keyboard: languageKeyboard,
-          resize_keyboard: true,
-          one_time_keyboard: true,
-        },
-      });
-      this.newUserLanguages.set(chatId, "");
-      // this.handleLanguageSelection(chatId,"", true);
+      await this.handleUserRegistration(chatId);
     } else {
-      const user = await UserService.findUserByChatId(chatId);
-      i18n.changeLanguage(user?.language);
       this.sendMainMenu(chatId);
     }
   }
 
-  public async handleChangeLanguage(msg: TelegramBot.Message) {
-    const chatId = msg.chat.id;
+  public async handleUserRegistration(chatId: number) {
+    await this.promptLanguageSelection(chatId);
+
+    const languageListener = async (msg: TelegramBot.Message) => {
+      if (
+        msg.chat.id === chatId &&
+        (msg.text === "🇷🇺Русский" || msg.text === "🇺🇸English")
+      ) {
+        this.bot.removeListener("message", languageListener);
+        this.languageListeners.delete(chatId);
+        
+        const language = msg.text;
+        await this.handleLanguageSelection(chatId, language, true);
+
+        const contactListener = async (contactMsg: TelegramBot.Message) => {
+          if (contactMsg.chat.id === chatId && contactMsg.contact) {
+            this.bot.removeListener("contact", contactListener);
+            this.contactListeners.delete(chatId);
+            await this.handleContact(contactMsg);
+          }
+        };
+
+        this.bot.on("contact", contactListener);
+        this.contactListeners.set(chatId, contactListener);
+      }
+    };
+
+    this.bot.on("message", languageListener);
+    this.languageListeners.set(chatId, languageListener);
+  }
+
+  private async promptLanguageSelection(chatId: number) {
     const languageKeyboard = [[{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }]];
     this.bot.sendMessage(chatId, i18n.t("choose_language"), {
       reply_markup: {
@@ -47,28 +69,34 @@ export default class UserHandler {
     });
   }
 
-  // public async handleListProducts(msg: TelegramBot.Message) {
-  //   // Implementation for listing products
-  // }
+  public async handleContact(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
 
-  public async handleContactUs(msg: TelegramBot.Message) {
-    this.bot.sendMessage(msg.chat.id, i18n.t("contact_us_information"));
-  }
+    if (msg.contact) {
+      const phoneNumber = msg.contact.phone_number;
+      const name = msg.contact.first_name;
 
-  public async handleAboutUs(msg: TelegramBot.Message) {
-    this.bot.sendMessage(msg.chat.id, i18n.t("about_us_information"));
-  }
-
-  public async handleLanguageSelection(chatId: number, language: string, isRegistration: boolean) {
-    if (language !== "🇷🇺Русский" && language !== "🇺🇸English") {
-      this.bot.sendMessage(chatId, i18n.t("choose_language"));
-      return;
+      if (await UserService.findUserByPhoneNumber(phoneNumber)) {
+        this.bot.sendMessage(chatId, i18n.t("user_already_exists"));
+      } else {
+        const language = this.newUserLanguages.get(chatId) || i18n.language;
+        await UserService.createUser(chatId, name, phoneNumber, language);
+        this.bot.sendMessage(chatId, i18n.t("contact_saved"));
+        this.newUserLanguages.delete(chatId);
+        this.sendMainMenu(chatId);
+      }
     }
+  }
 
+  public async handleLanguageSelection(
+    chatId: number,
+    language: string,
+    isNewUser: boolean
+  ) {
     const languageCode = language === "🇷🇺Русский" ? "ru-RU" : "en-US";
     i18n.changeLanguage(languageCode);
 
-    if (isRegistration) {
+    if (isNewUser) {
       this.newUserLanguages.set(chatId, languageCode);
       this.bot.sendMessage(chatId, i18n.t("share_contact"), {
         reply_markup: {
@@ -91,23 +119,38 @@ export default class UserHandler {
     }
   }
 
-  public async handleContact(msg: TelegramBot.Message) {
+  public async handleChangeLanguage(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
-    const contact = msg.contact;
+    const languageKeyboard = [[{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }]];
+    this.bot.sendMessage(chatId, i18n.t("choose_new_language"), {
+      reply_markup: {
+        keyboard: languageKeyboard,
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
+    });
 
-    if (contact) {
-      const phoneNumber = contact.phone_number;
-      const name = contact.first_name;
-      if (await UserService.findUserByPhoneNumber(phoneNumber)) {
-        this.bot.sendMessage(chatId, i18n.t("user_already_exists"));
-      } else {
-        const language = this.newUserLanguages.get(chatId) || i18n.language;
-        await UserService.createUser(chatId, name, phoneNumber, language);
-        this.bot.sendMessage(chatId, i18n.t("contact_saved"));
-        this.newUserLanguages.delete(chatId);
-        this.sendMainMenu(chatId);
+    const changeLanguageListener = async (msg: TelegramBot.Message) => {
+      if (msg.chat.id === chatId) {
+        const language = msg.text;
+        if (language === "🇷🇺Русский" || language === "🇺🇸English") {
+          this.bot.removeListener("message", changeLanguageListener);
+          const languageCode = language === "🇷🇺Русский" ? "ru-RU" : "en-US";
+          i18n.changeLanguage(languageCode);
+
+          const user = await UserService.findUserByChatId(chatId);
+          if (user) {
+            user.language = languageCode;
+            user.updatedAt = new Date();
+            await user.save();
+            this.bot.sendMessage(chatId, i18n.t("language_changed"));
+          }
+          this.sendMainMenu(chatId);
+        }
       }
-    }
+    };
+
+    this.bot.on("message", changeLanguageListener);
   }
 
   public async handleMyCreditCard(msg: TelegramBot.Message) {
@@ -169,5 +212,13 @@ export default class UserHandler {
         one_time_keyboard: false,
       },
     });
+  }
+
+  public async handleContactUs(msg: TelegramBot.Message) {
+    this.bot.sendMessage(msg.chat.id, i18n.t("contact_us_information"));
+  }
+
+  public async handleAboutUs(msg: TelegramBot.Message) {
+    this.bot.sendMessage(msg.chat.id, i18n.t("about_us_information"));
   }
 }

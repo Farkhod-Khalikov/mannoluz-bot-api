@@ -6,7 +6,7 @@ export default class AdminHandler {
   private bot: TelegramBot;
   private adminPostData: Map<
     number,
-    { title: string | null; message: string | null }
+    { title: string | null; message: string | null; inProgress: boolean }
   > = new Map();
 
   constructor(bot: TelegramBot) {
@@ -16,19 +16,22 @@ export default class AdminHandler {
   public async handleSendPost(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
 
-    this.bot.sendMessage(chatId, i18n.t("provide_post_title"), {
-      reply_markup: {
-        force_reply: true,
-      },
-    });
-
-    this.adminPostData.set(chatId, { title: null, message: null });
+    if (await UserService.isUserAdmin(chatId)) {
+      this.adminPostData.set(chatId, { title: null, message: null, inProgress: true });
+      this.bot.sendMessage(chatId, i18n.t("provide_post_title"), {
+        reply_markup: {
+          force_reply: true,
+        },
+      });
+    } else {
+      this.bot.sendMessage(chatId, i18n.t("not_authorized"));
+    }
   }
 
   public async handleAdminPostData(chatId: number, text: string) {
     const currentPostData = this.adminPostData.get(chatId);
 
-    if (currentPostData) {
+    if (currentPostData && currentPostData.inProgress) {
       if (!currentPostData.title) {
         currentPostData.title = text;
         this.bot.sendMessage(chatId, i18n.t("provide_post_message"), {
@@ -81,13 +84,16 @@ export default class AdminHandler {
       }
       this.bot.sendMessage(chatId, i18n.t("post_sent"));
       this.sendMainMenu(chatId);
+    } else {
+      this.bot.sendMessage(chatId, i18n.t("post_creation_failed"));
     }
     this.adminPostData.delete(chatId);
   }
 
   public async handleCancelPost(chatId: number) {
-    this.adminPostData.delete(chatId);
+    this.bot.sendMessage(chatId, i18n.t("post_creation_cancelled"));
     this.sendMainMenu(chatId);
+    this.adminPostData.delete(chatId);
   }
 
   public async sendMainMenu(chatId: number) {
@@ -118,7 +124,4 @@ export default class AdminHandler {
       },
     });
   }
-  // private async sendMainMenu(chatId: number) {
-  //   // Implement to send main menu
-  // }
 }

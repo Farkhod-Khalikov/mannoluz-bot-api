@@ -1,7 +1,6 @@
 import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/UserService";
 import i18n from "../utils/i18n";
-import { generateCreditCard } from "../utils/creditCardGeneration";
 import UserHandler from "./UserHandler";
 import AdminHandler from "./AdminHandler";
 import ProductHandler from "./ProductHandler";
@@ -20,11 +19,6 @@ export default class MessageController {
   }
 
   public async handleMessage(msg: TelegramBot.Message) {
-    if (msg.contact) {
-      await this.userHandler.handleContact(msg);
-      return;
-    }
-
     const chatId = msg.chat.id;
     const isUserAdmin = await UserService.isUserAdmin(chatId);
 
@@ -32,6 +26,14 @@ export default class MessageController {
       switch (msg.text) {
         case "/start":
           await this.userHandler.handleStart(msg);
+          break;
+        case "🇷🇺Русский":
+        case "🇺🇸English":
+          if (this.userHandler.newUserLanguages.has(chatId)) {
+            await this.userHandler.handleLanguageSelection(chatId, msg.text, true);
+          } else {
+            await this.userHandler.handleLanguageSelection(chatId, msg.text, false);
+          }
           break;
         case i18n.t("settings_button"):
           await this.userHandler.handleSettings(msg);
@@ -54,18 +56,22 @@ export default class MessageController {
         case i18n.t("back_button"):
           await this.userHandler.sendMainMenu(chatId);
           break;
-        case "🇷🇺Русский":
-        case "🇺🇸English":
-          await this.userHandler.handleLanguageSelection(chatId, msg.text, false);
-          break;
         case i18n.t("send_post_button"):
           if (isUserAdmin) {
             await this.adminHandler.handleSendPost(msg);
           }
           break;
         default:
-          this.bot.sendMessage(chatId, i18n.t("command_not_recognized"));
+          if (isUserAdmin) {
+            // Handle admin-specific messages for post creation
+            await this.adminHandler.handleAdminPostData(chatId, msg.text);
+          } else {
+            this.bot.sendMessage(chatId, i18n.t("command_not_recognized"));
+            this.userHandler.sendMainMenu(chatId);
+          }
       }
+    } else if (msg.contact) {
+      // Handle contact sharing here if needed
     }
   }
 
@@ -91,8 +97,6 @@ export default class MessageController {
           if (data?.startsWith("page_")) {
             const page = parseInt(data.split("_")[1], 10);
             this.productHandler.handlePagination(chatId, `page_${page}`);
-          } else {
-            this.bot.sendMessage(chatId, i18n.t("command_not_recognized"));
           }
       }
     }

@@ -1,7 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
 import { initDB } from "./db";
-import MessageController from "./controllers/MessageController";
+// import MessageController from "./controllers/MessageController";
 import MessageHandler from "./event-handlers/MessageHandler";
 // import CallbackQueryController from "./controllers/CallbackQueryController";
 
