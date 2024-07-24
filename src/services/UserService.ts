@@ -11,12 +11,27 @@ export class UserService {
   ): Promise<IUser | null> {
     return User.findOne({ phoneNumber: phoneNumber });
   }
+  public static async getAdminName(chatId: number): Promise<string> {
+    try {
+      // Fetch the user based on the chatId
+      const user = await User.findOne({ chatId }).exec();
 
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      // Return the user's name (assuming your User model has a name field)
+      return user.name || "Unknown Admin"; // Adjust as necessary
+    } catch (error) {
+      console.error("Error fetching admin name:", error);
+      return "Unknown Admin";
+    }
+  }
   public static async createUser(
     chatId: number,
     name: string,
     phone: string,
-    language: string,
+    language: string
   ): Promise<void> {
     const user = new User({
       chatId,
@@ -50,7 +65,7 @@ export class UserService {
   public static async getAllUsers(): Promise<IUser[]> {
     return User.find({});
   }
-  public static async getAllProducts(): Promise<IProduct[]>{
+  public static async getAllProducts(): Promise<IProduct[]> {
     return Product.find({});
   }
 }

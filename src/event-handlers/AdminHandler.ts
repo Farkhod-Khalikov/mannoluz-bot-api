@@ -3,6 +3,7 @@ import { UserService } from "../services/UserService";
 import i18n from "../utils/i18n";
 import fs from "fs";
 import path from "path";
+import Post from "../models/posts"; // Import the Post model
 
 export default class AdminHandler {
   private bot: TelegramBot;
@@ -15,7 +16,7 @@ export default class AdminHandler {
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
-    this.tempDir = path.join(__dirname, "..", "temp"); // Ensure temp folder is created
+    this.tempDir = path.join(__dirname, "..", "temp/admin-posts"); // Ensure temp folder is created
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir);
     }
@@ -108,6 +109,17 @@ export default class AdminHandler {
   public async handleConfirmPost(chatId: number) {
     const postData = this.adminPostData.get(chatId);
     if (postData && postData.title && postData.message && postData.image) {
+      // Save post data to the database
+      const adminName = await UserService.getAdminName(chatId); // Assuming you have a method to get admin name
+      const post = new Post({
+        adminName,
+        title: postData.title,
+        createdAt: new Date(),
+        imagePath: postData.image,
+      });
+      await post.save();
+
+      // Send post to all users
       const users = await UserService.getAllUsers();
       for (const user of users) {
         this.bot.sendPhoto(
@@ -122,30 +134,23 @@ export default class AdminHandler {
       this.bot.sendMessage(chatId, i18n.t("post_sent"));
       this.sendMainMenu(chatId);
     }
-    this.cleanUpTempFiles();
+    // Only clean up temp files if the post is canceled
+    // this.cleanUpTempFiles();
     this.adminPostData.delete(chatId);
   }
 
   public async handleCancelPost(chatId: number) {
-    this.cleanUpTempFiles();
+    const currentPostData = this.adminPostData.get(chatId);
+    if (currentPostData && currentPostData.image) {
+      // Remove the image file if the post is canceled
+      fs.unlink(currentPostData.image, (err) => {
+        if (err) {
+          console.error("Failed to delete temp file:", err);
+        }
+      });
+    }
     this.adminPostData.delete(chatId);
     this.sendMainMenu(chatId);
-  }
-
-  private cleanUpTempFiles() {
-    fs.readdir(this.tempDir, (err, files) => {
-      if (err) {
-        console.error('Failed to read temp directory:', err);
-        return;
-      }
-      files.forEach(file => {
-        fs.unlink(path.join(this.tempDir, file), err => {
-          if (err) {
-            console.error('Failed to delete temp file:', err);
-          }
-        });
-      });
-    });
   }
 
   public async sendMainMenu(chatId: number) {
