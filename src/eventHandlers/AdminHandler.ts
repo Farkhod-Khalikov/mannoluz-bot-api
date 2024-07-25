@@ -1,9 +1,9 @@
 import TelegramBot from "node-telegram-bot-api";
-import { UserService } from "../services/UserService";
+import { UserService } from "../services/user.service";
 import i18n from "../utils/i18n";
 import fs from "fs";
 import path from "path";
-import Post from "../models/posts"; // Import the Post model
+import Post from "../models/posts.schema"; // Import the Post model
 
 export default class AdminHandler {
   private bot: TelegramBot;

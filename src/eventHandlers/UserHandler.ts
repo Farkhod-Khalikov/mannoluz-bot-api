@@ -1,7 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
-import { UserService } from "../services/UserService";
+import { UserService } from "../services/user.service";
 import i18n from "../utils/i18n";
-import { generateCreditCard } from "../utils/creditCardGeneration";
+import { generateCreditCard } from "../utils/creditcard.generation";
 //format for transactions as a caption
 // `${i18n.t("bonuses_addition")} | ${sum}${i18n.t("coins")} | ${i18n.t("transaction_date")}: ${transaction.createdAt}`
 export default class UserHandler {

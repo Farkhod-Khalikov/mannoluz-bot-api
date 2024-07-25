@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { initDB } from "./db";
 import express from "express";
 import MessageHandler from "./eventHandlers/MessageHandler";
-import userRoute from "./routes/userRoute";
+import userRoute from "./routes/user.routes";
 
 dotenv.config();
 

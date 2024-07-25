@@ -1,5 +1,5 @@
-import Product, { IProduct } from "../models/products";
-import User, { IUser } from "../models/users";
+import Product, { IProduct } from "../models/products.schema";
+import User, { IUser } from "../models/users.schema";
 
 export class UserService {
   public static async findUserByChatId(chatId: number): Promise<IUser | null> {

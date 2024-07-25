@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { UserService } from "../services/UserService";
-import Transaction from "../models/transactions";
-import User from "../models/users";
+import { UserService } from "../services/user.service";
+import Transaction from "../models/transactions.schema";
+import User from "../models/users.schema";
 import mongoose, { Document, Schema, Types } from "mongoose";
 import TelegramBot from 'node-telegram-bot-api';
 import dotenv from 'dotenv';
