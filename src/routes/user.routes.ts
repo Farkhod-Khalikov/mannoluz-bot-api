@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import UserController from '../controllers/UserController';
 
-const userRoute = Router();
+const userRouter = Router();
 
 
-userRoute.patch('/balance/add', UserController.addBonuses);  // Renamed route to add bonuses
-userRoute.patch('/balance/remove', UserController.removeBonuses);  // Renamed route to remove bonuses
+userRouter.patch('/balance/add', UserController.addBonuses);  // Renamed route to add bonuses
+userRouter.patch('/balance/remove', UserController.removeBonuses);  // Renamed route to remove bonuses
 
-export default userRoute;
+export default userRouter;

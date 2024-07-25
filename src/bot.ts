@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import { initDB } from "./db";
 import express from "express";
 import MessageHandler from "./eventHandlers/MessageHandler";
-import userRoute from "./routes/user.routes";
+import userRouter from "./routes/user.routes";
 
 dotenv.config();
 
@@ -12,7 +12,7 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.use('/users', userRoute);
+app.use('/users', userRouter);
 
 
 app.get("/", (req, res) => {
