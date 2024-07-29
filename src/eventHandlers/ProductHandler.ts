@@ -1,9 +1,8 @@
 import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/user.service";
-// import i18n from "../utils/i18n";
 
 export default class ProductHandler {
-  private bot: TelegramBot;
+private bot: TelegramBot;
   private userProductPages: Map<number, number> = new Map();
 
   constructor(bot: TelegramBot) {
@@ -38,7 +37,7 @@ export default class ProductHandler {
         )
         .join("\n\n");
 
-      const paginationButtons = [];
+      const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
 
       if (currentPage > 1) {
         paginationButtons.push({
@@ -81,18 +80,18 @@ export default class ProductHandler {
   }
 
   public async handlePagination(chatId: number, action: string) {
-    if (action === "previous") {
+    if (action === "product_previous_page") {
       this.userProductPages.set(
         chatId,
-        (this.userProductPages.get(chatId) || 1) - 1
+        Math.max((this.userProductPages.get(chatId) || 1) - 1, 1)
       );
-    } else if (action === "next") {
+    } else if (action === "product_next_page") {
       this.userProductPages.set(
         chatId,
         (this.userProductPages.get(chatId) || 1) + 1
       );
     } else if (action.startsWith("product_page_")) {
-      const page = parseInt(action.split("_")[1], 10);
+      const page = parseInt(action.split("_")[2], 10);
       this.userProductPages.set(chatId, page);
     }
 

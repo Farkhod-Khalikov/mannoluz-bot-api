@@ -6,6 +6,7 @@ export interface ITransaction extends Document {
   bonuses: number;
   createdAt?: Date;
   updatedAt?: Date;
+  // operation: string; //adding or removing
   description?: string;
 }
 
@@ -13,6 +14,7 @@ const transactionSchema = new Schema<ITransaction>(
   {
     userId: { type: String, required: true },
     bonuses: { type: Number, required: true },
+    // operation: { type: String, required: true },
     description: { type: String, required: false },
   },
   { timestamps: true }

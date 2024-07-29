@@ -1,5 +1,5 @@
-import TelegramBot from 'node-telegram-bot-api';
-import { UserService } from '../services/user.service'; // Assuming you have a UserService to get transactions
+import TelegramBot from "node-telegram-bot-api";
+import { UserService } from "../services/user.service";
 
 export default class TransactionHandler {
   private bot: TelegramBot;
@@ -33,62 +33,65 @@ export default class TransactionHandler {
         .slice(startIndex, endIndex)
         .map(
           (transaction: any) =>
-            `${transaction.type} | ${transaction.date} | ${transaction.sum}`
+            `${transaction.description} | ${transaction.createdAt} | ${transaction.bonuses} Coins\n`
         )
-        .join('\n');
+        .join("\n");
 
-      const paginationButtons: TelegramBot.InlineKeyboardButton[][] = [];
+      const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
 
       if (currentPage > 1) {
-        paginationButtons.push([
-          { text: 'Previous', callback_data: 'transaction_previous_page' },
-        ]);
+        paginationButtons.push({
+          text: "Previous",
+          callback_data: "transaction_previous_page",
+        });
       }
 
       for (let i = 1; i <= totalPages; i++) {
-        paginationButtons.push([
-          { text: `${i}`, callback_data: `transaction_page_${i}` },
-        ]);
+        paginationButtons.push({
+          text: `${i}`,
+          callback_data: `transaction_page_${i}`,
+        });
       }
 
       if (currentPage < totalPages) {
-        paginationButtons.push([
-          { text: 'Next', callback_data: 'transaction_next_page' },
-        ]);
+        paginationButtons.push({
+          text: "Next",
+          callback_data: "transaction_next_page",
+        });
       }
 
       await this.bot.sendMessage(
         chatId,
         `*Transactions (Page ${currentPage} of ${totalPages}):*\n\n${transactionPage}`,
         {
-          parse_mode: 'Markdown',
+          parse_mode: "Markdown",
           reply_markup: {
-            inline_keyboard: paginationButtons,
+            inline_keyboard: [paginationButtons],
           },
         }
       );
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error("Error fetching transactions:", error);
       this.bot.sendMessage(
         msg.chat.id,
-        'There was an error fetching the transaction list. Please try again later.'
+        "There was an error fetching the transaction list. Please try again later."
       );
     }
   }
 
   public async handlePagination(chatId: number, action: string) {
-    if (action === 'prev') {
+    if (action === "transaction_previous_page") {
       this.userTransactionPages.set(
         chatId,
         Math.max((this.userTransactionPages.get(chatId) || 1) - 1, 1)
       );
-    } else if (action === 'next') {
+    } else if (action === "transaction_next_page") {
       this.userTransactionPages.set(
         chatId,
         (this.userTransactionPages.get(chatId) || 1) + 1
       );
-    } else if (action.startsWith('transaction_page_')) {
-      const page = parseInt(action.split('_')[1], 10);
+    } else if (action.startsWith("transaction_page_")) {
+      const page = parseInt(action.split("_")[2], 10);
       this.userTransactionPages.set(chatId, page);
     }
 

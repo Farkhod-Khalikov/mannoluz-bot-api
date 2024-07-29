@@ -98,54 +98,58 @@ export default class MessageController {
     }
   }
 
-  public async handleCallbackQuery(callbackQuery: TelegramBot.CallbackQuery) {
+  async handleCallbackQuery(callbackQuery: TelegramBot.CallbackQuery) {
     const chatId = callbackQuery.message?.chat.id;
     const data = callbackQuery.data;
 
-    if (chatId) {
-      switch (data) {
-        case "confirm_post":
-          await this.adminHandler.handleConfirmPost(chatId);
-          break;
-        case "cancel_post":
-          await this.adminHandler.handleCancelPost(chatId);
-          break;
-        case "transaction_previous_page":
-          await this.transactionHandler.handlePagination(chatId, "previous");
-          break;
-        case "product_previous_page":
-          await this.productHandler.handlePagination(chatId, "previous");
-          break;
-        case "transaction_next_page":
-          await this.transactionHandler.handlePagination(chatId, "next");
-          break;
-        case "product_next_page":
-          await this.productHandler.handlePagination(chatId, "next");
-          break;
-        // case "list_transactions":
-        //   await this.transactionHandler.handleListTransactions({
-        //     chat: { id: chatId },
-        //   } as TelegramBot.Message);
-        //   break;
-        default:
-          if (data?.startsWith("transaction_page_")) {
-            const page = parseInt(data.split("_")[1], 10);
+    if (chatId && data) {
+      if (data.startsWith("transaction_page_")) {
+        const page = parseInt(data.split("_")[2], 10);
+        await this.transactionHandler.handlePagination(
+          chatId,
+          `transaction_page_${page}`
+        );
+      } else if (data.startsWith("product_page_")) {
+        const page = parseInt(data.split("_")[2], 10);
+        await this.productHandler.handlePagination(
+          chatId,
+          `product_page_${page}`
+        );
+      } else {
+        switch (data) {
+          case "confirm_post":
+            await this.adminHandler.handleConfirmPost(chatId);
+            break;
+          case "cancel_post":
+            await this.adminHandler.handleCancelPost(chatId);
+            break;
+          case "transaction_previous_page":
             await this.transactionHandler.handlePagination(
               chatId,
-              `transaction_page_${page}`
+              "transaction_previous_page"
             );
-          } else if (data?.startsWith("product_page_")) {
-            const page = parseInt(data.split("_")[1], 10);
+            break;
+          case "transaction_next_page":
+            await this.transactionHandler.handlePagination(
+              chatId,
+              "transaction_next_page"
+            );
+            break;
+          case "product_previous_page":
             await this.productHandler.handlePagination(
               chatId,
-              `product_page_${page}`
+              "product_previous_page"
             );
-
-            // } else if (data === "transaction_previous_page") {
-            //   await this.transactionHandler.handlePagination(chatId, "previous");
-            // } else if (data === "transaction_next_page") {
-            //   await this.transactionHandler.handlePagination(chatId, "next");
-          }
+            break;
+          case "product_next_page":
+            await this.productHandler.handlePagination(
+              chatId,
+              "product_next_page"
+            );
+            break;
+          default:
+            console.warn(`Unknown callback query data: ${data}`);
+        }
       }
 
       // Acknowledge the callback query to remove the "loading" state from the button

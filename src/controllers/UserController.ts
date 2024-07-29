@@ -57,7 +57,7 @@ class UserController {
 
   static async removeBonuses(req: Request, res: Response) {
     try {
-      const { phoneNumber, sum } = req.body;
+      const { phoneNumber, sum, description } = req.body;
 
       if (!phoneNumber || isNaN(sum)) {
         return res
@@ -80,7 +80,8 @@ class UserController {
       await Transaction.create({
         userId: user._id,
         phoneNumber: phoneNumber,
-        bonuses: -sum, // - is just to show removal or additiona (also can add description to show it)
+        bonuses: -sum,
+        description: description // - is just to show removal or additiona (also can add description to show it)
       });
 
       // Update user's balance
