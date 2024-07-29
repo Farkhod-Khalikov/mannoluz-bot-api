@@ -212,7 +212,7 @@ export default class UserHandler {
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
 
     const mainMenuKeyboard = [
-      [{ text: i18n.t("credit_card_button") }],
+      [{ text: i18n.t("credit_card_button") }, { text: i18n.t("btn_rules") }],
       [
         { text: i18n.t("btn_list_products") },
         { text: i18n.t("btn_list_transactions") },
@@ -228,6 +228,7 @@ export default class UserHandler {
     ];
 
     if (isAdmin) {
+      // for admins also add button "Purchase requests" isAnswered == true
       mainMenuKeyboard.push([{ text: i18n.t("send_post_button") }]);
     }
 

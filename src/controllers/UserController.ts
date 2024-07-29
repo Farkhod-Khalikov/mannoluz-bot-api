@@ -41,9 +41,7 @@ class UserController {
       if (user.chatId) {
         await bot.sendMessage(
           user.chatId,
-          `${i18n.t("bonuses_addition")}: ${sum}${i18n.t("coins")}\n${i18n.t(
-            "transaction_date"
-          )}: ${transaction.createdAt}\n${i18n.t("description")}: ${
+          `Bonuses have been added: ${sum}${i18n.t("coins")}\n${i18n.t("description")}: ${
             transaction.description
           }`
         );
@@ -91,7 +89,7 @@ class UserController {
       if (user.chatId) {
         await bot.sendMessage(
           user.chatId,
-          `${sum} Bonuses removed from your balance`
+          `Bonuses have been removed: ${sum} coins`
         );
       }
       res.json({ message: "Bonuses removed", newBalance: user.balance });

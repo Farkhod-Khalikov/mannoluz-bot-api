@@ -2,7 +2,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/user.service";
 
 export default class TransactionHandler {
-  private bot: TelegramBot;
+ private bot: TelegramBot;
   private userTransactionPages: Map<number, number> = new Map();
 
   constructor(bot: TelegramBot) {
@@ -12,12 +12,17 @@ export default class TransactionHandler {
   public async handleListTransactions(msg: TelegramBot.Message) {
     try {
       const chatId = msg.chat.id;
-      const transactions = await UserService.getAllTransactions(chatId); // Fetch transactions for the user
+      let transactions = await UserService.getAllTransactions(chatId); // Fetch transactions for the user
 
       if (transactions.length === 0) {
         this.bot.sendMessage(chatId, "No transactions available.");
         return;
       }
+
+      // Sort transactions by createdAt date in descending order
+      transactions = transactions.sort(
+        (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
 
       if (!this.userTransactionPages.has(chatId)) {
         this.userTransactionPages.set(chatId, 1);
@@ -31,10 +36,11 @@ export default class TransactionHandler {
 
       const transactionPage = transactions
         .slice(startIndex, endIndex)
-        .map(
-          (transaction: any) =>
-            `${transaction.description} | ${transaction.createdAt} | ${transaction.bonuses} Coins\n`
-        )
+        .map((transaction: any) => {
+          const date = new Date(transaction.createdAt);
+          const formattedDate = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}.${date.getFullYear()}`;
+          return `${transaction.description} | ${formattedDate} | ${transaction.bonuses} Coins\n`;
+        })
         .join("\n");
 
       const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
@@ -98,5 +104,5 @@ export default class TransactionHandler {
     await this.handleListTransactions({
       chat: { id: chatId },
     } as TelegramBot.Message);
-  }
+  } 
 }

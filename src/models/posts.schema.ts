@@ -4,7 +4,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IPost extends Document {
   adminName: string;
   title: string;
-  createdAt: Date;
+  createdAt: Date; //update using mongo's timestamps
   imagePath: string;
 }
 // короче вот это все нахуй удалить можно в тз нету этой темы
