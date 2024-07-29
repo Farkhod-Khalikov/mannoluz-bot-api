@@ -2,7 +2,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/user.service";
 import i18n from "../utils/i18n";
 import { generateCreditCard } from "../utils/creditcard.generation";
-//format for transactions as a caption
+// format for transactions as a caption
 // `${i18n.t("bonuses_addition")} | ${sum}${i18n.t("coins")} | ${i18n.t("transaction_date")}: ${transaction.createdAt}`
 export default class UserHandler {
   private bot: TelegramBot;
@@ -13,8 +13,16 @@ export default class UserHandler {
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.newUserLanguages = new Map<number, string>();
-    this.languageListeners = new Map<number, (msg: TelegramBot.Message) => void>();
-    this.contactListeners = new Map<number, (msg: TelegramBot.Message) => void>();
+
+    // tried to solve double message error
+    this.languageListeners = new Map<
+      number,
+      (msg: TelegramBot.Message) => void
+    >();
+    this.contactListeners = new Map<
+      number,
+      (msg: TelegramBot.Message) => void
+    >();
   }
 
   public async handleStart(msg: TelegramBot.Message) {
@@ -24,6 +32,7 @@ export default class UserHandler {
     if (!isExisted) {
       await this.handleUserRegistration(chatId);
     } else {
+      // add setSystemLanguage to use language that is saved in user's document
       this.sendMainMenu(chatId);
     }
   }
@@ -38,7 +47,7 @@ export default class UserHandler {
       ) {
         this.bot.removeListener("message", languageListener);
         this.languageListeners.delete(chatId);
-        
+
         const language = msg.text;
         await this.handleLanguageSelection(chatId, language, true);
 
@@ -163,12 +172,24 @@ export default class UserHandler {
       const filePath = await generateCreditCard(user.phone, user.id);
       this.bot
         .sendPhoto(chatId, filePath, {
-          caption: `${i18n.t("balance_caption")}: ${balance} ${i18n.t("coins")}`,
+          caption: `${i18n.t("balance_caption")}: ${balance} ${i18n.t(
+            "coins"
+          )}`,
         })
         .catch((error) => console.error("Failed to send QR code:", error));
     } else {
       this.bot.sendMessage(chatId, i18n.t("user_not_found"));
     }
+  }
+
+  // /send user's system languague
+  public async sendUserLanguage(chatId: number) {
+    const user = await UserService.findUserByChatId(chatId);
+
+    if (user) {
+      this.bot.sendMessage(chatId, user.language);
+    }
+    this.sendMainMenu(chatId);
   }
 
   public async handleSettings(msg: TelegramBot.Message) {
@@ -193,8 +214,12 @@ export default class UserHandler {
     const mainMenuKeyboard = [
       [{ text: i18n.t("credit_card_button") }],
       [
-        { text: i18n.t("settings_button") },
         { text: i18n.t("btn_list_products") },
+        { text: i18n.t("btn_list_transactions") },
+      ],
+      [
+        { text: i18n.t("settings_button") },
+        { text: i18n.t("purchase_request") },
       ],
       [
         { text: i18n.t("contact_us_button") },

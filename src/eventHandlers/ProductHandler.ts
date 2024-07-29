@@ -34,7 +34,7 @@ export default class ProductHandler {
         .slice(startIndex, endIndex)
         .map(
           (product: any) =>
-            `*Name:* ${product.name}\n*Price:* ${product.price} UZS`
+            `*Name:* ${product.name}\n*Price:* ${product.price} USD`
         )
         .join("\n\n");
 
@@ -43,16 +43,22 @@ export default class ProductHandler {
       if (currentPage > 1) {
         paginationButtons.push({
           text: "Previous",
-          callback_data: "prev_page",
+          callback_data: "product_previous_page",
         });
       }
 
       for (let i = 1; i <= totalPages; i++) {
-        paginationButtons.push({ text: `${i}`, callback_data: `page_${i}` });
+        paginationButtons.push({
+          text: `${i}`,
+          callback_data: `product_page_${i}`,
+        });
       }
 
       if (currentPage < totalPages) {
-        paginationButtons.push({ text: "Next", callback_data: "next_page" });
+        paginationButtons.push({
+          text: "Next",
+          callback_data: "product_next_page",
+        });
       }
 
       await this.bot.sendMessage(
@@ -85,7 +91,7 @@ export default class ProductHandler {
         chatId,
         (this.userProductPages.get(chatId) || 1) + 1
       );
-    } else if (action.startsWith("page_")) {
+    } else if (action.startsWith("product_page_")) {
       const page = parseInt(action.split("_")[1], 10);
       this.userProductPages.set(chatId, page);
     }

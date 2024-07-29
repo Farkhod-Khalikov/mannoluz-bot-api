@@ -13,7 +13,7 @@ const transactionSchema = new Schema<ITransaction>(
   {
     userId: { type: String, required: true },
     bonuses: { type: Number, required: true },
-    description: {type: String, required: false}
+    description: { type: String, required: false },
   },
   { timestamps: true }
 );

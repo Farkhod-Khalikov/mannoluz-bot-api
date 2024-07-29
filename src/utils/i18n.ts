@@ -5,19 +5,19 @@ i18next.init({
   resources: {
     "en-US": {
       translation: {
-        coins:"Coins",
+        coins: "Coins",
         description: "Description",
         bonuses_addition: "Addition",
-        bonuses_removal:"Removal",
-        transaction_date:"Transaction Date",
-        provide_post_title:"Post Title:",
+        bonuses_removal: "Removal",
+        transaction_date: "Transaction Date",
+        provide_post_title: "Post Title:",
         provide_post_message: "Post Message:",
         confirm_button: "✅Confirm",
-        post_sent:"✅Succesfully send",
-        registration_on_start:"Register ME",
-        send_post_button:"✍️Send Post",
+        post_sent: "✅Succesfully send",
+        registration_on_start: "Register ME",
+        send_post_button: "✍️Send Post",
         btn_list_products: "🛒Products",
-        balance_caption:"Your balance",
+        balance_caption: "Your balance",
         choose_language:
           "🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.",
         share_contact: "📱Please share your contact.",
@@ -60,19 +60,19 @@ Thank you for choosing MANNOL!`,
     },
     "ru-RU": {
       translation: {
-        coins:"Монет",
+        coins: "Монет",
         bonuses_addition: "Добавление",
         description: "Описание",
-        transaction_date:"Дата транзакции",
-        bonuses_removal:"Вычитание",
-        provide_post_title:"Заголовок Поста:",
+        transaction_date: "Дата транзакции",
+        bonuses_removal: "Вычитание",
+        provide_post_title: "Заголовок Поста:",
         provide_post_message: "Содержание Поста:",
-        post_sent:"✅Пост отправлен!",
+        post_sent: "✅Пост отправлен!",
         confirm_button: "✅Подтвердить",
-        registration_on_start:"Регистрация",
-        send_post_button:"✍️Отправить Пост",
-        balance_caption:"Ваш баланс",
-         choose_language:
+        registration_on_start: "Регистрация",
+        send_post_button: "✍️Отправить Пост",
+        balance_caption: "Ваш баланс",
+        choose_language:
           "🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.",
         share_contact: "📱Пожалуйста, поделитесь своим контактом.",
         share_contact_button: "📱Поделиться контактом",
@@ -88,11 +88,6 @@ Thank you for choosing MANNOL!`,
         language_changed: "✅Язык изменен.",
         post_creation_cancelled: "❌Пост НЕ отправлен.",
         btn_cancel_post_creation: "❌Отмена",
-
-       
-        
-
-
 
         about_us_information: `Добро пожаловать на официальную страницу MANNOL!
 

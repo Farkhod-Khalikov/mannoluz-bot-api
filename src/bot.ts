@@ -12,21 +12,24 @@ const port = process.env.PORT || 3000;
 
 app.use(express.json());
 
-app.use('/users', userRouter);
+// routes
+app.use("/users", userRouter);
 
-
-app.get("/", (req, res) => {
-  res.send("Express server is running");
-});
+// app.get("/", (req, res) => {
+//   res.send("Express server is running");
+// });
 
 app.listen(port, () => {
   console.log(`[SUCCESS] Express server is running`);
-})
+});
 
 const token = process.env.TOKEN || "";
 const bot = new TelegramBot(token, { polling: true });
+
 if (!bot) console.log("[FAILED] Bot is not initialized.");
 console.log("[SUCCESS] Bot is started.");
+
+// initialize Database
 initDB();
 
 const messageHandler = new MessageHandler(bot);

@@ -2,6 +2,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/user.service";
 import i18n from "../utils/i18n";
 import UserHandler from "./UserHandler";
+import TransactionHandler from "./TransactionHandler";
 import AdminHandler from "./AdminHandler";
 import ProductHandler from "./ProductHandler";
 
@@ -10,12 +11,13 @@ export default class MessageController {
   private userHandler: UserHandler;
   private adminHandler: AdminHandler;
   private productHandler: ProductHandler;
-
+  private transactionHandler: TransactionHandler;
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.userHandler = new UserHandler(bot);
     this.adminHandler = new AdminHandler(bot);
     this.productHandler = new ProductHandler(bot);
+    this.transactionHandler = new TransactionHandler(bot);
   }
 
   public async handleMessage(msg: TelegramBot.Message) {
@@ -27,12 +29,29 @@ export default class MessageController {
         case "/start":
           await this.userHandler.handleStart(msg);
           break;
+        case "/userlanguage":
+          await this.userHandler.sendUserLanguage(chatId);
+          break;
+        case i18n.t("purchase_request"):
+          await this.bot.sendMessage(
+            chatId,
+            "Add force reply options -> save purchase requests to db and send notification to all admins"
+          );
+          break;
         case "🇷🇺Русский":
         case "🇺🇸English":
           if (this.userHandler.newUserLanguages.has(chatId)) {
-            await this.userHandler.handleLanguageSelection(chatId, msg.text, true);
+            await this.userHandler.handleLanguageSelection(
+              chatId,
+              msg.text,
+              true
+            );
           } else {
-            await this.userHandler.handleLanguageSelection(chatId, msg.text, false);
+            await this.userHandler.handleLanguageSelection(
+              chatId,
+              msg.text,
+              false
+            );
           }
           break;
         case i18n.t("settings_button"):
@@ -40,6 +59,9 @@ export default class MessageController {
           break;
         case i18n.t("btn_list_products"):
           await this.productHandler.handleListProducts(msg);
+          break;
+        case i18n.t("btn_list_transactions"):
+          await this.transactionHandler.handleListTransactions(msg);
           break;
         case i18n.t("change_language_button"):
           await this.userHandler.handleChangeLanguage(msg);
@@ -88,18 +110,46 @@ export default class MessageController {
         case "cancel_post":
           await this.adminHandler.handleCancelPost(chatId);
           break;
-        case "prev_page":
+        case "transaction_previous_page":
+          await this.transactionHandler.handlePagination(chatId, "previous");
+          break;
+        case "product_previous_page":
           await this.productHandler.handlePagination(chatId, "previous");
           break;
-        case "next_page":
+        case "transaction_next_page":
+          await this.transactionHandler.handlePagination(chatId, "next");
+          break;
+        case "product_next_page":
           await this.productHandler.handlePagination(chatId, "next");
           break;
+        // case "list_transactions":
+        //   await this.transactionHandler.handleListTransactions({
+        //     chat: { id: chatId },
+        //   } as TelegramBot.Message);
+        //   break;
         default:
-          if (data?.startsWith("page_")) {
+          if (data?.startsWith("transaction_page_")) {
             const page = parseInt(data.split("_")[1], 10);
-            this.productHandler.handlePagination(chatId, `page_${page}`);
+            await this.transactionHandler.handlePagination(
+              chatId,
+              `transaction_page_${page}`
+            );
+          } else if (data?.startsWith("product_page_")) {
+            const page = parseInt(data.split("_")[1], 10);
+            await this.productHandler.handlePagination(
+              chatId,
+              `product_page_${page}`
+            );
+
+            // } else if (data === "transaction_previous_page") {
+            //   await this.transactionHandler.handlePagination(chatId, "previous");
+            // } else if (data === "transaction_next_page") {
+            //   await this.transactionHandler.handlePagination(chatId, "next");
           }
       }
+
+      // Acknowledge the callback query to remove the "loading" state from the button
+      await this.bot.answerCallbackQuery(callbackQuery.id);
     }
   }
 }

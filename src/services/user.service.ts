@@ -1,4 +1,5 @@
 import Product, { IProduct } from "../models/products.schema";
+import Transaction from "../models/transactions.schema";
 import User, { IUser } from "../models/users.schema";
 
 export class UserService {
@@ -27,6 +28,17 @@ export class UserService {
       return "Unknown Admin";
     }
   }
+
+  // getUserLanguage and setSystemLanguage -> need to perform this
+  public static async getUserLanguage(chatId: number) {
+    const user = await this.findUserByChatId(chatId);
+    if (user) {
+      return user.language;
+    }
+    throw new Error("user is not found");
+  }
+
+
   public static async createUser(
     chatId: number,
     name: string,
@@ -53,7 +65,7 @@ export class UserService {
       await user.save();
     }
   }
-  
+
   public static async isUserAdmin(chatId: number): Promise<boolean> {
     const user = await User.findOne({ chatId });
     return user?.isAdmin ? true : false;
@@ -64,6 +76,9 @@ export class UserService {
 
   public static async getAllUsers(): Promise<IUser[]> {
     return User.find({});
+  }
+  public static async getAllTransactions(chatId: number){
+    return Transaction.find({});
   }
   public static async getAllProducts(): Promise<IProduct[]> {
     return Product.find({});
