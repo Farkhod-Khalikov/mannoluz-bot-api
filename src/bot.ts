@@ -4,7 +4,7 @@ import { initDB } from "./db";
 import express from "express";
 import MessageHandler from "./eventHandlers/MessageHandler";
 import userRouter from "./routes/user.routes";
-
+// import productRouter from "./routes/product.routes";
 dotenv.config();
 
 const app = express();
@@ -14,10 +14,7 @@ app.use(express.json());
 
 // routes
 app.use("/users", userRouter);
-
-// app.get("/", (req, res) => {
-//   res.send("Express server is running");
-// });
+// app.use("products", productRouter);
 
 app.listen(port, () => {
   console.log(`[SUCCESS] Express server is running`);

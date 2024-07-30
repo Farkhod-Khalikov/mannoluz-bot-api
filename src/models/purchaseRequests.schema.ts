@@ -3,8 +3,8 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IPurchaseRequest extends Document {
   userId: number;
   userName: string;
-  itemName: string;
-  createdAt: Date;
+  itemName: string; // no need for itemName just comment or description or message
+  createdAt: Date; // update using timestampts
 }
 
 const PurchaseRequestSchema: Schema = new Schema({
@@ -14,4 +14,7 @@ const PurchaseRequestSchema: Schema = new Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-export const PurchaseRequest = mongoose.model<IPurchaseRequest>("PurchaseRequest", PurchaseRequestSchema);
+export const PurchaseRequest = mongoose.model<IPurchaseRequest>(
+  "PurchaseRequest",
+  PurchaseRequestSchema
+);

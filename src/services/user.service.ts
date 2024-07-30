@@ -38,7 +38,6 @@ export class UserService {
     throw new Error("user is not found");
   }
 
-
   public static async createUser(
     chatId: number,
     name: string,
@@ -70,6 +69,7 @@ export class UserService {
     const user = await User.findOne({ chatId });
     return user?.isAdmin ? true : false;
   }
+
   public static async isUserRegistered(chatId: number): Promise<boolean> {
     return (await User.findOne({ chatId })) ? true : false;
   }
@@ -77,12 +77,15 @@ export class UserService {
   public static async getAllUsers(): Promise<IUser[]> {
     return User.find({});
   }
-  public static async getAllTransactions(chatId: number){
+
+  public static async getAllTransactions(chatId: number) {
     return Transaction.find({});
   }
+
   public static async getAllProducts(): Promise<IProduct[]> {
     return Product.find({});
-  } 
+  }
+
   public static async getAllAdmins(): Promise<IUser[]> {
     return User.find({ isAdmin: true });
   }

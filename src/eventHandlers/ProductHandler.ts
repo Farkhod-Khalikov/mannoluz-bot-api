@@ -2,7 +2,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/user.service";
 
 export default class ProductHandler {
-private bot: TelegramBot;
+  private bot: TelegramBot;
   private userProductPages: Map<number, number> = new Map();
 
   constructor(bot: TelegramBot) {
