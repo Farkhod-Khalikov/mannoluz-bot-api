@@ -7,7 +7,6 @@ export interface IPost extends Document {
   createdAt: Date; //update using mongo's timestamps
   imagePath: string;
 }
-// короче вот это все нахуй удалить можно в тз нету этой темы
 // Schema for the Post model
 const PostSchema: Schema = new Schema({
   adminName: { type: String, required: true },

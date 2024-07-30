@@ -170,18 +170,38 @@ export default class UserHandler {
     if (user) {
       const balance = user.balance;
       const filePath = await generateCreditCard(user.phone, user.id);
-      this.bot
-        .sendPhoto(chatId, filePath, {
-          caption: `${i18n.t("balance_caption")}: ${balance} ${i18n.t(
-            "coins"
-          )}`,
+
+      // Fetch last 5 transactions
+      const transactions = await UserService.getAllTransactions(chatId);
+      const lastTransactions = transactions
+        .sort(
+          (a: any, b: any) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+        .slice(0, 5)
+        .map((transaction: any) => {
+          const date = new Date(transaction.createdAt);
+          const formattedDate = `${date
+            .getDate()
+            .toString()
+            .padStart(2, "0")}.${(date.getMonth() + 1)
+            .toString()
+            .padStart(2, "0")}.${date.getFullYear()}`;
+          return `${transaction.description} | ${formattedDate} | ${transaction.bonuses} Coins`;
         })
+        .join("\n");
+
+      const caption = `${i18n.t("balance_caption")}: ${balance} ${i18n.t(
+        "coins"
+      )}\n\n${i18n.t("last_transactions")}:\n${lastTransactions}`;
+
+      this.bot
+        .sendPhoto(chatId, filePath, { caption })
         .catch((error) => console.error("Failed to send QR code:", error));
     } else {
       this.bot.sendMessage(chatId, i18n.t("user_not_found"));
     }
   }
-
   // /send user's system languague
   public async sendUserLanguage(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
