@@ -6,7 +6,10 @@ export interface IUser extends Document {
   name: string;
   phone: string;
   language: string;
-  balance?: number;
+  balance?: {
+    uniqueId?: string;
+    amount: number;
+  };
   isAdmin?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
@@ -18,9 +21,12 @@ const userSchema = new Schema<IUser>({
   name: { type: String, required: true },
   phone: { type: String, required: true },
   language: { type: String, required: true },
-  balance: { type: Number, default: 0 },
+  balance: {
+    uniqueId: { type: String },
+    amount: { type: Number, default: 0 }
+  },
   isAdmin: { type: Boolean, default: false },
-},{
+}, {
   timestamps: true
 });
 

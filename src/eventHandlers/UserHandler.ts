@@ -187,13 +187,13 @@ export default class UserHandler {
             .padStart(2, "0")}.${(date.getMonth() + 1)
             .toString()
             .padStart(2, "0")}.${date.getFullYear()}`;
-          return `${transaction.description} | ${formattedDate} | ${transaction.bonuses} Coins`;
+          return `${transaction.description} | ${formattedDate} | ${transaction.bonuses} ${i18n.t("coins")}`;
         })
         .join("\n");
 
-      const caption = `${i18n.t("balance_caption")}: ${balance} ${i18n.t(
+      const caption = `${i18n.t("balance_caption")}: ${balance?.amount} ${i18n.t(
         "coins"
-      )}\n\n${i18n.t("last_transactions")}:\n${lastTransactions}`;
+      )}\n\n\n${i18n.t("last_transactions")}:\n${lastTransactions}\n`;
 
       this.bot
         .sendPhoto(chatId, filePath, { caption })
