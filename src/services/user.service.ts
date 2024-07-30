@@ -82,5 +82,8 @@ export class UserService {
   }
   public static async getAllProducts(): Promise<IProduct[]> {
     return Product.find({});
+  } 
+  public static async getAllAdmins(): Promise<IUser[]> {
+    return User.find({ isAdmin: true });
   }
 }

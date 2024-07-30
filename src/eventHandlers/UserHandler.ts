@@ -2,6 +2,7 @@ import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/user.service";
 import i18n from "../utils/i18n";
 import { generateCreditCard } from "../utils/creditcard.generation";
+import { PurchaseRequest } from "../models/purchaseRequests.schema";
 // format for transactions as a caption
 // `${i18n.t("bonuses_addition")} | ${sum}${i18n.t("coins")} | ${i18n.t("transaction_date")}: ${transaction.createdAt}`
 export default class UserHandler {
@@ -267,5 +268,46 @@ export default class UserHandler {
 
   public async handleAboutUs(msg: TelegramBot.Message) {
     this.bot.sendMessage(msg.chat.id, i18n.t("about_us_information"));
+  }
+  public async handlePurchaseRequest(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
+
+    // Ask the user to provide the name of the item they want to purchase
+    this.bot.sendMessage(chatId, "Please write the name you want to purchase:", {
+      reply_markup: {
+        force_reply: true,
+      },
+    }).then(sentMessage => {
+      // Listen for the user's reply
+      const replyListener = (replyMsg: TelegramBot.Message) => {
+        if (replyMsg.reply_to_message?.message_id === sentMessage.message_id) {
+          this.bot.removeListener("message", replyListener);
+
+          // Save the purchase request to the database
+          const purchaseRequest = new PurchaseRequest({
+            userId: replyMsg.from?.id,
+            userName: replyMsg.from?.first_name,
+            itemName: replyMsg.text,
+            createdAt: new Date(),
+          });
+
+          purchaseRequest.save().then(async () => {
+            // Notify all admins
+            const admins = await UserService.getAllAdmins();
+            admins.forEach(admin => {
+              this.bot.sendMessage(admin.chatId, `New purchase request from ${replyMsg.from?.first_name}: ${replyMsg.text}`);
+            });
+
+            // Inform the user that their request has been received
+            this.bot.sendMessage(chatId, "Your purchase request has been received. Thank you!");
+          }).catch(error => {
+            console.error("Failed to save purchase request:", error);
+            this.bot.sendMessage(chatId, "Failed to process your request. Please try again later.");
+          });
+        }
+      };
+
+      this.bot.on("message", replyListener);
+    });
   }
 }
