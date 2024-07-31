@@ -7,8 +7,8 @@
     "start:dev": "nodemon ./src/bot.ts"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Farhod Legend",
+  "license": "",
   "description": "",
   "dependencies": {
     "@types/eslint": "^9.6.0",

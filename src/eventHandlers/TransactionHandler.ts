@@ -1,6 +1,7 @@
 //./src/eventHandler/TransactionHanlder
 import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/user.service";
+import i18n from "../utils/i18n";
 
 export default class TransactionHandler {
   private bot: TelegramBot;
@@ -46,7 +47,11 @@ export default class TransactionHandler {
             .padStart(2, "0")}.${(date.getMonth() + 1)
             .toString()
             .padStart(2, "0")}.${date.getFullYear()}`;
-          return `${transaction.description} | ${formattedDate} | ${transaction.bonuses} Coins\n`;
+          return `${
+            transaction.bonuses > 0
+              ? i18n.t("bonuses_addition").padEnd(10, " ")
+              : i18n.t("bonuses_removal").padEnd(10, " ")
+          } | ${formattedDate} | ${transaction.bonuses} ${i18n.t("coins")}\n`;
         })
         .join("\n");
 

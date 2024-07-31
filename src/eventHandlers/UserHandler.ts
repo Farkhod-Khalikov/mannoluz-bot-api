@@ -26,7 +26,6 @@ export default class UserHandler {
     >();
   }
 
-
   // create setSystemLanguage and add to handleStart
 
   public async handleStart(msg: TelegramBot.Message) {
@@ -191,9 +190,11 @@ export default class UserHandler {
             .padStart(2, "0")}.${(date.getMonth() + 1)
             .toString()
             .padStart(2, "0")}.${date.getFullYear()}`;
-          return `${transaction.description} | ${formattedDate} | ${
-            transaction.bonuses
-          } ${i18n.t("coins")}`;
+          return `${
+            transaction.bonuses > 0
+              ? i18n.t("bonuses_addition").padEnd(10, " ")
+              : i18n.t("bonuses_removal").padEnd(10, " ")
+          } | ${formattedDate} | ${transaction.bonuses} ${i18n.t("coins")}`;
         })
         .join("\n");
 
@@ -240,11 +241,12 @@ export default class UserHandler {
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
 
     const mainMenuKeyboard = [
-      [{ text: i18n.t("credit_card_button") }, { text: i18n.t("btn_rules") }],
+      [{ text: i18n.t("credit_card_button") }],
       [
         { text: i18n.t("btn_list_products") },
         { text: i18n.t("btn_list_transactions") },
       ],
+      [{ text: i18n.t("btn_rules") }],
       [
         { text: i18n.t("settings_button") },
         { text: i18n.t("purchase_request") },
@@ -329,7 +331,6 @@ export default class UserHandler {
               });
           }
         };
-
         this.bot.on("message", replyListener);
       });
   }

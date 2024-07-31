@@ -159,7 +159,7 @@ export default class AdminHandler {
         { text: i18n.t("btn_list_products") },
         { text: i18n.t("btn_list_transactions") },
       ],
-      [{ text: i18n.t("settings_button") }],
+      [{ text: i18n.t("settings_button") }, {text: i18n.t("purchase_request")}],
       [
         { text: i18n.t("contact_us_button") },
         { text: i18n.t("about_us_button") },
