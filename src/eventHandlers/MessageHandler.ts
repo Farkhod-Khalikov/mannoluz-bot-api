@@ -23,6 +23,12 @@ export default class MessageController {
   public async handleMessage(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
     const isUserAdmin = await UserService.isUserAdmin(chatId);
+    const isExisted = await UserService.isUserRegistered(chatId);
+    //create setSystemLanguage method
+    if (isExisted) {
+      const user = await UserService.findUserByChatId(chatId);
+      i18n.changeLanguage(user?.language);
+    }
 
     if (msg.text) {
       switch (msg.text) {
@@ -37,12 +43,6 @@ export default class MessageController {
           break;
         case i18n.t("btn_rules"):
           await this.bot.sendMessage(chatId, "Rules for using bonuses");
-          break;
-        case i18n.t("purchase_request"):
-          await this.bot.sendMessage(
-            chatId,
-            "Add force reply options -> save purchase requests to db and send notification to all admins"
-          );
           break;
         case "🇷🇺Русский":
         case "🇺🇸English":

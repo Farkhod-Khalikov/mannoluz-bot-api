@@ -36,6 +36,8 @@ export default class UserHandler {
       await this.handleUserRegistration(chatId);
     } else {
       // add setSystemLanguage to use language that is saved in user's document
+      const user = await UserService.findUserByChatId(chatId);
+      i18n.changeLanguage(user?.language);
       this.sendMainMenu(chatId);
     }
   }
@@ -192,17 +194,15 @@ export default class UserHandler {
             .padStart(2, "0")}.${date.getFullYear()}`;
           return `${
             transaction.bonuses > 0
-              ? i18n.t("bonuses_addition").padEnd(10, " ")
-              : i18n.t("bonuses_removal").padEnd(10, " ")
+              ? i18n.t("bonuses_addition")/*.padEnd(10, " ")*/
+              : i18n.t("bonuses_removal")/*.padEnd(10, " ")*/
           } | ${formattedDate} | ${transaction.bonuses} ${i18n.t("coins")}`;
         })
         .join("\n");
 
-      const caption = `${i18n.t("balance_caption")}: ${
-        balance || 0
-      } ${i18n.t("coins")}\n\n\n${i18n.t(
-        "last_transactions"
-      )}:\n${lastTransactions}\n`;
+      const caption = `${i18n.t("balance_caption")}: ${balance || 0} ${i18n.t(
+        "coins"
+      )}\n\n\n${i18n.t("last_transactions")}:\n${lastTransactions}\n`;
 
       this.bot
         .sendPhoto(chatId, filePath, { caption })
@@ -279,6 +279,7 @@ export default class UserHandler {
     this.bot.sendMessage(msg.chat.id, i18n.t("about_us_information"));
   }
   public async handlePurchaseRequest(chatId: number) {
+    const user = await UserService.findUserByChatId(chatId);
     await this.bot.sendMessage(
       chatId,
       "Please leave a comment for your request:",
@@ -297,8 +298,9 @@ export default class UserHandler {
         this.bot.removeListener("message", purchaseRequestListener);
 
         const request = new PurchaseRequest({
-          userId: chatId,
-          itemName: msg.text,
+          username: user?.name,
+          phonenumber: user?.phone,
+          comment: msg.text,
           createdAt: new Date(),
         });
 
@@ -318,7 +320,7 @@ export default class UserHandler {
     for (const admin of admins) {
       this.bot.sendMessage(
         admin.chatId,
-        `New purchase request from user ${request.userId}: ${request.itemName}`
+        `New purchase request:\nUser: ${request.username}\nComment: ${request.comment}`
       );
     }
   }
