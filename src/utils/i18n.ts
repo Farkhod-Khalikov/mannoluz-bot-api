@@ -5,9 +5,9 @@ i18next.init({
   resources: {
     "en-US": {
       translation: {
-        last_transactions:"Last Transactions",
-        btn_rules:"Rules",
-        btn_list_transactions:"List Transactions",
+        last_transactions: "Last Transactions",
+        btn_rules: "Rules",
+        btn_list_transactions: "List Transactions",
         coins: "Coins",
         description: "Description",
         bonuses_addition: "Add",
@@ -63,9 +63,9 @@ Thank you for choosing MANNOL!`,
     },
     "ru-RU": {
       translation: {
-        btn_list_transactions:"Список Транзакций",
-        last_transactions:"Последнии транзакции",
-        btn_rules:"Правила Использования бонусов",
+        btn_list_transactions: "Список Транзакций",
+        last_transactions: "Последнии транзакции",
+        btn_rules: "Правила Использования бонусов",
         coins: "Монет",
         bonuses_addition: "Зачисление",
         description: "Описание",

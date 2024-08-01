@@ -199,7 +199,7 @@ export default class UserHandler {
         .join("\n");
 
       const caption = `${i18n.t("balance_caption")}: ${
-        balance?.amount
+        balance || 0
       } ${i18n.t("coins")}\n\n\n${i18n.t(
         "last_transactions"
       )}:\n${lastTransactions}\n`;
@@ -278,60 +278,105 @@ export default class UserHandler {
   public async handleAboutUs(msg: TelegramBot.Message) {
     this.bot.sendMessage(msg.chat.id, i18n.t("about_us_information"));
   }
-  public async handlePurchaseRequest(msg: TelegramBot.Message) {
-    const chatId = msg.chat.id;
-
-    // Ask the user to provide the name of the item they want to purchase
-    this.bot
-      .sendMessage(chatId, "Please write the name you want to purchase:", {
+  public async handlePurchaseRequest(chatId: number) {
+    await this.bot.sendMessage(
+      chatId,
+      "Please leave a comment for your request:",
+      {
         reply_markup: {
           force_reply: true,
         },
-      })
-      .then((sentMessage) => {
-        // Listen for the user's reply
-        const replyListener = (replyMsg: TelegramBot.Message) => {
-          if (
-            replyMsg.reply_to_message?.message_id === sentMessage.message_id
-          ) {
-            this.bot.removeListener("message", replyListener);
+      }
+    );
 
-            // Save the purchase request to the database
-            const purchaseRequest = new PurchaseRequest({
-              userId: replyMsg.from?.id,
-              userName: replyMsg.from?.first_name,
-              itemName: replyMsg.text,
-              createdAt: new Date(),
-            });
+    const purchaseRequestListener = async (msg: TelegramBot.Message) => {
+      if (
+        msg.reply_to_message &&
+        msg.reply_to_message.text === "Please leave a comment for your request:"
+      ) {
+        this.bot.removeListener("message", purchaseRequestListener);
 
-            purchaseRequest
-              .save()
-              .then(async () => {
-                // Notify all admins
-                const admins = await UserService.getAllAdmins();
-                admins.forEach((admin) => {
-                  this.bot.sendMessage(
-                    admin.chatId,
-                    `New purchase request from ${replyMsg.from?.first_name}: ${replyMsg.text}`
-                  );
-                });
+        const request = new PurchaseRequest({
+          userId: chatId,
+          itemName: msg.text,
+          createdAt: new Date(),
+        });
 
-                // Inform the user that their request has been received
-                this.bot.sendMessage(
-                  chatId,
-                  "Your purchase request has been received. Thank you!"
-                );
-              })
-              .catch((error) => {
-                console.error("Failed to save purchase request:", error);
-                this.bot.sendMessage(
-                  chatId,
-                  "Failed to process your request. Please try again later."
-                );
-              });
-          }
-        };
-        this.bot.on("message", replyListener);
-      });
+        await request.save();
+        await this.notifyAdmins(request);
+
+        this.sendMainMenu(chatId);
+      }
+    };
+
+    this.bot.on("message", purchaseRequestListener);
+  }
+
+  private async notifyAdmins(request: any) {
+    const admins = await UserService.getAllAdmins();
+
+    for (const admin of admins) {
+      this.bot.sendMessage(
+        admin.chatId,
+        `New purchase request from user ${request.userId}: ${request.itemName}`
+      );
+    }
   }
 }
+//   public async handlePurchaseRequest(msg: TelegramBot.Message) {
+//     const chatId = msg.chat.id;
+
+//     // Ask the user to provide the name of the item they want to purchase
+//     this.bot
+//       .sendMessage(chatId, "Please write the name you want to purchase:", {
+//         reply_markup: {
+//           force_reply: true,
+//         },
+//       })
+//       .then((sentMessage) => {
+//         // Listen for the user's reply
+//         const replyListener = (replyMsg: TelegramBot.Message) => {
+//           if (
+//             replyMsg.reply_to_message?.message_id === sentMessage.message_id
+//           ) {
+//             this.bot.removeListener("message", replyListener);
+
+//             // Save the purchase request to the database
+//             const purchaseRequest = new PurchaseRequest({
+//               userId: replyMsg.from?.id,
+//               userName: replyMsg.from?.first_name,
+//               itemName: replyMsg.text,
+//               createdAt: new Date(),
+//             });
+
+//             purchaseRequest
+//               .save()
+//               .then(async () => {
+//                 // Notify all admins
+//                 const admins = await UserService.getAllAdmins();
+//                 admins.forEach((admin) => {
+//                   this.bot.sendMessage(
+//                     admin.chatId,
+//                     `New purchase request from ${replyMsg.from?.first_name}: ${replyMsg.text}`
+//                   );
+//                 });
+
+//                 // Inform the user that their request has been received
+//                 this.bot.sendMessage(
+//                   chatId,
+//                   "Your purchase request has been received. Thank you!"
+//                 );
+//               })
+//               .catch((error) => {
+//                 console.error("Failed to save purchase request:", error);
+//                 this.bot.sendMessage(
+//                   chatId,
+//                   "Failed to process your request. Please try again later."
+//                 );
+//               });
+//           }
+//         };
+//         this.bot.on("message", replyListener);
+//       });
+//   }
+// }

@@ -6,29 +6,26 @@ export interface IUser extends Document {
   name: string;
   phone: string;
   language: string;
-  balance?: {
-    uniqueId?: string;
-    amount: number;
-  };
+  balance?: number;
   isAdmin?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 // Define the schema for the User model
-const userSchema = new Schema<IUser>({
-  chatId: { type: Number, required: true },
-  name: { type: String, required: true },
-  phone: { type: String, required: true },
-  language: { type: String, required: true },
-  balance: {
-    uniqueId: { type: String },
-    amount: { type: Number, default: 0 }
+const userSchema = new Schema<IUser>(
+  {
+    chatId: { type: Number, required: true },
+    name: { type: String, required: true },
+    phone: { type: String, required: true },
+    language: { type: String, required: true },
+    balance: { type: Number, default: 0 },
+    isAdmin: { type: Boolean, default: false },
   },
-  isAdmin: { type: Boolean, default: false },
-}, {
-  timestamps: true
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Create the User model
 const User: Model<IUser> = model<IUser>("User", userSchema);

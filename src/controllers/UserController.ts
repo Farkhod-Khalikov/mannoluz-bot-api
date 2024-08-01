@@ -13,12 +13,12 @@ const bot = new TelegramBot(token);
 class UserController {
   static async addBonuses(req: Request, res: Response) {
     try {
-      const { phoneNumber, sum, description, uniqueId} = req.body;
+      const { phoneNumber, sum, description, uniqueId } = req.body;
 
-      if (!phoneNumber || isNaN(sum)) {
+      if (!phoneNumber || isNaN(sum) || !uniqueId) {
         return res
           .status(400)
-          .json({ message: "Invalid phoneNumber or sum provided" });
+          .json({ message: "Invalid phoneNumber, sum, or UniqueID provided" });
       }
 
       // Find user by phoneNumber
@@ -31,25 +31,29 @@ class UserController {
       const transaction = await Transaction.create({
         userId: user._id,
         phoneNumber,
+        uniqueID: uniqueId,
         bonuses: sum,
         description,
       });
+      await transaction.save();
 
       // Update user's balance
       // const uniqueId  =  // Use transaction ID as uniqueId
-      const newBalance = (user.balance?.amount || 0) + sum;
-      user.balance = { uniqueId, amount: newBalance };
+      const newBalance = (user.balance || 0) + sum;
+      user.balance = newBalance;
       await user.save();
 
       // Send a message to the User that their balance is updated
       if (user.chatId) {
         await bot.sendMessage(
           user.chatId,
-          `Bonuses have been added: ${sum}${i18n.t("coins")}\n${i18n.t("description")}: ${description}`
+          `${i18n.t("bonuses_added_notification")}: ${sum} ${i18n.t(
+            "coins"
+          )}\n${i18n.t("description")}: ${description}`
         );
       }
 
-      res.json({ message: "Bonuses added", newBalance });
+      res.json({ message: "Bonuses added", newBalance, uniqueId });
     } catch (error) {
       console.error("Error adding bonuses:", error);
       res.status(500).json({ message: "Internal server error" });
@@ -58,12 +62,12 @@ class UserController {
 
   static async removeBonuses(req: Request, res: Response) {
     try {
-      const { phoneNumber, sum, description } = req.body;
-
-      if (!phoneNumber || isNaN(sum)) {
+      const { phoneNumber, sum, description, uniqueId } = req.body;
+      
+      if (!phoneNumber || isNaN(sum) || !uniqueId) {
         return res
           .status(400)
-          .json({ message: "Invalid phoneNumber or sum provided" });
+          .json({ message: "Invalid phoneNumber, uniqueId or sum provided" });
       }
 
       // Find user by phoneNumber
@@ -72,29 +76,32 @@ class UserController {
         return res.status(404).json({ message: "User not found" });
       }
 
-      if ((user.balance?.amount || 0) < sum) {
+      if ((user.balance || 0) < sum) {
         return res.status(400).json({ message: "Not enough bonuses" });
       }
 
       // Create a new transaction
-      await Transaction.create({
+      const transaction = await Transaction.create({
         userId: user._id,
         phoneNumber,
+        uniqueID: uniqueId,
         bonuses: -sum,
         description,
       });
+      await transaction.save();
 
       // Update user's balance
-      const uniqueId = new Date().toISOString(); // Generate a new uniqueId for removal
-      const newBalance = (user.balance?.amount || 0) - sum;
-      user.balance = { uniqueId, amount: newBalance };
+      const newBalance = (user.balance || 0) - sum;
+      user.balance = newBalance;
       await user.save();
 
       // Send a message to the User that their balance is updated
       if (user.chatId) {
         await bot.sendMessage(
           user.chatId,
-          `Bonuses have been removed: ${sum} ${i18n.t("coins")}`
+          `${i18n.t("bonuses_removed_notification")}: ${sum} ${i18n.t(
+            "coins"
+          )}\n${i18n.t("description")}: ${description}`
         );
       }
 

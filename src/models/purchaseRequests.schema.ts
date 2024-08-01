@@ -1,16 +1,18 @@
 import mongoose, { Document, Schema } from "mongoose";
 
 export interface IPurchaseRequest extends Document {
-  userId: number;
-  userName: string;
-  itemName: string; // no need for itemName just comment or description or message
+  chatId: number;
+  username?: string;
+  comment: string; // no need for itemName just comment or description or message
+  phonenumber?: number;
   createdAt: Date; // update using timestampts
 }
 
 const PurchaseRequestSchema: Schema = new Schema({
-  userId: { type: Number, required: true },
-  userName: { type: String, required: true },
-  itemName: { type: String, required: true },
+  chatId: { type: Number, required: true },
+  username: { type: String, required: false },
+  phonenumber: {type: Number, required: false},
+  comment: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 

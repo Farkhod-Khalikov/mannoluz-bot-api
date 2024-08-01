@@ -33,7 +33,7 @@ export default class MessageController {
           await this.userHandler.sendUserLanguage(chatId);
           break;
         case i18n.t("purchase_request"):
-          await this.userHandler.handlePurchaseRequest(msg);
+          await this.userHandler.handlePurchaseRequest(chatId);
           break;
         case i18n.t("btn_rules"):
           await this.bot.sendMessage(chatId, "Rules for using bonuses");
