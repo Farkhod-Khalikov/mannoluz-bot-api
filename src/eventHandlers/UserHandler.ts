@@ -130,7 +130,7 @@ export default class UserHandler {
         await user.save();
         this.bot.sendMessage(chatId, i18n.t("language_changed"));
       }
-      this.sendMainMenu(chatId);
+      //this.sendMainMenu(chatId);
     }
   }
 
@@ -158,7 +158,7 @@ export default class UserHandler {
             user.language = languageCode;
             user.updatedAt = new Date();
             await user.save();
-            this.bot.sendMessage(chatId, i18n.t("language_changed"));
+            //this.bot.sendMessage(chatId, i18n.t("language_changed"));
           }
           this.sendMainMenu(chatId);
         }
