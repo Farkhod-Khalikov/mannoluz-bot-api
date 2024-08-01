@@ -4,6 +4,7 @@ import { UserService } from "../services/user.service";
 import i18n from "../utils/i18n";
 import { generateCreditCard } from "../utils/creditcard.generation";
 import { PurchaseRequest } from "../models/purchaseRequests.schema";
+import { changeLanguage } from "i18next";
 
 export default class UserHandler {
   private bot: TelegramBot;
@@ -88,8 +89,9 @@ export default class UserHandler {
     const chatId = msg.chat.id;
 
     if (msg.contact) {
-      const phoneNumber = msg.contact.phone_number;
-      const name = msg.contact.first_name;
+      const phoneNumber = msg.contact.phone_number; //update this part so it doesnt save plus (+)  sign
+      const name =
+        msg.contact.first_name; /*+ " " + (msg.contact?.last_name || "")*/
 
       if (await UserService.findUserByPhoneNumber(phoneNumber)) {
         this.bot.sendMessage(chatId, i18n.t("user_already_exists"));
@@ -126,7 +128,6 @@ export default class UserHandler {
       const user = await UserService.findUserByChatId(chatId);
       if (user) {
         user.language = languageCode;
-        user.updatedAt = new Date();
         await user.save();
         this.bot.sendMessage(chatId, i18n.t("language_changed"));
       }
@@ -137,7 +138,7 @@ export default class UserHandler {
   public async handleChangeLanguage(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
     const languageKeyboard = [[{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }]];
-    this.bot.sendMessage(chatId, i18n.t("choose_new_language"), {
+    this.bot.sendMessage(chatId, i18n.t("choose_language"), {
       reply_markup: {
         keyboard: languageKeyboard,
         resize_keyboard: true,
@@ -194,8 +195,8 @@ export default class UserHandler {
             .padStart(2, "0")}.${date.getFullYear()}`;
           return `${
             transaction.bonuses > 0
-              ? i18n.t("bonuses_addition")/*.padEnd(10, " ")*/
-              : i18n.t("bonuses_removal")/*.padEnd(10, " ")*/
+              ? i18n.t("bonuses_addition") /*.padEnd(10, " ")*/
+              : i18n.t("bonuses_removal") /*.padEnd(10, " ")*/
           } | ${formattedDate} | ${transaction.bonuses} ${i18n.t("coins")}`;
         })
         .join("\n");
@@ -280,20 +281,16 @@ export default class UserHandler {
   }
   public async handlePurchaseRequest(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
-    await this.bot.sendMessage(
-      chatId,
-      "Please leave a comment for your request:",
-      {
-        reply_markup: {
-          force_reply: true,
-        },
-      }
-    );
+    await this.bot.sendMessage(chatId, i18n.t("purchase_request_prompt"), {
+      reply_markup: {
+        force_reply: true,
+      },
+    });
 
     const purchaseRequestListener = async (msg: TelegramBot.Message) => {
       if (
         msg.reply_to_message &&
-        msg.reply_to_message.text === "Please leave a comment for your request:"
+        msg.reply_to_message.text === i18n.t("purchase_request_prompt")
       ) {
         this.bot.removeListener("message", purchaseRequestListener);
 
@@ -303,24 +300,25 @@ export default class UserHandler {
           comment: msg.text,
           createdAt: new Date(),
         });
-
         await request.save();
         await this.notifyAdmins(request);
-
-        this.sendMainMenu(chatId);
+        await this.bot.sendMessage(
+          chatId,
+          "Your Request is delivered to the admins, request is active for 24h. If admins didnt contact you, please repeat request or call on [phonenumber]. Thank you!"
+        );
+        await this.sendMainMenu(chatId);
       }
     };
-
     this.bot.on("message", purchaseRequestListener);
   }
 
   private async notifyAdmins(request: any) {
     const admins = await UserService.getAllAdmins();
-
+    //do smth if no admins retrieved for db
     for (const admin of admins) {
       this.bot.sendMessage(
         admin.chatId,
-        `New purchase request:\nUser: ${request.username}\nComment: ${request.comment}`
+        `New purchase request:\nUser: ${request.username}\nPhone: ${request.phonenumber}\nComment: ${request.comment}`
       );
     }
   }
