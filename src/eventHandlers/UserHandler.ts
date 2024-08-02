@@ -314,7 +314,7 @@ export default class UserHandler {
 
   private async notifyAdmins(request: any) {
     const admins = await UserService.getAllAdmins();
-    //do smth if no admins retrieved for db
+    //do smth if no admins retrieved from db
     for (const admin of admins) {
       this.bot.sendMessage(
         admin.chatId,
@@ -323,60 +323,3 @@ export default class UserHandler {
     }
   }
 }
-//   public async handlePurchaseRequest(msg: TelegramBot.Message) {
-//     const chatId = msg.chat.id;
-
-//     // Ask the user to provide the name of the item they want to purchase
-//     this.bot
-//       .sendMessage(chatId, "Please write the name you want to purchase:", {
-//         reply_markup: {
-//           force_reply: true,
-//         },
-//       })
-//       .then((sentMessage) => {
-//         // Listen for the user's reply
-//         const replyListener = (replyMsg: TelegramBot.Message) => {
-//           if (
-//             replyMsg.reply_to_message?.message_id === sentMessage.message_id
-//           ) {
-//             this.bot.removeListener("message", replyListener);
-
-//             // Save the purchase request to the database
-//             const purchaseRequest = new PurchaseRequest({
-//               userId: replyMsg.from?.id,
-//               userName: replyMsg.from?.first_name,
-//               itemName: replyMsg.text,
-//               createdAt: new Date(),
-//             });
-
-//             purchaseRequest
-//               .save()
-//               .then(async () => {
-//                 // Notify all admins
-//                 const admins = await UserService.getAllAdmins();
-//                 admins.forEach((admin) => {
-//                   this.bot.sendMessage(
-//                     admin.chatId,
-//                     `New purchase request from ${replyMsg.from?.first_name}: ${replyMsg.text}`
-//                   );
-//                 });
-
-//                 // Inform the user that their request has been received
-//                 this.bot.sendMessage(
-//                   chatId,
-//                   "Your purchase request has been received. Thank you!"
-//                 );
-//               })
-//               .catch((error) => {
-//                 console.error("Failed to save purchase request:", error);
-//                 this.bot.sendMessage(
-//                   chatId,
-//                   "Failed to process your request. Please try again later."
-//                 );
-//               });
-//           }
-//         };
-//         this.bot.on("message", replyListener);
-//       });
-//   }
-// }
