@@ -1,4 +1,5 @@
 import Product, { IProduct } from "../models/products.schema";
+import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import Transaction from "../models/transactions.schema";
 import User, { IUser } from "../models/users.schema";
 
@@ -38,6 +39,23 @@ export class UserService {
     throw new Error("user is not found");
   }
 
+  public static async createPurchaseRequest(
+    chatId: number,
+    name: string,
+    phone: string,
+    comment: string,
+    isActive: boolean,
+  ){
+    const purchaseRequest = new PurchaseRequest({
+      chatId,
+      name,
+      phone,
+      comment,
+      isActive
+    });
+    purchaseRequest.createdAt = new Date();
+    await purchaseRequest.save();
+  }
   public static async createUser(
     chatId: number,
     name: string,
@@ -88,5 +106,8 @@ export class UserService {
 
   public static async getAllAdmins(): Promise<IUser[]> {
     return User.find({ isAdmin: true });
+  }
+  public static async hasActiveRequests(phonenumber: string) {
+    return (await Transaction.find({ isActive: true, phone: phonenumber }))? true: false;
   }
 }

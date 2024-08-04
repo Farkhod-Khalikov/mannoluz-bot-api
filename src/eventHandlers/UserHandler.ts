@@ -89,7 +89,7 @@ export default class UserHandler {
     const chatId = msg.chat.id;
 
     if (msg.contact) {
-      const phoneNumber = msg.contact.phone_number; //update this part so it doesnt save plus (+)  sign
+      const phoneNumber = msg.contact.phone_number.replace("+", "");
       const name =
         msg.contact.first_name; /*+ " " + (msg.contact?.last_name || "")*/
 
@@ -279,48 +279,83 @@ export default class UserHandler {
   public async handleAboutUs(msg: TelegramBot.Message) {
     this.bot.sendMessage(msg.chat.id, i18n.t("about_us_information"));
   }
+
   public async handlePurchaseRequest(chatId: number) {
-    const user = await UserService.findUserByChatId(chatId);
-    await this.bot.sendMessage(chatId, i18n.t("purchase_request_prompt"), {
-      reply_markup: {
-        force_reply: true,
-      },
-    });
-
-    const purchaseRequestListener = async (msg: TelegramBot.Message) => {
-      if (
-        msg.reply_to_message &&
-        msg.reply_to_message.text === i18n.t("purchase_request_prompt")
-      ) {
-        this.bot.removeListener("message", purchaseRequestListener);
-
-        const request = new PurchaseRequest({
-          username: user?.name,
-          phonenumber: user?.phone,
-          comment: msg.text,
-          createdAt: new Date(),
-        });
-        await request.save();
-        await this.notifyAdmins(request);
-        await this.bot.sendMessage(
-          chatId,
-          "Your Request is delivered to the admins, request is active for 24h. If admins didnt contact you, please repeat request or call on [phonenumber]. Thank you!"
-        );
-        await this.sendMainMenu(chatId);
-      }
+    const confirmKeyboard = {
+      inline_keyboard: [
+        [
+          {
+            text: i18n.t("yes_sure"),
+            callback_data: "confirm_purchase_request",
+          },
+          {
+            text: i18n.t("no_thanks"),
+            callback_data: "cancel_purchase_request",
+          },
+        ],
+      ],
     };
-    this.bot.on("message", purchaseRequestListener);
+
+    this.bot.sendMessage(chatId, i18n.t("confirm_purchase_request"), {
+      reply_markup: confirmKeyboard,
+    });
   }
 
-  private async notifyAdmins(request: any) {
+  public async handleConfirmPurchaseRequest(chatId: number) {
+    this.bot.sendMessage(chatId, i18n.t("write_comment"));
+    const commentListener = async (msg: TelegramBot.Message) => {
+      if (msg.chat.id === chatId) {
+        const comment = msg.text || "";
+        const user = await UserService.findUserByChatId(chatId);
+
+        if (user) {
+          const username = user.name;
+          const phonenumber = user.phone;
+
+          // save purchase Request to mongo
+          const purchaseRequest = await PurchaseRequest.create({
+            username,
+            phonenumber,
+            comment,
+            createdAt: new Date(),
+          });
+
+          // notify admins
+          await this.notifyAdminsOfPurchaseRequest(
+            username,
+            phonenumber,
+            comment
+          );
+          this.bot.removeListener("message", commentListener);
+          this.sendMainMenu(chatId);
+        } else {
+          this.bot.sendMessage(chatId, i18n.t("user_not_found"));
+        }
+      }
+    };
+
+    this.bot.on("message", commentListener);
+  }
+
+  public async handleCancelPurchaseRequest(chatId: number) {
+    this.bot.sendMessage(chatId, i18n.t("purchase_request_cancelled"));
+    this.sendMainMenu(chatId);
+  }
+  // When there are no admins retrieved from db there is an issue
+  public async notifyAdminsOfPurchaseRequest(
+    username: string,
+    phoneNumber: string,
+    comment: string
+  ) {
     const admins = await UserService.getAllAdmins();
-   if(admins){
-     for (const admin of admins) {
-       this.bot.sendMessage(
-         admin.chatId,
-         `New purchase request:\nUser: ${request.username}\nPhone: ${request.phonenumber}\nComment: ${request.comment}`
-       );
-     }
-   }
+    if (!admins || admins.length === 0) {
+      return;
+    }
+    for (const admin of admins) {
+      await this.bot.sendMessage(
+        admin.chatId,
+        `New Purchase Request:\nUsername: ${username}\nPhone Number: +${phoneNumber}\nComment: ${comment}`
+      );
+    }
   }
 }

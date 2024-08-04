@@ -12,6 +12,7 @@ export default class MessageController {
   private adminHandler: AdminHandler;
   private productHandler: ProductHandler;
   private transactionHandler: TransactionHandler;
+
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.userHandler = new UserHandler(bot);
@@ -24,7 +25,7 @@ export default class MessageController {
     const chatId = msg.chat.id;
     const isUserAdmin = await UserService.isUserAdmin(chatId);
     const isExisted = await UserService.isUserRegistered(chatId);
-    //create setSystemLanguage method
+
     if (isExisted) {
       const user = await UserService.findUserByChatId(chatId);
       i18n.changeLanguage(user?.language);
@@ -104,7 +105,7 @@ export default class MessageController {
     }
   }
 
-  async handleCallbackQuery(callbackQuery: TelegramBot.CallbackQuery) {
+  public async handleCallbackQuery(callbackQuery: TelegramBot.CallbackQuery) {
     const chatId = callbackQuery.message?.chat.id;
     const data = callbackQuery.data;
 
@@ -123,6 +124,12 @@ export default class MessageController {
         );
       } else {
         switch (data) {
+          case "confirm_purchase_request":
+            await this.userHandler.handleConfirmPurchaseRequest(chatId);
+            break;
+          case "cancel_purchase_request":
+            await this.userHandler.handleCancelPurchaseRequest(chatId);
+            break;
           case "confirm_post":
             await this.adminHandler.handleConfirmPost(chatId);
             break;
