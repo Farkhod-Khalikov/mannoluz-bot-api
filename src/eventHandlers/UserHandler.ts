@@ -314,7 +314,7 @@ export default class UserHandler {
 
   private async notifyAdmins(request: any) {
     const admins = await UserService.getAllAdmins();
-    //do smth if no admins retrieved from db
+   if(admins){
     for (const admin of admins) {
       this.bot.sendMessage(
         admin.chatId,
@@ -322,4 +322,5 @@ export default class UserHandler {
       );
     }
   }
+}
 }

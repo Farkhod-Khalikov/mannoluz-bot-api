@@ -51,7 +51,7 @@ export default class AdminHandler {
           reply_markup: {
             force_reply: true,
           },
-        });
+        }); // check if admin has shared correct image format
       } else if (!currentPostData.image) {
         // Await for image file
         this.bot.sendMessage(chatId, i18n.t("uploading_image"), {
@@ -70,7 +70,7 @@ export default class AdminHandler {
     if (photo) {
       const fileId = photo.file_id;
       const filePath = await this.bot.downloadFile(fileId, this.tempDir);
-      const fileName = path.basename(filePath);
+      // const fileName = path.basename(filePath);
 
       // Update post data with the local image path
       const currentPostData = this.adminPostData.get(chatId);
@@ -110,9 +110,9 @@ export default class AdminHandler {
     const postData = this.adminPostData.get(chatId);
     if (postData && postData.title && postData.message && postData.image) {
       // Save post data to the database
-      const adminName = await UserService.getAdminName(chatId); // Assuming you have a method to get admin name
+      const creator = await UserService.getUserName(chatId); // Assuming you have a method to get admin name
       const post = new Post({
-        adminName,
+        creator,
         title: postData.title,
         createdAt: new Date(),
         imagePath: postData.image,
@@ -148,18 +148,21 @@ export default class AdminHandler {
     this.adminPostData.delete(chatId);
     this.sendMainMenu(chatId);
   }
-
+  // update sharing AdminMenu
   public async sendMainMenu(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
 
     const mainMenuKeyboard = [
-    [{ text: i18n.t("credit_card_button") }],
+      [{ text: i18n.t("credit_card_button") }],
       [
         { text: i18n.t("btn_list_products") },
         { text: i18n.t("btn_list_transactions") },
       ],
-      [{ text: i18n.t("settings_button") }, {text: i18n.t("purchase_request")}],
+      [
+        { text: i18n.t("settings_button") },
+        { text: i18n.t("purchase_request") },
+      ],
       [
         { text: i18n.t("contact_us_button") },
         { text: i18n.t("about_us_button") },
