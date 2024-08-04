@@ -1,4 +1,3 @@
-//./src/eventHandler/TransactionHanlder
 import TelegramBot from "node-telegram-bot-api";
 import { UserService } from "../services/user.service";
 import i18n from "../utils/i18n";
@@ -14,14 +13,13 @@ export default class TransactionHandler {
   public async handleListTransactions(msg: TelegramBot.Message) {
     try {
       const chatId = msg.chat.id;
-      let transactions = await UserService.getAllTransactions(chatId); // Fetch transactions for the user
+      let transactions = await UserService.getAllTransactions(chatId);
 
       if (transactions.length === 0) {
         this.bot.sendMessage(chatId, "No transactions available.");
         return;
       }
 
-      // Sort transactions by createdAt date in descending order
       transactions = transactions.sort(
         (a: any, b: any) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -56,22 +54,44 @@ export default class TransactionHandler {
         .join("\n");
 
       const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
+      const numPagesToShow = 3; // Number of page buttons to display in each division
+      const divisionSize = numPagesToShow * 2 + 1; // Number of pages to display (with ...)
 
-      if (currentPage > 1) {
+      const startDivision = Math.max(1, Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1);
+      const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
+
+      const showPrev = currentPage > 1;
+      const showNext = currentPage < totalPages;
+
+      if (showPrev) {
         paginationButtons.push({
-          text: "Previous",
+          text: "Prev",
           callback_data: "transaction_previous_page",
         });
       }
 
-      for (let i = 1; i <= totalPages; i++) {
+      if (startDivision > 1) {
         paginationButtons.push({
-          text: `${i}`,
+          text: "...",
+          callback_data: "transaction_page_ellipsis",
+        });
+      }
+
+      for (let i = startDivision; i <= endDivision; i++) {
+        paginationButtons.push({
+          text: i.toString(),
           callback_data: `transaction_page_${i}`,
         });
       }
 
-      if (currentPage < totalPages) {
+      if (endDivision < totalPages) {
+        paginationButtons.push({
+          text: "...",
+          callback_data: "transaction_page_ellipsis",
+        });
+      }
+
+      if (showNext) {
         paginationButtons.push({
           text: "Next",
           callback_data: "transaction_next_page",
@@ -98,6 +118,9 @@ export default class TransactionHandler {
   }
 
   public async handlePagination(chatId: number, action: string) {
+    const transactions = await UserService.getAllTransactions(chatId);
+    const totalPages = Math.ceil(transactions.length / 5);
+
     if (action === "transaction_previous_page") {
       this.userTransactionPages.set(
         chatId,
@@ -106,11 +129,11 @@ export default class TransactionHandler {
     } else if (action === "transaction_next_page") {
       this.userTransactionPages.set(
         chatId,
-        (this.userTransactionPages.get(chatId) || 1) + 1
+        Math.min((this.userTransactionPages.get(chatId) || 1) + 1, totalPages)
       );
     } else if (action.startsWith("transaction_page_")) {
       const page = parseInt(action.split("_")[2], 10);
-      this.userTransactionPages.set(chatId, page);
+      this.userTransactionPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
     }
 
     await this.handleListTransactions({
