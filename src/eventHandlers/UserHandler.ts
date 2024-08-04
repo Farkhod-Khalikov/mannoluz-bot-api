@@ -315,12 +315,12 @@ export default class UserHandler {
   private async notifyAdmins(request: any) {
     const admins = await UserService.getAllAdmins();
    if(admins){
-    for (const admin of admins) {
-      this.bot.sendMessage(
-        admin.chatId,
-        `New purchase request:\nUser: ${request.username}\nPhone: ${request.phonenumber}\nComment: ${request.comment}`
-      );
-    }
+     for (const admin of admins) {
+       this.bot.sendMessage(
+         admin.chatId,
+         `New purchase request:\nUser: ${request.username}\nPhone: ${request.phonenumber}\nComment: ${request.comment}`
+       );
+     }
+   }
   }
-}
 }

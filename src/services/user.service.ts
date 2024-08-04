@@ -12,7 +12,7 @@ export class UserService {
   ): Promise<IUser | null> {
     return User.findOne({ phone: phoneNumber });
   }
-  public static async getAdminName(chatId: number): Promise<string> {
+  public static async getUserName(chatId: number): Promise<string> {
     try {
       // Fetch the user based on the chatId
       const user = await User.findOne({ chatId }).exec();
@@ -22,10 +22,10 @@ export class UserService {
       }
 
       // Return the user's name (assuming your User model has a name field)
-      return user.name || "Unknown Admin"; // Adjust as necessary
+      return user.name || "Unknown User"; // Adjust as necessary
     } catch (error) {
-      console.error("Error fetching admin name:", error);
-      return "Unknown Admin";
+      console.error("Error fetching user name:", error);
+      return "Unknown User";
     }
   }
 
