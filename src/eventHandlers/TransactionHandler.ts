@@ -54,12 +54,20 @@ export default class TransactionHandler {
         .join("\n");
 
       const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
-      const numPagesToShow = 3;
-      const divisionSize = numPagesToShow * 2 + 1;
+      const numPagesToShow = 3; // Number of page buttons to display in each division
 
       const startDivision = Math.max(1, Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1);
       const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
 
+      const showPrev = currentPage > 1;
+      const showNext = currentPage < totalPages;
+
+      // if (showPrev) {
+      //   paginationButtons.push({
+      //     text: "Prev",
+      //     callback_data: "transaction_previous_page",
+      //   });
+      // }
 
       if (startDivision > 1) {
         paginationButtons.push({
@@ -70,7 +78,7 @@ export default class TransactionHandler {
 
       for (let i = startDivision; i <= endDivision; i++) {
         paginationButtons.push({
-          text: i.toString(),
+          text: i === currentPage ? `${i} ✅` : i.toString(),
           callback_data: `transaction_page_${i}`,
         });
       }
@@ -82,22 +90,38 @@ export default class TransactionHandler {
         });
       }
 
-      const row1 = paginationButtons;
+      // if (showNext) {
+      //   paginationButtons.push({
+      //     text: "Next",
+      //     callback_data: "transaction_next_page",
+      //   });
+      // }
 
-      const row2: TelegramBot.InlineKeyboardButton[] = [];
+      // Arrange buttons in separate lines
+      const keyboard: TelegramBot.InlineKeyboardButton[][] = [];
 
-      if (currentPage > 1) {
-        row2.push({
+      // Page buttons
+      if (paginationButtons.length > 0) {
+        keyboard.push(paginationButtons);
+      }
+
+      // Prev and Next buttons
+      const navButtons: TelegramBot.InlineKeyboardButton[] = [];
+      if (showPrev) {
+        navButtons.push({
           text: "Prev",
           callback_data: "transaction_previous_page",
         });
       }
-
-      if (currentPage < totalPages) {
-        row2.push({
+      if (showNext) {
+        navButtons.push({
           text: "Next",
           callback_data: "transaction_next_page",
         });
+      }
+
+      if (navButtons.length > 0) {
+        keyboard.push(navButtons);
       }
 
       await this.bot.sendMessage(
@@ -106,7 +130,7 @@ export default class TransactionHandler {
         {
           parse_mode: "Markdown",
           reply_markup: {
-            inline_keyboard: [row1, row2],
+            inline_keyboard: keyboard,
           },
         }
       );

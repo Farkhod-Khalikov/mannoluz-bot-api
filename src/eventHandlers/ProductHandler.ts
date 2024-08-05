@@ -62,7 +62,7 @@ export default class ProductHandler {
 
       for (let i = startDivision; i <= endDivision; i++) {
         paginationButtons.push({
-          text: i.toString(),
+          text: i === currentPage ? `${i} ✅` : i.toString(),
           callback_data: `product_page_${i}`,
         });
       }
