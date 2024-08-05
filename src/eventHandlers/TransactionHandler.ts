@@ -13,7 +13,11 @@ export default class TransactionHandler {
   public async handleListTransactions(msg: TelegramBot.Message) {
     try {
       const chatId = msg.chat.id;
-      let transactions = await UserService.getAllTransactions(chatId);
+      const user = await UserService.findUserByChatId(chatId);
+      if (!user){
+        throw new Error("Could not retrieve user");
+      }
+      let transactions = await UserService.getAllTransactions(user.id);
 
       if (transactions.length === 0) {
         this.bot.sendMessage(chatId, "No transactions available.");
@@ -144,7 +148,11 @@ export default class TransactionHandler {
   }
 
   public async handlePagination(chatId: number, action: string) {
-    const transactions = await UserService.getAllTransactions(chatId);
+    const user = await UserService.findUserByChatId(chatId);
+    if (!user){
+      throw new Error("Could not retrieve user");
+    }
+    const transactions = await UserService.getAllTransactions(user.id);
     const totalPages = Math.ceil(transactions.length / 5);
 
     if (action === "transaction_previous_page") {

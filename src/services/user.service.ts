@@ -96,8 +96,8 @@ export class UserService {
     return User.find({});
   }
 
-  public static async getAllTransactions(chatId: number) {
-    return Transaction.find({});
+  public static async getAllTransactions(userId: string) {
+    return Transaction.find({userId: userId});
   }
 
   public static async getAllProducts(): Promise<IProduct[]> {

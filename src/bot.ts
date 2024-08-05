@@ -14,7 +14,7 @@ app.use(express.json());
 
 // routes
 app.use("/users", userRouter);
-// app.use("/products", productRouter);
+// app.use("erproducts", productRouter);
 
 app.listen(port, () => {
   console.log(`[SUCCESS] Express server is running`);

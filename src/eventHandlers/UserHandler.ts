@@ -178,7 +178,7 @@ export default class UserHandler {
       const filePath = await generateCreditCard(user.phone, user.id);
 
       // Fetch last 5 transactions
-      const transactions = await UserService.getAllTransactions(chatId);
+      const transactions = await UserService.getAllTransactions(user.id);
       const lastTransactions = transactions
         .sort(
           (a: any, b: any) =>
