@@ -54,21 +54,12 @@ export default class TransactionHandler {
         .join("\n");
 
       const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
-      const numPagesToShow = 3; // Number of page buttons to display in each division
-      const divisionSize = numPagesToShow * 2 + 1; // Number of pages to display (with ...)
+      const numPagesToShow = 3;
+      const divisionSize = numPagesToShow * 2 + 1;
 
       const startDivision = Math.max(1, Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1);
       const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
 
-      const showPrev = currentPage > 1;
-      const showNext = currentPage < totalPages;
-
-      if (showPrev) {
-        paginationButtons.push({
-          text: "Prev",
-          callback_data: "transaction_previous_page",
-        });
-      }
 
       if (startDivision > 1) {
         paginationButtons.push({
@@ -91,8 +82,19 @@ export default class TransactionHandler {
         });
       }
 
-      if (showNext) {
-        paginationButtons.push({
+      const row1 = paginationButtons;
+
+      const row2: TelegramBot.InlineKeyboardButton[] = [];
+
+      if (currentPage > 1) {
+        row2.push({
+          text: "Prev",
+          callback_data: "transaction_previous_page",
+        });
+      }
+
+      if (currentPage < totalPages) {
+        row2.push({
           text: "Next",
           callback_data: "transaction_next_page",
         });
@@ -104,7 +106,7 @@ export default class TransactionHandler {
         {
           parse_mode: "Markdown",
           reply_markup: {
-            inline_keyboard: [paginationButtons],
+            inline_keyboard: [row1, row2],
           },
         }
       );

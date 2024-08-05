@@ -13,7 +13,7 @@ export default class ProductHandler {
   public async handleListProducts(msg: TelegramBot.Message) {
     try {
       const chatId = msg.chat.id;
-      let products = await UserService.getAllProducts();
+      const products = await UserService.getAllProducts();
 
       if (products.length === 0) {
         this.bot.sendMessage(chatId, "No products available.");
@@ -32,14 +32,13 @@ export default class ProductHandler {
 
       const productPage = products
         .slice(startIndex, endIndex)
-        .map((product: any) => {
-          return `*Name:* ${product.name}\n*Price:* ${product.price} USD`;
-        })
+        .map((product: any) =>
+          `*Product Name:* ${product.name}\n*Price:* ${product.price} ${i18n.t("coins")}`
+        )
         .join("\n\n");
 
       const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
       const numPagesToShow = 3; // Number of page buttons to display in each division
-      const divisionSize = numPagesToShow * 2 + 1; // Number of pages to display (with ...)
 
       const startDivision = Math.max(1, Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1);
       const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
@@ -47,12 +46,12 @@ export default class ProductHandler {
       const showPrev = currentPage > 1;
       const showNext = currentPage < totalPages;
 
-      if (showPrev) {
-        paginationButtons.push({
-          text: "Prev",
-          callback_data: "product_previous_page",
-        });
-      }
+      // if (showPrev) {
+      //   paginationButtons.push({
+      //     text: "Prev",
+      //     callback_data: "product_previous_page",
+      //   });
+      // }
 
       if (startDivision > 1) {
         paginationButtons.push({
@@ -75,20 +74,47 @@ export default class ProductHandler {
         });
       }
 
+      // if (showNext) {
+      //   paginationButtons.push({
+      //     text: "Next",
+      //     callback_data: "product_next_page",
+      //   });
+      // }
+
+      // Arrange buttons in separate lines
+      const keyboard: TelegramBot.InlineKeyboardButton[][] = [];
+
+      // Page buttons
+      if (paginationButtons.length > 0) {
+        keyboard.push(paginationButtons);
+      }
+
+      // Prev and Next buttons
+      const navButtons: TelegramBot.InlineKeyboardButton[] = [];
+      if (showPrev) {
+        navButtons.push({
+          text: "Prev",
+          callback_data: "product_previous_page",
+        });
+      }
       if (showNext) {
-        paginationButtons.push({
+        navButtons.push({
           text: "Next",
           callback_data: "product_next_page",
         });
       }
 
+      if (navButtons.length > 0) {
+        keyboard.push(navButtons);
+      }
+
       await this.bot.sendMessage(
         chatId,
-        `*Products (Page ${currentPage} of ${totalPages}):*\n\n${productPage}`,
+        `*Available Products (Page ${currentPage} of ${totalPages}):*\n\n${productPage}`,
         {
           parse_mode: "Markdown",
           reply_markup: {
-            inline_keyboard: [paginationButtons],
+            inline_keyboard: keyboard,
           },
         }
       );
