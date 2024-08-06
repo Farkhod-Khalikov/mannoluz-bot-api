@@ -96,13 +96,13 @@ export default class ProductHandler {
     const navButtons: TelegramBot.InlineKeyboardButton[] = [];
     if (showPrev) {
       navButtons.push({
-        text: "Prev",
+        text: i18n.t("prev"),
         callback_data: "product_previous_page",
       });
     }
     if (showNext) {
       navButtons.push({
-        text: "Next",
+        text: i18n.t("next"),
         callback_data: "product_next_page",
       });
     }

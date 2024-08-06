@@ -18,7 +18,7 @@ class UserController {
       if (!phonenumber || isNaN(sum) || !uniqueId) {
         return res
           .status(400)
-          .json({ message: "Invalid phoneNumber, sum, or UniqueID provided" });
+          .json({ message: "Invalid phonenumber, sum, or UniqueID provided" });
       }
 
       // Find user by phoneNumber
@@ -47,7 +47,7 @@ class UserController {
       if (user.chatId) {
         await bot.sendMessage(
           user.chatId,
-          `${i18n.t("bonuses_added_notification")}: ${sum} ${i18n.t(
+          `${i18n.t("bonuses_addition")}: ${sum} ${i18n.t(
             "coins"
           )}\n${i18n.t("description")}: ${description}`
         );
@@ -99,7 +99,7 @@ class UserController {
       if (user.chatId) {
         await bot.sendMessage(
           user.chatId,
-          `${i18n.t("bonuses_removed_notification")}: ${sum} ${i18n.t(
+          `${i18n.t("bonuses_removal")}: ${sum} ${i18n.t(
             "coins"
           )}\n${i18n.t("description")}: ${description}`
         );
@@ -125,7 +125,7 @@ class UserController {
         res.json({ message: "User admin has been removed" });
         await bot.sendMessage(
           user.chatId,
-          "Admin Privilegees has been removed. Please restart bot with /start command."
+          i18n.t("admin_removed_notification")
         );
       }
     } catch (error) {
@@ -147,7 +147,7 @@ class UserController {
         res.json({ message: "User granted admin privileges" });
         await bot.sendMessage(
           user.chatId,
-          "YOu've been granted with admin privileges. Please use command /start to reload bot."
+          i18n.t("admin_granted_notification")
         );
       }
     } catch (error) {
