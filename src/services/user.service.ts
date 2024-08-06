@@ -44,15 +44,15 @@ export class UserService {
     name: string,
     phone: string,
     comment: string,
-    isActive: boolean,
-  ){
+    isActive: boolean
+  ) {
     const purchaseRequest = new PurchaseRequest({
       chatId,
       name,
       phone,
       comment,
       isActive, // by default currently true
-      createdAt: new Date()
+      createdAt: new Date(),
     });
     // purchaseRequest.createdAt = new Date();
     await purchaseRequest.save();
@@ -101,7 +101,7 @@ export class UserService {
 
   //by userId which is saved in transaction schema
   public static async getAllTransactions(userId: string) {
-    return Transaction.find({userId: userId});
+    return Transaction.find({ userId: userId });
   }
 
   public static async getAllProducts(): Promise<IProduct[]> {
@@ -114,6 +114,20 @@ export class UserService {
 
   // use it to check before sending a new request
   public static async hasActiveRequests(phonenumber: string) {
-    return (await Transaction.find({ isActive: true, phone: phonenumber }))? true: false;
+    return (await Transaction.find({ isActive: true, phone: phonenumber }))
+      ? true
+      : false;
+  }
+  static async updateUserAdminStatus(phonenumber: string, isAdmin: boolean) {
+    try {
+      const user = await this.findUserByPhoneNumber(phonenumber);
+      if (!user) {
+        throw new Error("User not found");
+      }
+      await user.updateOne({ $set: { isAdmin } });
+    } catch (error) {
+      console.error("Error updating admin status:", error);
+      throw new Error("Error updating admin status");
+    }
   }
 }

@@ -4,6 +4,7 @@ import Transaction from "../models/transactions.schema";
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
 import i18n from "../utils/i18n";
+import User from "../models/users.schema";
 
 dotenv.config();
 
@@ -63,7 +64,7 @@ class UserController {
   static async removeBonuses(req: Request, res: Response) {
     try {
       const { phoneNumber, sum, description, uniqueId } = req.body;
-      
+
       if (!phoneNumber || isNaN(sum) || !uniqueId) {
         return res
           .status(400)
@@ -108,6 +109,50 @@ class UserController {
       res.json({ message: "Bonuses removed", newBalance });
     } catch (error) {
       console.error("Error removing bonuses:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+  static async removeAdmin(req: Request, res: Response) {
+    try {
+      const { phonenumber } = req.body;
+      if (!phonenumber) {
+        return res.status(400).json({ message: "Phone is required" });
+      }
+      const user = await UserService.findUserByPhoneNumber(phonenumber);
+      if (!user) {
+        return res.status(404).json({ message: "user not found" });
+      } else {
+        await UserService.updateUserAdminStatus(phonenumber, false);
+        res.json({ message: "User admin has been removed" });
+        await bot.sendMessage(
+          user.chatId,
+          "Admin Privilegees has been removed. Please restart bot with /start command."
+        );
+      }
+    } catch (error) {
+      console.error("Error removing admin privileges.", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+  static async addAdmin(req: Request, res: Response) {
+    try {
+      const { phonenumber } = req.body;
+      if (!phonenumber) {
+        return res.status(400).json({ message: "Phone number is required" });
+      }
+      const user = await UserService.findUserByPhoneNumber(phonenumber);
+      if (!user) {
+        res.status(404).json({ message: "user not found" });
+      } else {
+        await UserService.updateUserAdminStatus(phonenumber, true);
+        res.json({ message: "User granted admin privileges" });
+        await bot.sendMessage(
+          user.chatId,
+          "YOu've been granted with admin privileges. Please use command /start to reload bot."
+        );
+      }
+    } catch (error) {
+      console.error("Error granting admin privileges", error);
       res.status(500).json({ message: "Internal server error" });
     }
   }

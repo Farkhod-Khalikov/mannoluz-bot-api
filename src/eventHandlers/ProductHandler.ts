@@ -40,16 +40,25 @@ export default class ProductHandler {
 
     const productPage = products
       .slice(startIndex, endIndex)
-      .map((product: any) =>
-        `*Product Name:* ${product.name}\n*Price:* ${product.price} ${i18n.t("coins")}`
+      .map(
+        (product: any) =>
+          `*Product Name:* ${product.name}\n*Price:* ${product.price} ${i18n.t(
+            "coins"
+          )}`
       )
       .join("\n\n");
 
     const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
     const numPagesToShow = 3; // Number of page buttons to display in each division
 
-    const startDivision = Math.max(1, Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1);
-    const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
+    const startDivision = Math.max(
+      1,
+      Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
+    );
+    const endDivision = Math.min(
+      totalPages,
+      startDivision + numPagesToShow - 1
+    );
 
     const showPrev = currentPage > 1;
     const showNext = currentPage < totalPages;
@@ -134,7 +143,10 @@ export default class ProductHandler {
       );
     } else if (action.startsWith("product_page_")) {
       const page = parseInt(action.split("_")[2], 10);
-      this.userProductPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
+      this.userProductPages.set(
+        chatId,
+        Math.max(1, Math.min(page, totalPages))
+      );
     }
 
     await this.showProducts(chatId);

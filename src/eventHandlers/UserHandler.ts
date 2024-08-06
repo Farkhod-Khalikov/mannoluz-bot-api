@@ -4,7 +4,6 @@ import { UserService } from "../services/user.service";
 import i18n from "../utils/i18n";
 import { generateCreditCard } from "../utils/creditcard.generation";
 import { PurchaseRequest } from "../models/purchaseRequests.schema";
-import { changeLanguage } from "i18next";
 
 export default class UserHandler {
   private bot: TelegramBot;
@@ -311,31 +310,32 @@ export default class UserHandler {
         if (user) {
           const username = user.name;
           const phonenumber = user.phone;
-          if (await UserService.hasActiveRequests(phonenumber)) {
-            this.bot.sendMessage(chatId, i18n.t("active_request_exist"));
+          // const hasRequest = await UserService.hasActiveRequests(phonenumber)
+          // if (hasRequest) {
+          //   this.bot.sendMessage(chatId, i18n.t("active_request_exist"));
+          //   this.sendMainMenu(chatId);
+          //   return;
+        // } else {
+        //   // save purchase Request to mongo
+        // }
+        const purchaseRequest = await PurchaseRequest.create({
+          username,
+          phonenumber,
+          comment,
+          createdAt: new Date(),
+        });
+        if (purchaseRequest) {
+          this.bot.sendMessage(chatId, "Your request has been saved!");
+
+            // notify admins
+            await this.notifyAdminsOfPurchaseRequest(
+              username,
+              phonenumber,
+              comment
+            );
+            this.bot.removeListener("message", commentListener);
             this.sendMainMenu(chatId);
-            return;
           }
-
-          // save purchase Request to mongo
-          const purchaseRequest = await PurchaseRequest.create({
-            username,
-            phonenumber,
-            comment,
-            createdAt: new Date(),
-          });
-          if (purchaseRequest) {
-            this.bot.sendMessage(chatId, "Your request has been saved!");
-          }
-
-          // notify admins
-          await this.notifyAdminsOfPurchaseRequest(
-            username,
-            phonenumber,
-            comment
-          );
-          this.bot.removeListener("message", commentListener);
-          this.sendMainMenu(chatId);
         } else {
           this.bot.sendMessage(chatId, i18n.t("user_not_found"));
         }

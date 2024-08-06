@@ -52,10 +52,9 @@ export default class TransactionHandler {
       .slice(startIndex, endIndex)
       .map((transaction: any) => {
         const date = new Date(transaction.createdAt);
-        const formattedDate = `${date
-          .getDate()
-          .toString()
-          .padStart(2, "0")}.${(date.getMonth() + 1)
+        const formattedDate = `${date.getDate().toString().padStart(2, "0")}.${(
+          date.getMonth() + 1
+        )
           .toString()
           .padStart(2, "0")}.${date.getFullYear()}`;
         return `${
@@ -69,8 +68,14 @@ export default class TransactionHandler {
     const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
     const numPagesToShow = 3; // Number of page buttons to display in each division
 
-    const startDivision = Math.max(1, Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1);
-    const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
+    const startDivision = Math.max(
+      1,
+      Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
+    );
+    const endDivision = Math.min(
+      totalPages,
+      startDivision + numPagesToShow - 1
+    );
 
     const showPrev = currentPage > 1;
     const showNext = currentPage < totalPages;
@@ -159,7 +164,10 @@ export default class TransactionHandler {
       );
     } else if (action.startsWith("transaction_page_")) {
       const page = parseInt(action.split("_")[2], 10);
-      this.userTransactionPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
+      this.userTransactionPages.set(
+        chatId,
+        Math.max(1, Math.min(page, totalPages))
+      );
     }
 
     await this.showTransactions(chatId);
