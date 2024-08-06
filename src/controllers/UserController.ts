@@ -4,7 +4,6 @@ import Transaction from "../models/transactions.schema";
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
 import i18n from "../utils/i18n";
-import User from "../models/users.schema";
 
 dotenv.config();
 
@@ -14,16 +13,16 @@ const bot = new TelegramBot(token);
 class UserController {
   static async addBonuses(req: Request, res: Response) {
     try {
-      const { phoneNumber, sum, description, uniqueId } = req.body;
+      const { phonenumber, sum, description, uniqueId } = req.body;
 
-      if (!phoneNumber || isNaN(sum) || !uniqueId) {
+      if (!phonenumber || isNaN(sum) || !uniqueId) {
         return res
           .status(400)
           .json({ message: "Invalid phoneNumber, sum, or UniqueID provided" });
       }
 
       // Find user by phoneNumber
-      const user = await UserService.findUserByPhoneNumber(phoneNumber);
+      const user = await UserService.findUserByPhoneNumber(phonenumber);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -31,7 +30,7 @@ class UserController {
       // Create a new transaction
       const transaction = await Transaction.create({
         userId: user._id,
-        phoneNumber,
+        phonenumber,
         uniqueID: uniqueId,
         bonuses: sum,
         description,
@@ -63,16 +62,16 @@ class UserController {
 
   static async removeBonuses(req: Request, res: Response) {
     try {
-      const { phoneNumber, sum, description, uniqueId } = req.body;
+      const { phonenumber, sum, description, uniqueId } = req.body;
 
-      if (!phoneNumber || isNaN(sum) || !uniqueId) {
+      if (!phonenumber || isNaN(sum) || !uniqueId) {
         return res
           .status(400)
           .json({ message: "Invalid phoneNumber, uniqueId or sum provided" });
       }
 
       // Find user by phoneNumber
-      const user = await UserService.findUserByPhoneNumber(phoneNumber);
+      const user = await UserService.findUserByPhoneNumber(phonenumber);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -84,7 +83,7 @@ class UserController {
       // Create a new transaction add method to user.service
       const transaction = await Transaction.create({
         userId: user._id,
-        phoneNumber,
+        phonenumber,
         uniqueID: uniqueId,
         bonuses: -sum,
         description,
