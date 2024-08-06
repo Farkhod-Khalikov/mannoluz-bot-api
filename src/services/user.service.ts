@@ -51,11 +51,13 @@ export class UserService {
       name,
       phone,
       comment,
-      isActive
+      isActive, // by default currently true
+      createdAt: new Date()
     });
-    purchaseRequest.createdAt = new Date();
+    // purchaseRequest.createdAt = new Date();
     await purchaseRequest.save();
   }
+
   public static async createUser(
     chatId: number,
     name: string,
@@ -72,6 +74,7 @@ export class UserService {
     await user.save();
   }
 
+  // use it for api
   public static async setAdmin(
     chatId: number,
     isAdmin: boolean
@@ -96,6 +99,7 @@ export class UserService {
     return User.find({});
   }
 
+  //by userId which is saved in transaction schema
   public static async getAllTransactions(userId: string) {
     return Transaction.find({userId: userId});
   }
@@ -107,6 +111,8 @@ export class UserService {
   public static async getAllAdmins(): Promise<IUser[]> {
     return User.find({ isAdmin: true });
   }
+
+  // use it to check before sending a new request
   public static async hasActiveRequests(phonenumber: string) {
     return (await Transaction.find({ isActive: true, phone: phonenumber }))? true: false;
   }

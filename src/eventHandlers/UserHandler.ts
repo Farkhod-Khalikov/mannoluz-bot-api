@@ -311,6 +311,11 @@ export default class UserHandler {
         if (user) {
           const username = user.name;
           const phonenumber = user.phone;
+          if (await UserService.hasActiveRequests(phonenumber)) {
+            this.bot.sendMessage(chatId, i18n.t("active_request_exist"));
+            this.sendMainMenu(chatId);
+            return;
+          }
 
           // save purchase Request to mongo
           const purchaseRequest = await PurchaseRequest.create({
@@ -319,6 +324,9 @@ export default class UserHandler {
             comment,
             createdAt: new Date(),
           });
+          if (purchaseRequest) {
+            this.bot.sendMessage(chatId, "Your request has been saved!");
+          }
 
           // notify admins
           await this.notifyAdminsOfPurchaseRequest(

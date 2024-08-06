@@ -80,7 +80,7 @@ class UserController {
         return res.status(400).json({ message: "Not enough bonuses" });
       }
 
-      // Create a new transaction
+      // Create a new transaction add method to user.service
       const transaction = await Transaction.create({
         userId: user._id,
         phoneNumber,

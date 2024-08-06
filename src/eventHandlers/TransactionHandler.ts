@@ -13,131 +13,8 @@ export default class TransactionHandler {
   public async handleListTransactions(msg: TelegramBot.Message) {
     try {
       const chatId = msg.chat.id;
-      const user = await UserService.findUserByChatId(chatId);
-      if (!user){
-        throw new Error("Could not retrieve user");
-      }
-      let transactions = await UserService.getAllTransactions(user.id);
-
-      if (transactions.length === 0) {
-        this.bot.sendMessage(chatId, "No transactions available.");
-        return;
-      }
-
-      transactions = transactions.sort(
-        (a: any, b: any) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
-      if (!this.userTransactionPages.has(chatId)) {
-        this.userTransactionPages.set(chatId, 1);
-      }
-
-      const currentPage = this.userTransactionPages.get(chatId) || 1;
-      const itemsPerPage = 5;
-      const totalPages = Math.ceil(transactions.length / itemsPerPage);
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-
-      const transactionPage = transactions
-        .slice(startIndex, endIndex)
-        .map((transaction: any) => {
-          const date = new Date(transaction.createdAt);
-          const formattedDate = `${date
-            .getDate()
-            .toString()
-            .padStart(2, "0")}.${(date.getMonth() + 1)
-            .toString()
-            .padStart(2, "0")}.${date.getFullYear()}`;
-          return `${
-            transaction.bonuses > 0
-              ? i18n.t("bonuses_addition").padEnd(10, " ")
-              : i18n.t("bonuses_removal").padEnd(10, " ")
-          } | ${formattedDate} | ${transaction.bonuses} ${i18n.t("coins")}\n`;
-        })
-        .join("\n");
-
-      const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
-      const numPagesToShow = 3; // Number of page buttons to display in each division
-
-      const startDivision = Math.max(1, Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1);
-      const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
-
-      const showPrev = currentPage > 1;
-      const showNext = currentPage < totalPages;
-
-      // if (showPrev) {
-      //   paginationButtons.push({
-      //     text: "Prev",
-      //     callback_data: "transaction_previous_page",
-      //   });
-      // }
-
-      if (startDivision > 1) {
-        paginationButtons.push({
-          text: "...",
-          callback_data: "transaction_page_ellipsis",
-        });
-      }
-
-      for (let i = startDivision; i <= endDivision; i++) {
-        paginationButtons.push({
-          text: i === currentPage ? `${i} ✅` : i.toString(),
-          callback_data: `transaction_page_${i}`,
-        });
-      }
-
-      if (endDivision < totalPages) {
-        paginationButtons.push({
-          text: "...",
-          callback_data: "transaction_page_ellipsis",
-        });
-      }
-
-      // if (showNext) {
-      //   paginationButtons.push({
-      //     text: "Next",
-      //     callback_data: "transaction_next_page",
-      //   });
-      // }
-
-      // Arrange buttons in separate lines
-      const keyboard: TelegramBot.InlineKeyboardButton[][] = [];
-
-      // Page buttons
-      if (paginationButtons.length > 0) {
-        keyboard.push(paginationButtons);
-      }
-
-      // Prev and Next buttons
-      const navButtons: TelegramBot.InlineKeyboardButton[] = [];
-      if (showPrev) {
-        navButtons.push({
-          text: "Prev",
-          callback_data: "transaction_previous_page",
-        });
-      }
-      if (showNext) {
-        navButtons.push({
-          text: "Next",
-          callback_data: "transaction_next_page",
-        });
-      }
-
-      if (navButtons.length > 0) {
-        keyboard.push(navButtons);
-      }
-
-      await this.bot.sendMessage(
-        chatId,
-        `*Transactions (Page ${currentPage} of ${totalPages}):*\n\n${transactionPage}`,
-        {
-          parse_mode: "Markdown",
-          reply_markup: {
-            inline_keyboard: keyboard,
-          },
-        }
-      );
+      this.resetTransactionPage(chatId); // Reset the current page to 1
+      await this.showTransactions(chatId);
     } catch (error) {
       console.error("Error fetching transactions:", error);
       this.bot.sendMessage(
@@ -147,9 +24,124 @@ export default class TransactionHandler {
     }
   }
 
+  private async showTransactions(chatId: number) {
+    const user = await UserService.findUserByChatId(chatId);
+    if (!user) {
+      throw new Error("Could not retrieve user");
+    }
+
+    let transactions = await UserService.getAllTransactions(user.id);
+
+    if (transactions.length === 0) {
+      this.bot.sendMessage(chatId, "No transactions available.");
+      return;
+    }
+
+    transactions = transactions.sort(
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    const currentPage = this.userTransactionPages.get(chatId) || 1;
+    const itemsPerPage = 5;
+    const totalPages = Math.ceil(transactions.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    const transactionPage = transactions
+      .slice(startIndex, endIndex)
+      .map((transaction: any) => {
+        const date = new Date(transaction.createdAt);
+        const formattedDate = `${date
+          .getDate()
+          .toString()
+          .padStart(2, "0")}.${(date.getMonth() + 1)
+          .toString()
+          .padStart(2, "0")}.${date.getFullYear()}`;
+        return `${
+          transaction.bonuses > 0
+            ? i18n.t("bonuses_addition").padEnd(10, " ")
+            : i18n.t("bonuses_removal").padEnd(10, " ")
+        } | ${formattedDate} | ${transaction.bonuses} ${i18n.t("coins")}\n`;
+      })
+      .join("\n");
+
+    const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
+    const numPagesToShow = 3; // Number of page buttons to display in each division
+
+    const startDivision = Math.max(1, Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1);
+    const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
+
+    const showPrev = currentPage > 1;
+    const showNext = currentPage < totalPages;
+
+    if (startDivision > 1) {
+      paginationButtons.push({
+        text: "...",
+        callback_data: "transaction_page_ellipsis",
+      });
+    }
+
+    for (let i = startDivision; i <= endDivision; i++) {
+      paginationButtons.push({
+        text: i === currentPage ? `${i} ✅` : i.toString(),
+        callback_data: `transaction_page_${i}`,
+      });
+    }
+
+    if (endDivision < totalPages) {
+      paginationButtons.push({
+        text: "...",
+        callback_data: "transaction_page_ellipsis",
+      });
+    }
+
+    // Arrange buttons in separate lines
+    const keyboard: TelegramBot.InlineKeyboardButton[][] = [];
+
+    // Page buttons
+    if (paginationButtons.length > 0) {
+      keyboard.push(paginationButtons);
+    }
+
+    // Prev and Next buttons
+    const navButtons: TelegramBot.InlineKeyboardButton[] = [];
+    if (showPrev) {
+      navButtons.push({
+        text: "Prev",
+        callback_data: "transaction_previous_page",
+      });
+    }
+    if (showNext) {
+      navButtons.push({
+        text: "Next",
+        callback_data: "transaction_next_page",
+      });
+    }
+
+    if (navButtons.length > 0) {
+      keyboard.push(navButtons);
+    }
+
+    await this.bot.sendMessage(
+      chatId,
+      `*Transactions (Page ${currentPage} of ${totalPages}):*\n\n${transactionPage}`,
+      {
+        parse_mode: "Markdown",
+        reply_markup: {
+          inline_keyboard: keyboard,
+        },
+      }
+    );
+  }
+
+  private resetTransactionPage(chatId: number) {
+    this.userTransactionPages.set(chatId, 1);
+  }
+
   public async handlePagination(chatId: number, action: string) {
     const user = await UserService.findUserByChatId(chatId);
-    if (!user){
+    if (!user) {
       throw new Error("Could not retrieve user");
     }
     const transactions = await UserService.getAllTransactions(user.id);
@@ -170,8 +162,6 @@ export default class TransactionHandler {
       this.userTransactionPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
     }
 
-    await this.handleListTransactions({
-      chat: { id: chatId },
-    } as TelegramBot.Message);
+    await this.showTransactions(chatId);
   }
 }
