@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { UserService } from "../services/user.service";
+import  UserService  from "../services/user.service";
 import Transaction from "../models/transactions.schema";
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";

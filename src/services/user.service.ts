@@ -3,7 +3,7 @@ import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import Transaction from "../models/transactions.schema";
 import User, { IUser } from "../models/users.schema";
 
-export class UserService {
+export default class UserService {
   public static async findUserByChatId(chatId: number): Promise<IUser | null> {
     return User.findOne({ chatId });
   }

@@ -1,10 +1,10 @@
-// import {Router} from "express";
-// import ProductController from "../controllers/ProductController";
+import {Router} from "express";
+import ProductController from "../controllers/ProductController";
 
-// const productRouter = Router();
+const productRouter = Router();
 
-// productRouter.post("/add", ProductController.addProduct);
+productRouter.post("/add", ProductController.addProduct);
+productRouter.patch("/update", ProductController.updateProduct);
+productRouter.delete("/remove", ProductController.removeProduct);
 
-// productRouter.delete("/remove", ProductController.removeProduct);
-
-// export default productRouter;
+export default productRouter;

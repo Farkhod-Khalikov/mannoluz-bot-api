@@ -1,5 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
-import { UserService } from "../services/user.service";
+import UserService from "../services/user.service";
 import i18n from "../utils/i18n";
 import fs from "fs";
 import path from "path";
