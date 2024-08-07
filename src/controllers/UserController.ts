@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import  UserService  from "../services/user.service";
+import UserService from "../services/user.service";
 import Transaction from "../models/transactions.schema";
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
@@ -47,9 +47,9 @@ class UserController {
       if (user.chatId) {
         await bot.sendMessage(
           user.chatId,
-          `${i18n.t("bonuses_addition")}: ${sum} ${i18n.t(
-            "coins"
-          )}\n${i18n.t("description")}: ${description}`
+          `${i18n.t("bonuses_addition")}: ${sum} ${i18n.t("coins")}\n${i18n.t(
+            "description"
+          )}: ${description}`
         );
       }
 
@@ -99,9 +99,9 @@ class UserController {
       if (user.chatId) {
         await bot.sendMessage(
           user.chatId,
-          `${i18n.t("bonuses_removal")}: ${sum} ${i18n.t(
-            "coins"
-          )}\n${i18n.t("description")}: ${description}`
+          `${i18n.t("bonuses_removal")}: ${sum} ${i18n.t("coins")}\n${i18n.t(
+            "description"
+          )}: ${description}`
         );
       }
 
