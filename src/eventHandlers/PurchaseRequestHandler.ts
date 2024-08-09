@@ -1,56 +1,53 @@
 import TelegramBot from "node-telegram-bot-api";
-import  UserService  from "../services/user.service";
+import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import i18n from "../utils/i18n";
-import ProductService from "../services/product.service";
 
-export default class ProductHandler {
+export default class PurchaseRequestHandler {
   private bot: TelegramBot;
-  private userProductPages: Map<number, number> = new Map();
+  private userRequestPages: Map<number, number> = new Map();
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
   }
 
-  public async handleListProducts(msg: TelegramBot.Message) {
+  public async handleListRequests(msg: TelegramBot.Message) {
     try {
       const chatId = msg.chat.id;
-      this.resetProductPage(chatId); // Reset the current page to 1
-      await this.showProducts(chatId);
+      this.resetRequestPage(chatId); // Reset the current page to 1
+      await this.showRequests(chatId);
     } catch (error) {
-      console.error("Error fetching products:", error);
+      console.error("Error fetching requests:", error);
       this.bot.sendMessage(
         msg.chat.id,
-        "There was an error fetching the product list. Please try again later."
+        "There was an error fetching the requests. Please try again later."
       );
     }
   }
 
-  private async showProducts(chatId: number) {
-    const products = await ProductService.getAllProducts();
+  private async showRequests(chatId: number) {
+    const requests = await PurchaseRequest.find().sort({ isActive: -1 });
 
-    if (products.length === 0) {
-      this.bot.sendMessage(chatId, "No products available.");
+    if (requests.length === 0) {
+      this.bot.sendMessage(chatId, "No purchase requests available.");
       return;
     }
 
-    const currentPage = this.userProductPages.get(chatId) || 1;
+    const currentPage = this.userRequestPages.get(chatId) || 1;
     const itemsPerPage = 5;
-    const totalPages = Math.ceil(products.length / itemsPerPage);
+    const totalPages = Math.ceil(requests.length / itemsPerPage);
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
 
-    const productPage = products
+    const requestPage = requests
       .slice(startIndex, endIndex)
       .map(
-        (product: any) =>
-          `*Product:* ${product.name}\n*Price:* ${product.price} ${i18n.t(
-            "coins"
-          )}\n${i18n.t("*Available*")}: ${product.amount}`
+        (request: any) =>
+          `*Request by:* ${request.username}\n*Phone:* ${request.phonenumber}\n*Comment:* ${request.comment}\n*Active:* ${request.isActive ? "Yes" : "No"}\n*Date:* ${request.createdAt.toLocaleDateString()}`
       )
       .join("\n\n");
 
     const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
-    const numPagesToShow = 3; // Number of page buttons to display in each division
+    const numPagesToShow = 3;
 
     const startDivision = Math.max(
       1,
@@ -67,44 +64,41 @@ export default class ProductHandler {
     if (startDivision > 1) {
       paginationButtons.push({
         text: "...",
-        callback_data: "product_page_ellipsis",
+        callback_data: "request_page_ellipsis",
       });
     }
 
     for (let i = startDivision; i <= endDivision; i++) {
       paginationButtons.push({
         text: i === currentPage ? `${i} ✅` : i.toString(),
-        callback_data: `product_page_${i}`,
+        callback_data: `request_page_${i}`,
       });
     }
 
     if (endDivision < totalPages) {
       paginationButtons.push({
         text: "...",
-        callback_data: "product_page_ellipsis",
+        callback_data: "request_page_ellipsis",
       });
     }
 
-    // Arrange buttons in separate lines
     const keyboard: TelegramBot.InlineKeyboardButton[][] = [];
 
-    // Page buttons
     if (paginationButtons.length > 0) {
       keyboard.push(paginationButtons);
     }
 
-    // Prev and Next buttons
     const navButtons: TelegramBot.InlineKeyboardButton[] = [];
     if (showPrev) {
       navButtons.push({
         text: i18n.t("prev"),
-        callback_data: "product_previous_page",
+        callback_data: "request_previous_page",
       });
     }
     if (showNext) {
       navButtons.push({
         text: i18n.t("next"),
-        callback_data: "product_next_page",
+        callback_data: "request_next_page",
       });
     }
 
@@ -114,7 +108,7 @@ export default class ProductHandler {
 
     await this.bot.sendMessage(
       chatId,
-      `*Available Products (Page ${currentPage} of ${totalPages}):*\n\n${productPage}`,
+      `*Purchase Requests (Page ${currentPage} of ${totalPages}):*\n\n${requestPage}`,
       {
         parse_mode: "Markdown",
         reply_markup: {
@@ -124,32 +118,32 @@ export default class ProductHandler {
     );
   }
 
-  private resetProductPage(chatId: number) {
-    this.userProductPages.set(chatId, 1);
+  private resetRequestPage(chatId: number) {
+    this.userRequestPages.set(chatId, 1);
   }
 
   public async handlePagination(chatId: number, action: string) {
-    const products = await ProductService.getAllProducts();
-    const totalPages = Math.ceil(products.length / 5);
+    const requests = await PurchaseRequest.find().sort({ isActive: -1 });
+    const totalPages = Math.ceil(requests.length / 5);
 
-    if (action === "product_previous_page") {
-      this.userProductPages.set(
+    if (action === "request_previous_page") {
+      this.userRequestPages.set(
         chatId,
-        Math.max((this.userProductPages.get(chatId) || 1) - 1, 1)
+        Math.max((this.userRequestPages.get(chatId) || 1) - 1, 1)
       );
-    } else if (action === "product_next_page") {
-      this.userProductPages.set(
+    } else if (action === "request_next_page") {
+      this.userRequestPages.set(
         chatId,
-        Math.min((this.userProductPages.get(chatId) || 1) + 1, totalPages)
+        Math.min((this.userRequestPages.get(chatId) || 1) + 1, totalPages)
       );
-    } else if (action.startsWith("product_page_")) {
+    } else if (action.startsWith("request_page_")) {
       const page = parseInt(action.split("_")[2], 10);
-      this.userProductPages.set(
+      this.userRequestPages.set(
         chatId,
         Math.max(1, Math.min(page, totalPages))
       );
     }
 
-    await this.showProducts(chatId);
+    await this.showRequests(chatId);
   }
 }

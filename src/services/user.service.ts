@@ -30,7 +30,6 @@ export default class UserService {
     }
   }
 
-  // getUserLanguage and setSystemLanguage -> need to perform this
   public static async getUserLanguage(chatId: number) {
     const user = await this.findUserByChatId(chatId);
     if (user) {
@@ -102,10 +101,6 @@ export default class UserService {
   //by userId which is saved in transaction schema
   public static async getAllTransactions(userId: string) {
     return Transaction.find({ userId: userId });
-  }
-
-  public static async getAllProducts(): Promise<IProduct[]> {
-    return Product.find({});
   }
 
   public static async getAllAdmins(): Promise<IUser[]> {

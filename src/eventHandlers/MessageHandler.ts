@@ -5,6 +5,7 @@ import UserHandler from "./UserHandler";
 import TransactionHandler from "./TransactionHandler";
 import AdminHandler from "./AdminHandler";
 import ProductHandler from "./ProductHandler";
+import PurchaseRequestHandler from "./PurchaseRequestHandler";
 
 export default class MessageController {
   private bot: TelegramBot;
@@ -12,9 +13,11 @@ export default class MessageController {
   private adminHandler: AdminHandler;
   private productHandler: ProductHandler;
   private transactionHandler: TransactionHandler;
+  private purchaseRequestHandler: PurchaseRequestHandler;
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
+    this.purchaseRequestHandler = new PurchaseRequestHandler(bot);
     this.userHandler = new UserHandler(bot);
     this.adminHandler = new AdminHandler(bot);
     this.productHandler = new ProductHandler(bot);
@@ -43,7 +46,7 @@ export default class MessageController {
           await this.userHandler.handlePurchaseRequest(chatId);
           break;
         case i18n.t("btn_list_requests"):
-          await this.bot.sendMessage(chatId, i18n.t("btn_list_requests"));
+          await this.purchaseRequestHandler.handleListRequests(msg);
           break;
         case i18n.t("btn_rules"):
           await this.bot.sendMessage(chatId, "Rules for using bonuses");
@@ -109,7 +112,6 @@ export default class MessageController {
       await this.adminHandler.handleImageUpload(msg);
     }
   }
-
   public async handleCallbackQuery(callbackQuery: TelegramBot.CallbackQuery) {
     const chatId = callbackQuery.message?.chat.id;
     const data = callbackQuery.data;
@@ -126,6 +128,12 @@ export default class MessageController {
         await this.productHandler.handlePagination(
           chatId,
           `product_page_${page}`
+        );
+      } else if (data.startsWith("request_page_")) {
+        const page = parseInt(data.split("_")[2], 10);
+        await this.purchaseRequestHandler.handlePagination(
+          chatId,
+          `request_page_${page}`
         );
       } else {
         switch (data) {
@@ -157,6 +165,18 @@ export default class MessageController {
             await this.productHandler.handlePagination(
               chatId,
               "product_previous_page"
+            );
+            break;
+          case "request_next_page":
+            await this.purchaseRequestHandler.handlePagination(
+              chatId,
+              "request_next_page"
+            );
+            break;
+          case "request_previous_page":
+            await this.purchaseRequestHandler.handlePagination(
+              chatId,
+              "request_previous_page"
             );
             break;
           case "product_next_page":

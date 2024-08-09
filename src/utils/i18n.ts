@@ -5,6 +5,7 @@ i18next.init({
   resources: {
     "en-US": {
       translation: {
+        btn_list_requests:"Requests List",
         confirm_purchase_request:"Please, confirm if you want to leave a request.",
         yes_sure:"Yes, sure",
         no_thanks:"No, thanks",
@@ -74,6 +75,7 @@ Thank you for choosing MANNOL!`,
     },
     "ru-RU": {
       translation: {
+        btn_list_requests:"Список Заявок",
         prev: "⬅️пред",
         next: "след➡️",
         yes_sure:"Да, конечно",
