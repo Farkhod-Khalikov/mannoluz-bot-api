@@ -118,6 +118,7 @@ export default class UserService {
       ? true
       : false;
   }
+
   static async updateUserAdminStatus(phonenumber: string, isAdmin: boolean) {
     try {
       const user = await this.findUserByPhoneNumber(phonenumber);

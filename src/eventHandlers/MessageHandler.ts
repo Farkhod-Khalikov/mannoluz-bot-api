@@ -1,5 +1,5 @@
 import TelegramBot from "node-telegram-bot-api";
-import  UserService  from "../services/user.service";
+import UserService from "../services/user.service";
 import i18n from "../utils/i18n";
 import UserHandler from "./UserHandler";
 import TransactionHandler from "./TransactionHandler";
@@ -42,24 +42,28 @@ export default class MessageController {
         case i18n.t("purchase_request"):
           await this.userHandler.handlePurchaseRequest(chatId);
           break;
+        case i18n.t("btn_list_requests"):
+          await this.bot.sendMessage(chatId, i18n.t("btn_list_requests"));
+          break;
         case i18n.t("btn_rules"):
           await this.bot.sendMessage(chatId, "Rules for using bonuses");
           break;
         case "🇷🇺Русский":
         case "🇺🇸English":
+          // change if condition for checking whether user exists in db rather than by newUserLanguguages which is always true
           if (this.userHandler.newUserLanguages.has(chatId)) {
             await this.userHandler.handleLanguageSelection(
               chatId,
               msg.text,
               true
             );
-          } else {
+          } /*else {
             await this.userHandler.handleLanguageSelection(
               chatId,
               msg.text,
               false
             );
-          }
+          }*/
           break;
         case i18n.t("settings_button"):
           await this.userHandler.handleSettings(msg);
@@ -95,10 +99,10 @@ export default class MessageController {
             // Handle admin-specific messages for post creation
             await this.adminHandler.handleAdminPostData(chatId, msg.text);
           }
-          // } else {
-          //   this.bot.sendMessage(chatId, i18n.t("command_not_recognized"));
-          //   this.userHandler.sendMainMenu(chatId);
-          // }
+        // } else {
+        //   this.bot.sendMessage(chatId, i18n.t("command_not_recognized"));
+        //   this.userHandler.sendMainMenu(chatId);
+        // }
       }
     } else if (msg.photo) {
       // Handle image uploads

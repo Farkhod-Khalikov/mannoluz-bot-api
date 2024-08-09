@@ -4,11 +4,11 @@ import UserController from "../controllers/UserController";
 const userRouter = Router();
 
 // balance
-userRouter.patch("/balance/add", UserController.addBonuses);
-userRouter.patch("/balance/remove", UserController.removeBonuses);
+userRouter.post("/balance/add", UserController.addBonuses);
+userRouter.post("/balance/remove", UserController.removeBonuses);
 
 // admin-privileges
-userRouter.patch("/admin-privileges/add", UserController.addAdmin);
-userRouter.patch("/admin-privileges/remove", UserController.removeAdmin);
+userRouter.post("/admin-privileges/add", UserController.addAdmin);
+userRouter.post("/admin-privileges/remove", UserController.removeAdmin);
 
 export default userRouter;

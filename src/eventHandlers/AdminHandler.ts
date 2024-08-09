@@ -153,6 +153,7 @@ export default class AdminHandler {
     const user = await UserService.findUserByChatId(chatId);
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
 
+    // create adminMenuKeyboard
     const mainMenuKeyboard = [
       [{ text: i18n.t("credit_card_button") }],
       [

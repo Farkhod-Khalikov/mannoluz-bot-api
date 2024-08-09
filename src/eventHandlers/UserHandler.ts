@@ -10,10 +10,12 @@ export default class UserHandler {
   public newUserLanguages: Map<number, string>;
   private languageListeners: Map<number, (msg: TelegramBot.Message) => void>;
   private contactListeners: Map<number, (msg: TelegramBot.Message) => void>;
-
+  // private isRegistration: boolean;
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.newUserLanguages = new Map<number, string>();
+    // trying to colse double share_contact message
+    // this.isRegistration = false;
 
     // tried to solve double message error
     this.languageListeners = new Map<
@@ -130,7 +132,6 @@ export default class UserHandler {
         await user.save();
         this.bot.sendMessage(chatId, i18n.t("language_changed"));
       }
-      //this.sendMainMenu(chatId);
     }
   }
 
@@ -239,36 +240,53 @@ export default class UserHandler {
   public async sendMainMenu(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
-
-    const mainMenuKeyboard = [
-      [{ text: i18n.t("credit_card_button") }],
-      [
-        { text: i18n.t("btn_list_products") },
-        { text: i18n.t("btn_list_transactions") },
-      ],
-      [{ text: i18n.t("btn_rules") }],
-      [
-        { text: i18n.t("settings_button") },
-        { text: i18n.t("purchase_request") },
-      ],
-      [
-        { text: i18n.t("contact_us_button") },
-        { text: i18n.t("about_us_button") },
-      ],
-    ];
-
-    if (isAdmin) {
-      // for admins also add button "Purchase requests" isAnswered == true
-      mainMenuKeyboard.push([{ text: i18n.t("send_post_button") }]);
+    if (!isAdmin) {
+      const mainMenuKeyboard = [
+        [{ text: i18n.t("credit_card_button") }],
+        [
+          { text: i18n.t("btn_list_products") },
+          { text: i18n.t("btn_list_transactions") },
+        ],
+        [{ text: i18n.t("settings_button") }],
+        [{ text: i18n.t("btn_rules") }, { text: i18n.t("purchase_request") }],
+        [
+          { text: i18n.t("contact_us_button") },
+          { text: i18n.t("about_us_button") },
+        ],
+      ];
+      this.bot.sendMessage(chatId, i18n.t("choose_option"), {
+        reply_markup: {
+          keyboard: mainMenuKeyboard,
+          resize_keyboard: true,
+          one_time_keyboard: false,
+        },
+      });
+    } else {
+      const adminMenuKeyboard = [
+        [
+          /*{ text: i18n.t("credit_card_button") },*/ {
+            text: i18n.t("send_post_button"),
+          },
+        ],
+        [
+          { text: i18n.t("btn_list_products") },
+          { text: i18n.t("btn_list_requests") },
+        ],
+        [{ text: i18n.t("settings_button") }, { text: i18n.t("btn_rules") }],
+        [
+          { text: i18n.t("contact_us_button") },
+          { text: i18n.t("about_us_button") },
+        ],
+      ];
+      this.bot.sendMessage(chatId, i18n.t("choose_option"), {
+        reply_markup: {
+          keyboard: adminMenuKeyboard,
+          resize_keyboard: true,
+          one_time_keyboard: false,
+        },
+      });
+      // mainMenuKeyboard.push([{ text: i18n.t("send_post_button") }]);
     }
-
-    this.bot.sendMessage(chatId, i18n.t("choose_option"), {
-      reply_markup: {
-        keyboard: mainMenuKeyboard,
-        resize_keyboard: true,
-        one_time_keyboard: false,
-      },
-    });
   }
 
   public async handleContactUs(msg: TelegramBot.Message) {
@@ -349,7 +367,6 @@ export default class UserHandler {
     this.bot.sendMessage(chatId, i18n.t("purchase_request_cancelled"));
     this.sendMainMenu(chatId);
   }
-  // When there are no admins retrieved from db there is an issue
   public async notifyAdminsOfPurchaseRequest(
     username: string,
     phoneNumber: string,
