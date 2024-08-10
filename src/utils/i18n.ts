@@ -5,14 +5,17 @@ i18next.init({
   resources: {
     "en-US": {
       translation: {
-        btn_list_requests:"Requests List",
-        confirm_purchase_request:"Please, confirm if you want to leave a request.",
-        yes_sure:"Yes, sure",
-        no_thanks:"No, thanks",
-        admin_removed_notification: "You've been removed with admin's privileges. Please, restart bot with /start command",
-        admin_granted_notification: "You've been provided with admin's privileges. Pleaes, restart bot with /start command",
-        purchase_request_cancelled:"❌Request cancelled",
-        write_comment:"Please leave a comment:",
+        btn_list_requests: "Requests List",
+        confirm_purchase_request:
+          "Please, confirm if you want to leave a request.",
+        yes_sure: "Yes, sure",
+        no_thanks: "No, thanks",
+        admin_removed_notification:
+          "You've been removed with admin's privileges. Please, restart bot with /start command",
+        admin_granted_notification:
+          "You've been provided with admin's privileges. Pleaes, restart bot with /start command",
+        purchase_request_cancelled: "❌Request cancelled",
+        write_comment: "Please leave a comment:",
         last_transactions: "Last Transactions",
         btn_rules: "Rules",
         btn_list_transactions: "List Transactions",
@@ -75,20 +78,23 @@ Thank you for choosing MANNOL!`,
     },
     "ru-RU": {
       translation: {
-        btn_list_requests:"Список Заявок",
+        btn_list_requests: "Список Заявок",
         prev: "⬅️пред",
         next: "след➡️",
-        yes_sure:"Да, конечно",
-        no_thanks:"Нет, спасибо",
-        admin_removed_notification: "У вас забрали привилегии админа. Пожалуйста перезапустите бота коммандой /start.",
-        admin_granted_notification: "Вам предаставили привилегии админа. Пожалуйста перезапустите бота коммандой /start",
-        purchase_request_cancelled:"❌Отмена заявки",
-        confirm_purchase_request:"Пожалуйста подтвердите что хотите оставить заявку.",
+        yes_sure: "Да, конечно",
+        no_thanks: "Нет, спасибо",
+        admin_removed_notification:
+          "У вас забрали привилегии админа. Пожалуйста перезапустите бота коммандой /start.",
+        admin_granted_notification:
+          "Вам предаставили привилегии админа. Пожалуйста перезапустите бота коммандой /start",
+        purchase_request_cancelled: "❌Отмена заявки",
+        confirm_purchase_request:
+          "Пожалуйста подтвердите что хотите оставить заявку.",
         btn_list_transactions: "Список Транзакций",
         last_transactions: "Последнии транзакции",
         btn_rules: "Правила Использования бонусов",
         coins: "Монет",
-        write_comment:"Пожалуйста, оставьте комментарий:",
+        write_comment: "Пожалуйста, оставьте комментарий:",
         bonuses_addition: "Начисление",
         purchase_request: "Оставить запрос",
         description: "Описание",

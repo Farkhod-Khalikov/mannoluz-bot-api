@@ -13,6 +13,7 @@ export default class UserService {
   ): Promise<IUser | null> {
     return User.findOne({ phone: phoneNumber });
   }
+
   public static async getUserName(chatId: number): Promise<string> {
     try {
       // Fetch the user based on the chatId
@@ -114,6 +115,9 @@ export default class UserService {
       : false;
   }
 
+  public static async findTransactionByUniqueId(uniqueId: string){
+
+  }
   static async updateUserAdminStatus(phonenumber: string, isAdmin: boolean) {
     try {
       const user = await this.findUserByPhoneNumber(phonenumber);

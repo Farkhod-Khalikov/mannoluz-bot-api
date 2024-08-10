@@ -5,9 +5,10 @@ import Transaction from "../models/transactions.schema";
 import User, { IUser } from "../models/users.schema";
 
 export default class ProductService {
-
   // findProductByUniqueID: string
-  public static async findProductByUniqued(uniqueID: string): Promise<IProduct | null> {
+  public static async findProductByUniqued(
+    uniqueID: string
+  ): Promise<IProduct | null> {
     return User.findOne({ uniqueID });
   }
 
@@ -16,7 +17,7 @@ export default class ProductService {
     uniqueID: string,
     name: string,
     price: number,
-    amount: number,
+    amount: number
   ) {
     const product = new Product({
       uniqueID,
@@ -27,7 +28,11 @@ export default class ProductService {
     await product.save();
   }
 
-  public static async updateProductByUniqueID(uniqueID: string, amount?: number, price?: number){
+  public static async updateProductByUniqueID(
+    uniqueID: string,
+    amount?: number,
+    price?: number
+  ) {
     // update record regarding to amount or price
   }
 

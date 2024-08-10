@@ -42,7 +42,11 @@ export default class PurchaseRequestHandler {
       .slice(startIndex, endIndex)
       .map(
         (request: any) =>
-          `*Request by:* ${request.username}\n*Phone:* ${request.phonenumber}\n*Comment:* ${request.comment}\n*Active:* ${request.isActive ? "Yes" : "No"}\n*Date:* ${request.createdAt.toLocaleDateString()}`
+          `*Request by:* ${request.username}\n*Phone:* ${
+            request.phonenumber
+          }\n*Comment:* ${request.comment}\n*Active:* ${
+            request.isActive ? "Yes" : "No"
+          }\n*Date:* ${request.createdAt.toLocaleDateString()}`
       )
       .join("\n\n");
 
