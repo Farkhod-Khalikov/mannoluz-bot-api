@@ -138,6 +138,10 @@ class UserController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
+  //Update isActive Request
+  static async updateRequestStatus(req: Request, res: Response) {
+
+  }
 
   // Add Admin
   static async addAdmin(req: Request, res: Response) {

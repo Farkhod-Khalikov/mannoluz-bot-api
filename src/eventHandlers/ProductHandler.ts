@@ -13,7 +13,7 @@ export default class ProductHandler {
   public async handleListProducts(msg: TelegramBot.Message) {
     try {
       const chatId = msg.chat.id;
-      this.resetProductPage(chatId); // Reset the current page to 1
+      this.resetProductPage(chatId); // Reset the current page to 1 when clicking on button
       await this.showProducts(chatId);
     } catch (error) {
       console.error("Error fetching products:", error);

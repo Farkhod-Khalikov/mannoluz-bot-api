@@ -68,7 +68,7 @@ export default class PurchaseRequestHandler {
     if (startDivision > 1) {
       paginationButtons.push({
         text: "...",
-        callback_data: "request_page_ellipsis",
+        callback_data: "request_page_ellipsis", // request_page_prev_ellipsis
       });
     }
 

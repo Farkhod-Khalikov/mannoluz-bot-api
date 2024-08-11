@@ -23,7 +23,7 @@ export default class ProductService {
       uniqueID,
       name,
       price,
-      amount,
+      amount, 
     });
     await product.save();
   }
