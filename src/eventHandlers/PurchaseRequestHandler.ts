@@ -25,7 +25,7 @@ export default class PurchaseRequestHandler {
   }
 
   private async showRequests(chatId: number) {
-    const requests = await PurchaseRequest.find().sort({ isActive: -1 });
+    const requests = await PurchaseRequest.find().sort({ isActive: -1, createdAt: -1 });
 
     if (requests.length === 0) {
       this.bot.sendMessage(chatId, "No purchase requests available.");
