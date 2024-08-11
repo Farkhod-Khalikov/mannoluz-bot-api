@@ -11,6 +11,8 @@ const token = process.env.TOKEN || "";
 const bot = new TelegramBot(token);
 
 class UserController {
+
+  // Add bonuses
   static async addBonuses(req: Request, res: Response) {
     try {
       const { phonenumber, sum, description, uniqueId } = req.body;
@@ -60,6 +62,7 @@ class UserController {
     }
   }
 
+  // Remove Bonuses 
   static async removeBonuses(req: Request, res: Response) {
     try {
       const { phonenumber, sum, description, uniqueId } = req.body;
@@ -111,6 +114,8 @@ class UserController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
+
+  // Remove Admin
   static async removeAdmin(req: Request, res: Response) {
     try {
       const { phonenumber } = req.body;
@@ -133,6 +138,8 @@ class UserController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
+
+  // Add Admin
   static async addAdmin(req: Request, res: Response) {
     try {
       const { phonenumber } = req.body;

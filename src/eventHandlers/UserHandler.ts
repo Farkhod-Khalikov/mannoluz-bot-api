@@ -319,11 +319,24 @@ export default class UserHandler {
   }
 
   public async handleConfirmPurchaseRequest(chatId: number) {
+    const user = await UserService.findUserByChatId(chatId);
+    const activeRequest = await PurchaseRequest.findOne({
+      phonenumber: user?.phone,
+      isActive: true,
+    });
+    if (activeRequest) {
+      this.bot.sendMessage(
+        chatId,
+        i18n.t("active_request_exist")
+      );
+      this.sendMainMenu(chatId);
+      return;
+    }
     this.bot.sendMessage(chatId, i18n.t("write_comment"));
+
     const commentListener = async (msg: TelegramBot.Message) => {
       if (msg.chat.id === chatId) {
         const comment = msg.text || "";
-        const user = await UserService.findUserByChatId(chatId);
 
         if (user) {
           const username = user.name;
