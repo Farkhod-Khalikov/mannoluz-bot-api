@@ -15,7 +15,6 @@ const transactionSchema = new Schema<ITransaction>(
     uniqueID: { type: String, required: true, unique: true },
     userId: { type: String, required: true },
     bonuses: { type: Number, required: true },
-
     description: { type: String, required: false },
   },
   { timestamps: true }

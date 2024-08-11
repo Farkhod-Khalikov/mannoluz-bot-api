@@ -4,6 +4,8 @@ import Transaction from "../models/transactions.schema";
 import TelegramBot from "node-telegram-bot-api";
 import dotenv from "dotenv";
 import i18n from "../utils/i18n";
+import { PurchaseRequest } from "../models/purchaseRequests.schema";
+import User from "../models/users.schema";
 
 dotenv.config();
 
@@ -11,7 +13,6 @@ const token = process.env.TOKEN || "";
 const bot = new TelegramBot(token);
 
 class UserController {
-
   // Add bonuses
   static async addBonuses(req: Request, res: Response) {
     try {
@@ -62,7 +63,7 @@ class UserController {
     }
   }
 
-  // Remove Bonuses 
+  // Remove Bonuses
   static async removeBonuses(req: Request, res: Response) {
     try {
       const { phonenumber, sum, description, uniqueId } = req.body;
@@ -138,10 +139,6 @@ class UserController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
-  //Update isActive Request
-  static async updateRequestStatus(req: Request, res: Response) {
-
-  }
 
   // Add Admin
   static async addAdmin(req: Request, res: Response) {
@@ -164,6 +161,58 @@ class UserController {
     } catch (error) {
       console.error("Error granting admin privileges", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  //Update isActive Request
+  static async updateRequestStatus(req: Request, res: Response) {
+    const { phonenumber } = req.body;
+    const user = await UserService.findUserByPhoneNumber(phonenumber);
+    if (!phonenumber) {
+      return res.status(400).json({ message: "Phone number is required" });
+    }
+    if (!user) {
+      return res.status(400).json({ message: "User not found" });
+    }
+    try {
+      await PurchaseRequest.findOneAndUpdate(
+        { phonenumber: phonenumber, isActive: true },
+        { isActive: false }
+      );
+      await bot.sendMessage(
+        user.chatId,
+        "Your request status is updated to Not Active."
+      );
+      return res.status(200).json({ message: "The Request status is updated" });
+    } catch (error) {
+      console.error("Could not update requets status", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  }
+  static async removeTransaction(req: Request, res: Response) {
+    const { uniqueId } = req.body;
+    if (!uniqueId) {
+      return res.status(400).json({ message: "uniqueId is required" });
+    }
+    try {
+      // also depending on the transaction add or remove bonuses
+      // if transaction removed bonuses then you have to add them since you have to retrieve
+      
+      const transaction = await Transaction.findOneAndDelete({
+        uniqueID: uniqueId,
+      });
+      // const userId = transaction?.userId;
+      // const user = await User.findOne({ _id: userId });
+      // if (user) {
+      //   await bot.sendMessage(
+      //     user.chatId,
+      //     "One of your transaction were deleted"
+      //   );
+      // }
+        return res.status(200).json({ message: "Transaction is deleted" });
+    } catch (error) {
+      console.error("Could not delete transaction", error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 }
