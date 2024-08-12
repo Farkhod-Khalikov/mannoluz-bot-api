@@ -194,22 +194,56 @@ class UserController {
     if (!uniqueId) {
       return res.status(400).json({ message: "uniqueId is required" });
     }
+
     try {
-      // also depending on the transaction add or remove bonuses
-      // if transaction removed bonuses then you have to add them since you have to retrieve
-      
+      // Find and delete the transaction
       const transaction = await Transaction.findOneAndDelete({
         uniqueID: uniqueId,
       });
-      // const userId = transaction?.userId;
-      // const user = await User.findOne({ _id: userId });
-      // if (user) {
-      //   await bot.sendMessage(
-      //     user.chatId,
-      //     "One of your transaction were deleted"
-      //   );
-      // }
-        return res.status(200).json({ message: "Transaction is deleted" });
+
+      if (!transaction) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+
+      // Find the user associated with the transaction
+      const user = await User.findById(transaction.userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      } else {
+        // Update the user's balance based on the transaction
+        const bonuses = transaction.bonuses;
+
+        let currentBalance = user.balance || 0;
+        if (bonuses < 0) {
+          // Transaction removed bonuses, so we need to add them back
+          currentBalance += Math.abs(bonuses);
+          user.balance = currentBalance;
+          await bot.sendMessage(
+            user.chatId,
+            `Your transaction has been retrieved. Your balance is updated by ${Math.abs(
+              bonuses
+            )} bonuses.`
+          );
+        } else {
+          // Transaction added bonuses, so we need to remove them
+          currentBalance -= bonuses;
+          user.balance = currentBalance;
+          await bot.sendMessage(
+            user.chatId,
+            `Your transaction has been retrieved. ${bonuses} bonuses have been removed from your balance.`
+          );
+        }
+
+        // Save the updated user balance
+        await user.save();
+
+        return res
+          .status(200)
+          .json({
+            message: "Transaction is deleted and user's balance is updated",
+          });
+      }
     } catch (error) {
       console.error("Could not delete transaction", error);
       return res.status(500).json({ message: "Internal server error" });
