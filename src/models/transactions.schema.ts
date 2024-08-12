@@ -2,7 +2,7 @@
 import { Document, Model, model, Schema } from "mongoose";
 
 export interface ITransaction extends Document {
-  uniqueID: string;
+  uniqueId: string;
   userId: string;
   bonuses: number;
   createdAt?: Date;
@@ -12,7 +12,7 @@ export interface ITransaction extends Document {
 
 const transactionSchema = new Schema<ITransaction>(
   {
-    uniqueID: { type: String, required: true, unique: true },
+    uniqueId: { type: String, required: true, unique: true },
     userId: { type: String, required: true },
     bonuses: { type: Number, required: true },
     description: { type: String, required: false },

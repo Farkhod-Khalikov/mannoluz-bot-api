@@ -44,7 +44,7 @@ export default class ProductHandler {
         (product: any) =>
           `*Product:* ${product.name}\n*Price:* ${product.price} ${i18n.t(
             "coins"
-          )}\n${i18n.t("*Available*")}: ${product.amount}`
+          )}`
       )
       .join("\n\n");
 

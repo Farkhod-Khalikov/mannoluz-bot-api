@@ -34,7 +34,7 @@ class UserController {
       const transaction = await Transaction.create({
         userId: user._id,
         phonenumber,
-        uniqueID: uniqueId,
+        uniqueId: uniqueId,
         bonuses: sum,
         description,
       });
@@ -88,7 +88,7 @@ class UserController {
       const transaction = await Transaction.create({
         userId: user._id,
         phonenumber,
-        uniqueID: uniqueId,
+        uniqueId: uniqueId,
         bonuses: -sum,
         description,
       });
@@ -238,11 +238,9 @@ class UserController {
         // Save the updated user balance
         await user.save();
 
-        return res
-          .status(200)
-          .json({
-            message: "Transaction is deleted and user's balance is updated",
-          });
+        return res.status(200).json({
+          message: "Transaction is deleted and user's balance is updated",
+        });
       }
     } catch (error) {
       console.error("Could not delete transaction", error);

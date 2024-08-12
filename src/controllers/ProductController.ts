@@ -1,36 +1,47 @@
 import { Request, Response } from "express";
-import UserService from "../services/user.service";
-import Product from "../models/products.schema";
-import TelegramBot from "node-telegram-bot-api";
-import dotenv from "dotenv";
-import i18n from "../utils/i18n";
 import ProductService from "../services/product.service";
 
-dotenv.config();
-
 export default class ProductController {
-  // perform this logic and devide everything related to products into products service
   static async addProduct(req: Request, res: Response) {
     try {
-      const { uniqueId, name, price, amount } = req.body;
-      if (!name || !price || !uniqueId) {
-        res
-          .status(400)
-          .json({ message: "Invalid name, price, or uniqueId provided" });
+      const { uniqueId, name, price } = req.body;
+
+      if (!uniqueId || !name || !price) {
+        return res.status(400).json({ message: "Invalid uniqueId, name, or price provided" });
       }
-      // await ProductService.createProduct(uniqueId, name, price, amount);
-      const product  = await Product.create({
-        uniqueId: uniqueId,
-        name: name,
-        price: price,
-        ammount: amount
-      });
-      await product.save();
-      return res.status(200).json({ message: "Product is added to db" });
+
+      // Call the ProductService to add or update the product
+      const result = await ProductService.addOrUpdateProduct(uniqueId, name, price);
+
+      if (result.updated) {
+        return res.status(200).json({ message: "Product updated successfully" });
+      } else {
+        return res.status(200).json({ message: "Product added successfully" });
+      }
     } catch (error) {
-      return res.status(404).json({message:"Could not create product in db"});
+      console.error("Error in addProduct:", error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
-  static async updateProduct(req: Request, res: Response) {}
-  static async removeProduct(req: Request, res: Response) {}
+
+  static async removeProduct(req: Request, res: Response) {
+    try {
+      const { uniqueId } = req.body;
+
+      if (!uniqueId) {
+        return res.status(400).json({ message: "Invalid uniqueId provided" });
+      }
+
+      const result = await ProductService.removeProduct(uniqueId);
+
+      if (result) {
+        return res.status(200).json({ message: "Product removed successfully" });
+      } else {
+        return res.status(404).json({ message: "Product not found" });
+      }
+    } catch (error) {
+      console.error("Error in removeProduct:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
 }
