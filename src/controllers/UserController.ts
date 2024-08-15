@@ -1,3 +1,4 @@
+import Logger from "../utils/logger";
 import { Request, Response } from "express";
 import UserService from "../services/user.service";
 import Transaction from "../models/transactions.schema";
@@ -8,13 +9,13 @@ import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import User from "../models/users.schema";
 
 dotenv.config();
-
 const token = process.env.TOKEN || "";
 const bot = new TelegramBot(token);
 
 class UserController {
   // Add bonuses
   static async addBonuses(req: Request, res: Response) {
+    Logger.start("addBonuses");
     try {
       const { phonenumber, sum, description, uniqueId } = req.body;
 
@@ -61,6 +62,7 @@ class UserController {
       console.error("Error adding bonuses:", error);
       res.status(500).json({ message: "Internal server error" });
     }
+    Logger.end("addBonuses");
   }
 
   // Remove Bonuses

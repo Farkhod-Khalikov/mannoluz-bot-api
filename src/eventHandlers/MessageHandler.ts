@@ -39,9 +39,6 @@ export default class MessageController {
         case "/start":
           await this.userHandler.handleStart(msg);
           break;
-        case "/userlanguage":
-          await this.userHandler.sendUserLanguage(chatId);
-          break;
         case i18n.t("purchase_request"):
           await this.userHandler.handlePurchaseRequest(chatId);
           break;
@@ -53,20 +50,13 @@ export default class MessageController {
           break;
         case "🇷🇺Русский":
         case "🇺🇸English":
-          // change if condition for checking whether user exists in db rather than by newUserLanguguages which is always true
           if (this.userHandler.newUserLanguages.has(chatId)) {
             await this.userHandler.handleLanguageSelection(
               chatId,
               msg.text,
               true
             );
-          } /*else {
-            await this.userHandler.handleLanguageSelection(
-              chatId,
-              msg.text,
-              false
-            );
-          }*/
+          } 
           break;
         case i18n.t("settings_button"):
           await this.userHandler.handleSettings(msg);
@@ -102,10 +92,6 @@ export default class MessageController {
             // Handle admin-specific messages for post creation
             await this.adminHandler.handleAdminPostData(chatId, msg.text);
           }
-        // } else {
-        //   this.bot.sendMessage(chatId, i18n.t("command_not_recognized"));
-        //   this.userHandler.sendMainMenu(chatId);
-        // }
       }
     } else if (msg.photo) {
       // Handle image uploads
@@ -190,7 +176,6 @@ export default class MessageController {
         }
       }
 
-      // Acknowledge the callback query to remove the "loading" state from the button
       await this.bot.answerCallbackQuery(callbackQuery.id);
     }
   }

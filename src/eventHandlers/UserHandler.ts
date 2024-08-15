@@ -1,4 +1,3 @@
-// ./src/evenHandlers/UserHandler
 import TelegramBot from "node-telegram-bot-api";
 import UserService from "../services/user.service";
 import i18n from "../utils/i18n";
@@ -10,14 +9,9 @@ export default class UserHandler {
   public newUserLanguages: Map<number, string>;
   private languageListeners: Map<number, (msg: TelegramBot.Message) => void>;
   private contactListeners: Map<number, (msg: TelegramBot.Message) => void>;
-  // private isRegistration: boolean;
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.newUserLanguages = new Map<number, string>();
-    // trying to colse double share_contact message
-    // this.isRegistration = false;
-
-    // tried to solve double message error
     this.languageListeners = new Map<
       number,
       (msg: TelegramBot.Message) => void
@@ -28,7 +22,6 @@ export default class UserHandler {
     >();
   }
 
-  // create setSystemLanguage and add to handleStart
 
   public async handleStart(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
@@ -37,7 +30,6 @@ export default class UserHandler {
     if (!isExisted) {
       await this.handleUserRegistration(chatId);
     } else {
-      // add setSystemLanguage to use language that is saved in user's document
       const user = await UserService.findUserByChatId(chatId);
       i18n.changeLanguage(user?.language);
       this.sendMainMenu(chatId);
@@ -92,7 +84,7 @@ export default class UserHandler {
     if (msg.contact) {
       const phoneNumber = msg.contact.phone_number.replace("+", "");
       const name =
-        msg.contact.first_name; /*+ " " + (msg.contact?.last_name || "")*/
+        msg.contact.first_name; 
 
       if (await UserService.findUserByPhoneNumber(phoneNumber)) {
         this.bot.sendMessage(chatId, i18n.t("user_already_exists"));
@@ -159,7 +151,6 @@ export default class UserHandler {
             user.language = languageCode;
             user.updatedAt = new Date();
             await user.save();
-            //this.bot.sendMessage(chatId, i18n.t("language_changed"));
           }
           this.sendMainMenu(chatId);
         }
@@ -177,7 +168,6 @@ export default class UserHandler {
       const balance = user.balance;
       const filePath = await generateCreditCard(user.phone, user.id);
 
-      // Fetch last 5 transactions
       const transactions = await UserService.getAllTransactions(user.id);
       const lastTransactions = transactions
         .sort(
@@ -212,15 +202,7 @@ export default class UserHandler {
       this.bot.sendMessage(chatId, i18n.t("user_not_found"));
     }
   }
-  // /send user's system languague
-  public async sendUserLanguage(chatId: number) {
-    const user = await UserService.findUserByChatId(chatId);
 
-    if (user) {
-      this.bot.sendMessage(chatId, user.language);
-    }
-    this.sendMainMenu(chatId);
-  }
 
   public async handleSettings(msg: TelegramBot.Message) {
     const settingsKeyboard = [
@@ -286,7 +268,6 @@ export default class UserHandler {
           one_time_keyboard: false,
         },
       });
-      // mainMenuKeyboard.push([{ text: i18n.t("send_post_button") }]);
     }
   }
 
@@ -339,14 +320,6 @@ export default class UserHandler {
         if (user) {
           const username = user.name;
           const phonenumber = user.phone;
-          // const hasRequest = await UserService.hasActiveRequests(phonenumber)
-          // if (hasRequest) {
-          //   this.bot.sendMessage(chatId, i18n.t("active_request_exist"));
-          //   this.sendMainMenu(chatId);
-          //   return;
-          // } else {
-          //   // save purchase Request to mongo
-          // }
           const purchaseRequest = await PurchaseRequest.create({
             username,
             phonenumber,
