@@ -189,8 +189,10 @@ class UserController {
       res.status(500).json({ message: "Internal server error" });
     }
   }
+
   static async removeTransaction(req: Request, res: Response) {
     const { uniqueId } = req.body;
+
     if (!uniqueId) {
       return res.status(400).json({ message: "uniqueId is required" });
     }
@@ -198,7 +200,7 @@ class UserController {
     try {
       // Find and delete the transaction
       const transaction = await Transaction.findOneAndDelete({
-        uniqueID: uniqueId,
+        uniqueId: uniqueId,
       });
 
       if (!transaction) {
