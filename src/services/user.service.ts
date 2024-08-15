@@ -1,4 +1,3 @@
-import Product, { IProduct } from "../models/products.schema";
 import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import Transaction from "../models/transactions.schema";
 import User, { IUser } from "../models/users.schema";
