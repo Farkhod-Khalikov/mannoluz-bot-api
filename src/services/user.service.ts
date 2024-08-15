@@ -115,7 +115,7 @@ export default class UserService {
       : false;
   }
 
-  public static async findTransactionByUniqueId(uniqueId: Object) {
+  public static async findTransactionByDocumentId(documentId: string) {
     // update this the get documentId and agentId
   }
 

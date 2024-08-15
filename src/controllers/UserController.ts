@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import i18n from "../utils/i18n";
 import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import User from "../models/users.schema";
+import TransactionService from "../services/transaction.service";
 
 dotenv.config();
 const token = process.env.TOKEN || "";
@@ -20,6 +21,9 @@ class UserController {
       const { phonenumber, sum, description, uniqueId } = req.body;
 
       if (!phonenumber || isNaN(sum) || !uniqueId) {
+        Logger.error("addBonuses", "Invalid arguments provided");
+        Logger.end("addBonuses");
+
         return res
           .status(400)
           .json({ message: "Invalid phonenumber, sum, or UniqueID provided" });
@@ -28,10 +32,21 @@ class UserController {
       // Find user by phoneNumber
       const user = await UserService.findUserByPhoneNumber(phonenumber);
       if (!user) {
+        Logger.error("addBonuses", "User not found");
+        Logger.end("addBonuses");
         return res.status(404).json({ message: "User not found" });
       }
+      // Find transaction by unique Id
+      const duplicated = await TransactionService.isDuplicated(uniqueId);
+      console.log(duplicated);
+      if (duplicated) {
+        Logger.error("addBonuses", "duplicated uniqueId");
+        Logger.end("addBonuses");
+        return res
+          .status(400)
+          .json({ message: "duplicated transaction id  error" });
+      }
 
-      // Create a new transaction
       const transaction = await Transaction.create({
         userId: user._id,
         phonenumber,
@@ -59,14 +74,16 @@ class UserController {
 
       res.json({ message: "Bonuses added", newBalance, uniqueId });
     } catch (error) {
+      
       console.error("Error adding bonuses:", error);
-      res.status(500).json({ message: "Internal server error" });
+      return res.status(500).json({ message: "Internal server error" });
     }
     Logger.end("addBonuses");
   }
 
   // Remove Bonuses
   static async removeBonuses(req: Request, res: Response) {
+    Logger.start("removeBonuses");
     try {
       const { phonenumber, sum, description, uniqueId } = req.body;
 
@@ -116,6 +133,7 @@ class UserController {
       console.error("Error removing bonuses:", error);
       res.status(500).json({ message: "Internal server error" });
     }
+    Logger.end("removeBonuses");
   }
 
   // Remove Admin
@@ -179,6 +197,7 @@ class UserController {
     try {
       await PurchaseRequest.findOneAndUpdate(
         { phonenumber: phonenumber, isActive: true },
+        //property to update
         { isActive: false }
       );
       await bot.sendMessage(user.chatId, i18n.t("request_status_update"));

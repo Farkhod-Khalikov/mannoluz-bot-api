@@ -1,7 +1,7 @@
 export default class Logger {
-  static error(action: string, message: string) {
+  static error(action: string, errorMessage: string) {
     console.error(
-      `[ERROR] [${new Date().toISOString()}] [${action}] ${message}`
+      `[ERROR] [${new Date().toISOString()}] [${action}] ${errorMessage}`
     );
   }
   static start(action: string, message: string = "") {
