@@ -264,9 +264,10 @@ export default class UserHandler {
     } else {
       const adminMenuKeyboard = [
         [
-          /*{ text: i18n.t("credit_card_button") },*/ {
+          {
             text: i18n.t("send_post_button"),
           },
+          { text: i18n.t("purchase_request") },
         ],
         [
           { text: i18n.t("btn_list_products") },
@@ -325,10 +326,7 @@ export default class UserHandler {
       isActive: true,
     });
     if (activeRequest) {
-      this.bot.sendMessage(
-        chatId,
-        i18n.t("active_request_exist")
-      );
+      this.bot.sendMessage(chatId, i18n.t("active_request_exist"));
       this.sendMainMenu(chatId);
       return;
     }
@@ -353,10 +351,9 @@ export default class UserHandler {
             username,
             phonenumber,
             comment,
-            createdAt: new Date(),
           });
           if (purchaseRequest) {
-            this.bot.sendMessage(chatId, "Your request has been saved!");
+            this.bot.sendMessage(chatId, i18n.t("request_saved"));
 
             // notify admins
             await this.notifyAdminsOfPurchaseRequest(

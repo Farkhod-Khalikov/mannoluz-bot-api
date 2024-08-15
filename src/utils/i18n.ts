@@ -5,6 +5,9 @@ i18next.init({
   resources: {
     "en-US": {
       translation: {
+        request_status_update:
+          "Your request status is updated to 'Not Active'. If admins didnt contact you, please repeat the request or contact  us through panel 'Contact Us'",
+        request_saved: "Your request is saved!",
         btn_list_requests: "Requests List",
         confirm_purchase_request:
           "Please, confirm if you want to leave a request.",
@@ -49,6 +52,8 @@ i18next.init({
         post_creation_cancelled: "❌Post NOT send.",
         btn_cancel_post_creation: "❌Cancel",
         language_changed: "✅Language's changed successfully.",
+        active_request_exist:
+          "You have active request! Please, wait until admins contact you. Sorry for the delay and inconvenience.",
         contact_us_information: `Our contacts:
 
 Tashkent: 100002, 
@@ -78,7 +83,12 @@ Thank you for choosing MANNOL!`,
     },
     "ru-RU": {
       translation: {
+        request_status_update:
+          "Статус вашей последнее заявки обновлен на не активный. Если с вами не связались пожалуйста оставьте заявку снова или свяжетесь с нами по предоставленным контактам через панель 'Связаться с нами'.",
+        request_saved: "Ваша заявка сохранена!",
         btn_list_requests: "Список Заявок",
+        active_request_exist:
+          "У вас уже есть активная заявка! Пожалуйста, дождитесь пока администраторы свяжутся с вам. Просим извинение за вынужденное ожидание.",
         prev: "⬅️пред",
         next: "след➡️",
         yes_sure: "Да, конечно",

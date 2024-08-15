@@ -179,10 +179,7 @@ class UserController {
         { phonenumber: phonenumber, isActive: true },
         { isActive: false }
       );
-      await bot.sendMessage(
-        user.chatId,
-        "Your request status is updated to Not Active."
-      );
+      await bot.sendMessage(user.chatId, i18n.t("request_status_update"));
       return res.status(200).json({ message: "The Request status is updated" });
     } catch (error) {
       console.error("Could not update requets status", error);

@@ -115,9 +115,10 @@ export default class UserService {
       : false;
   }
 
-  public static async findTransactionByUniqueId(uniqueId: string){
-
+  public static async findTransactionByUniqueId(uniqueId: Object) {
+    // update this the get documentId and agentId
   }
+
   static async updateUserAdminStatus(phonenumber: string, isAdmin: boolean) {
     try {
       const user = await this.findUserByPhoneNumber(phonenumber);
