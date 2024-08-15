@@ -22,6 +22,6 @@ export default class TransactionService {
   public static async isDuplicated(uniqueId: string) {
     const transaction = await this.findTransactionByUniqueId(uniqueId);
     if (!transaction) return false;
-    else true;
+    else return true;
   }
 }
