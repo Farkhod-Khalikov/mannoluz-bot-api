@@ -138,10 +138,17 @@ class UserController {
         );
       }
 
-      res.json({ error:false, message: "Bonuses removed", newBalance, agentId });
+      res.json({
+        error: false,
+        message: "Bonuses removed",
+        newBalance,
+        agentId,
+      });
     } catch (error) {
       console.error("Error removing bonuses:", error);
-      res.status(500).json({ message: "Internal server error. Unknow error occured" });
+      res
+        .status(500)
+        .json({ message: "Internal server error. Unknow error occured" });
     }
     Logger.end("removeBonuses");
   }
@@ -219,61 +226,74 @@ class UserController {
   }
 
   static async removeTransaction(req: Request, res: Response) {
-    const { uniqueId } = req.body;
+    const { documentId, agentId } = req.body;
 
-    if (!uniqueId) {
-      return res.status(400).json({ message: "uniqueId is required" });
+    if (!documentId) {
+      return res
+        .status(400)
+        .json({ error: true, message: "documentId is required" });
     }
 
     try {
-      // Find and delete the transaction
-      const transaction = await Transaction.findOneAndDelete({
-        uniqueId: uniqueId,
-      });
+      // Find all transactions with the provided documentId (and agentId if available)
+      const query = { documentId: documentId } as any;
+      if (agentId) query.agentId = agentId;
 
-      if (!transaction) {
-        return res.status(404).json({ message: "Transaction not found" });
+      const transactions = await Transaction.find(query);
+
+      if (transactions.length === 0) {
+        return res.status(404).json({ message: "No transactions found" });
       }
 
-      // Find the user associated with the transaction
-      const user = await User.findById(transaction.userId);
+      // Track user balances that need to be updated
+      const userBalances = new Map<string, number>();
 
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      } else {
-        // Update the user's balance based on the transaction
-        const bonuses = transaction.bonuses;
-
-        let currentBalance = user.balance || 0;
-        if (bonuses < 0) {
-          // Transaction removed bonuses, so we need to add them back
-          currentBalance += Math.abs(bonuses);
-          user.balance = currentBalance;
-          await bot.sendMessage(
-            user.chatId,
-            `Your transaction has been retrieved. Your balance is updated by ${Math.abs(
-              bonuses
-            )} bonuses.`
-          );
-        } else {
-          // Transaction added bonuses, so we need to remove them
-          currentBalance -= bonuses;
-          user.balance = currentBalance;
-          await bot.sendMessage(
-            user.chatId,
-            `Your transaction has been retrieved. ${bonuses} bonuses have been removed from your balance.`
-          );
+      for (const transaction of transactions) {
+        // Accumulate the total bonuses adjustment for each user
+        if (!userBalances.has(transaction.userId.toString())) {
+          userBalances.set(transaction.userId.toString(), 0);
         }
 
-        // Save the updated user balance
+        const currentAdjustment =
+          userBalances.get(transaction.userId.toString()) || 0;
+        userBalances.set(
+          transaction.userId.toString(),
+          currentAdjustment + transaction.bonuses
+        );
+      }
+
+      // Update each user's balance based on accumulated adjustments
+      for (const [userId, adjustment] of userBalances.entries()) {
+        const user = await User.findById(userId);
+
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        user.balance = (user.balance || 0) - adjustment;
         await user.save();
 
-        return res.status(200).json({
-          message: "Transaction is deleted and user's balance is updated",
-        });
+        // Notify the user
+        if (user.chatId) {
+          const adjustmentMessage =
+            adjustment < 0
+              ? `Your balance has been increased by ${Math.abs(
+                  adjustment
+                )} bonuses due to transaction deletion.`
+              : `Your balance has been decreased by ${adjustment} bonuses due to transaction deletion.`;
+
+          await bot.sendMessage(user.chatId, adjustmentMessage);
+        }
       }
+
+      // Delete all found transactions
+      await Transaction.deleteMany(query);
+
+      return res.status(200).json({
+        message: "Transactions deleted and users' balances updated",
+      });
     } catch (error) {
-      console.error("Could not delete transaction", error);
+      console.error("Could not delete transactions", error);
       return res.status(500).json({ message: "Internal server error" });
     }
   }
