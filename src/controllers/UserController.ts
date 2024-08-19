@@ -7,7 +7,6 @@ import dotenv from "dotenv";
 import i18n from "../utils/i18n";
 import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import User from "../models/users.schema";
-import TransactionService from "../services/transaction.service";
 
 dotenv.config();
 const token = process.env.TOKEN || "";
@@ -18,15 +17,13 @@ class UserController {
   static async addBonuses(req: Request, res: Response) {
     Logger.start("addBonuses");
     try {
-      const { phonenumber, sum, description, uniqueId } = req.body;
+      const { phonenumber, sum, description, documentId, agentId } = req.body;
 
-      if (!phonenumber || isNaN(sum) || !uniqueId) {
+      if (!phonenumber || isNaN(sum) || !documentId || !agentId) {
         Logger.error("addBonuses", "Invalid arguments provided");
         Logger.end("addBonuses");
 
-        return res
-          .status(400)
-          .json({ message: "Invalid phonenumber, sum, or UniqueID provided" });
+        return res.status(400).json({ message: "Invalid args provided" });
       }
 
       // Find user by phoneNumber
@@ -36,30 +33,23 @@ class UserController {
         Logger.end("addBonuses");
         return res.status(404).json({ message: "User not found" });
       }
-      // Find transaction by unique Id
-      const duplicated = await TransactionService.isDuplicated(uniqueId);
-      console.log(duplicated);
-      if (duplicated) {
-        Logger.error("addBonuses", "duplicated uniqueId");
-        Logger.end("addBonuses");
-        return res
-          .status(400)
-          .json({ message: "duplicated transaction id  error" });
-      }
 
       const transaction = await Transaction.create({
         userId: user._id,
-        phonenumber,
-        uniqueId: uniqueId,
+        documentId: documentId,
+        agentId: agentId,
         bonuses: sum,
-        description,
+        description: description,
       });
+      if (!transaction) {
+        console.error("Could not create transaction");
+        return res
+          .status(409)
+          .json({ error: true, message: "Could not create transaction" });
+      }
       await transaction.save();
 
-      // Update user's balance
-      // const uniqueId  =  // Use transaction ID as uniqueId
-      const newBalance = (user.balance || 0) + sum;
-      user.balance = newBalance;
+      user.balance += sum;
       await user.save();
 
       // Send a message to the User that their balance is updated
@@ -72,11 +62,17 @@ class UserController {
         );
       }
 
-      res.json({ message: "Bonuses added", newBalance, uniqueId });
+      res.json({
+        error: false,
+        message: "Bonuses added",
+        balance: user.balance,
+        agentId: agentId,
+      });
     } catch (error) {
-      
       console.error("Error adding bonuses:", error);
-      return res.status(500).json({ message: "Internal server error" });
+      return res
+        .status(500)
+        .json({ message: "Internal server error. Unknown Error Occured" });
     }
     Logger.end("addBonuses");
   }
@@ -85,32 +81,46 @@ class UserController {
   static async removeBonuses(req: Request, res: Response) {
     Logger.start("removeBonuses");
     try {
-      const { phonenumber, sum, description, uniqueId } = req.body;
+      const { phonenumber, sum, description, documentId, agentId } = req.body;
 
-      if (!phonenumber || isNaN(sum) || !uniqueId) {
+      if (!phonenumber || isNaN(sum) || !documentId || !agentId) {
         return res
           .status(400)
-          .json({ message: "Invalid phoneNumber, uniqueId or sum provided" });
+          .json({ error: true, message: "Invalid args provided" });
       }
 
       // Find user by phoneNumber
       const user = await UserService.findUserByPhoneNumber(phonenumber);
       if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        Logger.error("removeBonuses", "User not found");
+        return res.status(404).json({ error: true, message: "User not found" });
       }
 
       if ((user.balance || 0) < sum) {
-        return res.status(400).json({ message: "Not enough bonuses" });
+        Logger.error(
+          "removeBonuses",
+          "User has less bonuses than it required to remove"
+        );
+        return res
+          .status(400)
+          .json({ error: true, message: "Not enough bonuses" });
       }
 
       // Create a new transaction add method to user.service
       const transaction = await Transaction.create({
-        userId: user._id,
-        phonenumber,
-        uniqueId: uniqueId,
+        userId: user.id,
+        documentId: documentId,
+        agentId: agentId,
         bonuses: -sum,
-        description,
+        description: description,
       });
+
+      if (!transaction) {
+        Logger.error("removeBonuses", "Could not create transaction document");
+        return res
+          .status(500)
+          .json({ error: true, message: "Could not create transaction" });
+      }
       await transaction.save();
 
       // Update user's balance
@@ -128,10 +138,10 @@ class UserController {
         );
       }
 
-      res.json({ message: "Bonuses removed", newBalance });
+      res.json({ error:false, message: "Bonuses removed", newBalance, agentId });
     } catch (error) {
       console.error("Error removing bonuses:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Internal server error. Unknow error occured" });
     }
     Logger.end("removeBonuses");
   }

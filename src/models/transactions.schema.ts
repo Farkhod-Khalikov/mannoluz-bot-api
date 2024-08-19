@@ -2,8 +2,8 @@
 import { Document, Model, model, Schema } from "mongoose";
 
 export interface ITransaction extends Document {
-  // documentId: string;
-  uniqueId: string;
+  documentId: string;
+  agentId: string;
   userId: string;
   bonuses: number;
   createdAt?: Date;
@@ -13,9 +13,8 @@ export interface ITransaction extends Document {
 
 const transactionSchema = new Schema<ITransaction>(
   {
-    // documentId: (uniqueId for all transactions of specific user),
-    // agentId (uniqueId for every transaction)
-    uniqueId: { type: String, required: true, unique: true },
+    documentId: { type: String, required: true },
+    agentId: { type: String, required: true },
     userId: { type: String, required: true },
     bonuses: { type: Number, required: true },
     description: { type: String, required: false },
