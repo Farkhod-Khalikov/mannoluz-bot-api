@@ -4,14 +4,14 @@ import ProductService from "../services/product.service";
 export default class ProductController {
   static async addProduct(req: Request, res: Response) {
     try {
-      const { uniqueId, name, price } = req.body;
+      const { uniqueId, name, price, date } = req.body;
 
       if (!uniqueId || !name || !price) {
-        return res.status(400).json({ message: "Invalid uniqueId, name, or price provided" });
+        return res.status(400).json({ message: "Invalid args" });
       }
 
       // Call the ProductService to add or update the product
-      const result = await ProductService.addOrUpdateProduct(uniqueId, name, price);
+      const result = await ProductService.addOrUpdateProduct(uniqueId, name, price, date);
 
       if (result.updated) {
         return res.status(200).json({ message: "Product updated successfully" });

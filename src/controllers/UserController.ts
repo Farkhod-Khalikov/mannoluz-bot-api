@@ -35,7 +35,7 @@ class UserController {
       }
 
       const transaction = await Transaction.create({
-        userId: user._id,
+        userId: user.id,
         documentId: documentId,
         agentId: agentId,
         bonuses: sum,

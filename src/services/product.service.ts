@@ -14,7 +14,8 @@ export default class ProductService {
   static async addOrUpdateProduct(
     uniqueId: string,
     name: string,
-    price: number
+    price: number,
+    date?: string
   ) {
     try {
       // Check if the product already exists
@@ -24,11 +25,12 @@ export default class ProductService {
         // If the product exists, update it
         existingProduct.name = name;
         existingProduct.price = price;
+        existingProduct.date = date || "";
         await existingProduct.save();
         return { updated: true };
       } else {
         // If the product doesn't exist, create a new one
-        const newProduct = new Product({ uniqueId, name, price });
+        const newProduct = new Product({ uniqueId, name, price, date });
         await newProduct.save();
         return { updated: false };
       }
