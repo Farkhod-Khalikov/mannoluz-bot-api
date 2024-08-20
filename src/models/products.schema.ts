@@ -14,7 +14,7 @@ const productSchema = new Schema<IProduct>(
     uniqueId: { type: String, required: true, unique: true },
     name: { type: String, required: true },
     price: { type: Number, required: true },
-    date: { type: String },
+    date: { type: String, default: "" },
   },
   {
     timestamps: true,

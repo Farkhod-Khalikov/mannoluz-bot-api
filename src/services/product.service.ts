@@ -1,20 +1,18 @@
 import { ProgramUpdateLevel } from "typescript";
 import Product, { IProduct } from "../models/products.schema";
-import { PurchaseRequest } from "../models/purchaseRequests.schema";
-import Transaction from "../models/transactions.schema";
-import User, { IUser } from "../models/users.schema";
+import Logger from "../utils/logger";
 
 export default class ProductService {
   // findProductByUniqueID: string
-  public static async findProductByUniqued(
+  public static async findProductByUniqueId(
     uniqueID: string
   ): Promise<IProduct | null> {
-    return User.findOne({ uniqueID });
+    return Product.findOne({ uniqueID });
   }
   static async addOrUpdateProduct(
     uniqueId: string,
-    name: string,
-    price: number,
+    name?: string,
+    price?: number,
     date?: string
   ) {
     try {
@@ -23,16 +21,20 @@ export default class ProductService {
 
       if (existingProduct) {
         // If the product exists, update it
-        existingProduct.name = name;
-        existingProduct.price = price;
+        if (name) existingProduct.name = name;
+        if (price) existingProduct.price = price;
         existingProduct.date = date || "";
         await existingProduct.save();
-        return { updated: true };
+        return { isNewProduct: false, existingProduct };
       } else {
         // If the product doesn't exist, create a new one
-        const newProduct = new Product({ uniqueId, name, price, date });
-        await newProduct.save();
-        return { updated: false };
+        const newProduct = await new Product({
+          uniqueId,
+          name,
+          price,
+          date,
+        }).save();
+        return { isNewProduct: true, newProduct };
       }
     } catch (error) {
       console.error("Error in addOrUpdateProduct:", error);
@@ -40,10 +42,10 @@ export default class ProductService {
     }
   }
 
-  static async removeProduct(uniqueId: string) {
+  static async deleteProduct(uniqueId: string) {
     try {
       const result = await Product.findOneAndDelete({ uniqueId });
-      return result ? true : false;
+      return !!result;
     } catch (error) {
       console.error("Error in removeProduct:", error);
       throw new Error("Error in removeProduct");

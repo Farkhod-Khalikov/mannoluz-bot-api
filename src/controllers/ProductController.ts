@@ -1,46 +1,79 @@
 import { Request, Response } from "express";
 import ProductService from "../services/product.service";
+import Logger from "../utils/logger";
 
 export default class ProductController {
   static async addProduct(req: Request, res: Response) {
+    Logger.start("addProduct", "Adding product...");
     try {
       const { uniqueId, name, price, date } = req.body;
 
-      if (!uniqueId || !name || !price) {
-        return res.status(400).json({ message: "Invalid args" });
+      if (!uniqueId || (!name && !price)) {
+        Logger.error(
+          "addProduct",
+          "Could not add product due to invalid req.body arguments"
+        );
+        return res.status(400).json({
+          error: true,
+          message: "Invalid args. uniqueId, name and price are required.",
+        });
       }
 
       // Call the ProductService to add or update the product
-      const result = await ProductService.addOrUpdateProduct(uniqueId, name, price, date);
+      const result = await ProductService.addOrUpdateProduct(
+        uniqueId,
+        name,
+        price,
+        date
+      );
 
-      if (result.updated) {
-        return res.status(200).json({ message: "Product updated successfully" });
+      if (result.isNewProduct) {
+        Logger.end("addProduct");
+        return res.status(200).json({
+          error: false,
+          message: "Product added successfully",
+          result,
+        });
       } else {
-        return res.status(200).json({ message: "Product added successfully" });
+        Logger.end("addProduct");
+        return res.status(200).json({
+          error: false,
+          message: "Product updated successfully",
+          result,
+        });
       }
+
     } catch (error) {
-      console.error("Error in addProduct:", error);
+      Logger.error("addProduct", "Unknown Error");
       return res.status(500).json({ message: "Internal server error" });
     }
   }
 
   static async removeProduct(req: Request, res: Response) {
+    Logger.start("removeProduct");
     try {
       const { uniqueId } = req.body;
 
       if (!uniqueId) {
-        return res.status(400).json({ message: "Invalid uniqueId provided" });
+        Logger.error("removeProduct", "uniqueId is not provided in req.body");
+        return res
+          .status(400)
+          .json({ error: true, message: "Invalid uniqueId provided" });
       }
 
-      const result = await ProductService.removeProduct(uniqueId);
+      const result = await ProductService.deleteProduct(uniqueId);
 
-      if (result) {
-        return res.status(200).json({ message: "Product removed successfully" });
+      if (!result) {
+        Logger.error("removeProduct", "Product NOT Found");
+        res.status(404).json({ error: true, message: "Product NOT Found" });
       } else {
-        return res.status(404).json({ message: "Product not found" });
+        Logger.end("removeProduct", "Product removed successfully");
+        return res
+          .status(200)
+          .json({ error: false, message: "Product removed successfully" });
       }
     } catch (error) {
-      console.error("Error in removeProduct:", error);
+      Logger.error("removeProduct", "Unknown Error Appeared");
       return res.status(500).json({ message: "Internal server error" });
     }
   }

@@ -70,9 +70,14 @@ class UserController {
       });
     } catch (error) {
       console.error("Error adding bonuses:", error);
-      return res
-        .status(500)
-        .json({ message: "Internal server error. Unknown Error Occured" });
+      if (error instanceof Error) {
+        return res.status(500).json({ error: true, message: error.message });
+      } else {
+        return res.status(500).json({
+          error: true,
+          message: "Internal Server Error. Error is unkown",
+        });
+      }
     }
     Logger.end("addBonuses");
   }
@@ -86,7 +91,11 @@ class UserController {
       if (!phonenumber || isNaN(sum) || !documentId || !agentId) {
         return res
           .status(400)
-          .json({ error: true, message: "Invalid args provided" });
+          .json({
+            error: true,
+            message:
+              "Invalid args provided. phonenumber, sum, documentId, and agentId are required.",
+          });
       }
 
       // Find user by phoneNumber
@@ -138,7 +147,8 @@ class UserController {
         );
       }
 
-      res.json({
+      Logger.end("removeBonuses");
+      return res.status(200).json({
         error: false,
         message: "Bonuses removed",
         newBalance,
@@ -150,7 +160,6 @@ class UserController {
         .status(500)
         .json({ message: "Internal server error. Unknow error occured" });
     }
-    Logger.end("removeBonuses");
   }
 
   // Remove Admin
