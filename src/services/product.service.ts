@@ -1,6 +1,4 @@
-import { ProgramUpdateLevel } from "typescript";
 import Product, { IProduct } from "../models/products.schema";
-import Logger from "../utils/logger";
 
 export default class ProductService {
   // findProductByUniqueID: string
