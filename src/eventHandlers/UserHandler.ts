@@ -86,7 +86,7 @@ export default class UserHandler {
       const name =
         msg.contact.first_name; 
 
-      if (await UserService.findUserByPhoneNumber(phoneNumber)) {
+      if (await UserService.findUserByphoneNumber(phoneNumber)) {
         this.bot.sendMessage(chatId, i18n.t("user_already_exists"));
       } else {
         const language = this.newUserLanguages.get(chatId) || i18n.language;
@@ -303,7 +303,7 @@ export default class UserHandler {
   public async handleConfirmPurchaseRequest(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
     const activeRequest = await PurchaseRequest.findOne({
-      phonenumber: user?.phone,
+      phoneNumber: user?.phone,
       isActive: true,
     });
     if (activeRequest) {
@@ -319,10 +319,10 @@ export default class UserHandler {
 
         if (user) {
           const username = user.name;
-          const phonenumber = user.phone;
+          const phoneNumber = user.phone;
           const purchaseRequest = await PurchaseRequest.create({
             username,
-            phonenumber,
+            phoneNumber,
             comment,
           });
           if (purchaseRequest) {
@@ -331,7 +331,7 @@ export default class UserHandler {
             // notify admins
             await this.notifyAdminsOfPurchaseRequest(
               username,
-              phonenumber,
+              phoneNumber,
               comment
             );
             this.bot.removeListener("message", commentListener);

@@ -9,6 +9,7 @@ import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import User from "../models/users.schema";
 
 dotenv.config();
+// Possible server dropping issue is that I am declaring 2nd TelegramBot instance which possibly might end in looping
 const token = process.env.TOKEN || "";
 const bot = new TelegramBot(token);
 
@@ -17,9 +18,9 @@ class UserController {
   static async addBonuses(req: Request, res: Response) {
     Logger.start("addBonuses");
     try {
-      const { phonenumber, sum, description, documentId, agentId } = req.body;
+      const { phoneNumber, sum, description, documentId, agentId } = req.body;
 
-      if (!phonenumber || isNaN(sum) || !documentId || !agentId) {
+      if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
         Logger.error("addBonuses", "Invalid arguments provided");
 
         return res
@@ -28,13 +29,13 @@ class UserController {
       }
 
       // Find user by phoneNumber
-      const user = await UserService.findUserByPhoneNumber(phonenumber);
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
 
       if (!user) {
         Logger.error("addBonuses", "User not found");
         return res.status(404).json({ error: true, message: "User not found" });
       }
-
+      // Create TransactionSevice.createTransaction
       const transaction = await Transaction.create({
         userId: user.id,
         documentId: documentId,
@@ -91,23 +92,26 @@ class UserController {
   static async removeBonuses(req: Request, res: Response) {
     Logger.start("removeBonuses");
     try {
-      const { phonenumber, sum, description, documentId, agentId } = req.body;
+      const { phoneNumber, sum, description, documentId, agentId } = req.body;
 
-      if (!phonenumber || isNaN(sum) || !documentId || !agentId) {
+      if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
         return res.status(400).json({
           error: true,
           message:
-            "Invalid args provided. phonenumber, sum, documentId, and agentId are required.",
+            "Invalid args provided. phoneNumber, sum, documentId, and agentId are required.",
         });
       }
 
       // Find user by phoneNumber
-      const user = await UserService.findUserByPhoneNumber(phonenumber);
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
+
+      // If user not found return error
       if (!user) {
         Logger.error("removeBonuses", "User not found");
         return res.status(404).json({ error: true, message: "User not found" });
       }
 
+      // If user doesnt have enough bonuses return error
       if ((user.balance || 0) < sum) {
         Logger.error(
           "removeBonuses",
@@ -120,15 +124,16 @@ class UserController {
         });
       }
 
-      // Create a new transaction add method to user.service
+      //TransactionService.createTransaction method to accomplish
       const transaction = await Transaction.create({
-        userId: user.id,
+        userId: user.id, //Mongo's ObjectId
         documentId: documentId,
         agentId: agentId,
         bonuses: -sum,
         description: description,
       });
 
+      // If transaction was not created return error
       if (!transaction) {
         Logger.error("removeBonuses", "Could not create transaction document");
         return res
@@ -136,11 +141,13 @@ class UserController {
           .json({ error: true, message: "Could not create transaction" });
       }
 
+      //Save transaction document
       await transaction.save();
 
       // Update user balance
       if (user.balance && user.balance > 0) {
         user.balance -= sum;
+        // Save user with updated balance
         await user.save();
       }
 
@@ -148,6 +155,8 @@ class UserController {
       if (user.chatId) {
         await bot.sendMessage(
           user.chatId,
+          // Removal | [sum] Coins
+          // Description:
           `${i18n.t("bonuses_removal")}: ${sum} ${i18n.t("coins")}\n${i18n.t(
             "description"
           )}: ${description}`
@@ -156,22 +165,27 @@ class UserController {
 
       Logger.end("removeBonuses");
       const newBalance = user.balance;
+
+      // response OK with updated user's balanace
       return res.status(200).json({
         error: false,
         message: "Bonuses removed",
         newBalance,
         agentId,
       });
+      // Catch any unhandled error
     } catch (error) {
       Logger.error(
         "removeBonuses",
         "Unhandled Error occured while removing bonuses"
       );
+      // If error of type "ERROR" then return error itself
       if (error instanceof Error) {
         res.status(500).json({
           error: true,
           message: error.message,
         });
+        // Otherwise return Unknown Error
       } else {
         res.status(500).json({
           error: true,
@@ -184,25 +198,31 @@ class UserController {
   // Remove Admin
   static async removeAdmin(req: Request, res: Response) {
     Logger.start("removeAdmin");
+
     try {
-      const { phonenumber } = req.body;
-      if (!phonenumber) {
+      const { phoneNumber } = req.body;
+
+      //If phoneNumber is not provided return error
+      if (!phoneNumber) {
         Logger.error("removeAdmin", "Phone is required");
         return res
           .status(400)
           .json({ error: true, message: "Phone is required" });
       }
 
-      const user = await UserService.findUserByPhoneNumber(phonenumber);
+      // Find user via phoneNumber
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
 
+      //If user not found return error
       if (!user) {
         Logger.error("removeAdmin", "User not found");
         return res.status(404).json({ error: true, message: "user not found" });
       }
 
+      // init vars
       const username = user.name;
-      const isAdmin = user.isAdmin;
 
+      // if User is not an admin no need to update isAdmin status
       if (!user.isAdmin) {
         Logger.warn(
           "removeAdmin",
@@ -213,22 +233,29 @@ class UserController {
           error: false,
           message: "Status is not updated since user is not an admin",
           username,
-          isAdmin,
+          isAdmin: false,
         });
       } else {
-        await UserService.updateUserAdminStatus(phonenumber, false);
+        // update isAdmin status -> false
+        await UserService.updateUserAdminStatus(phoneNumber, false);
+
+        // Send Message to restart bot
         await bot.sendMessage(
           user.chatId,
           i18n.t("admin_removed_notification")
         );
+
         Logger.end("removeAdmin");
+
+        // return status OK since isAdmin status is updated
         return res.status(200).json({
           error: false,
           message: "User admin has been removed",
           username,
-          isAdmin,
+          isAdmin: false,
         });
       }
+      // Update this code to return the ERROR itself
     } catch (error) {
       Logger.error("removeAdmin", "Error occured while removing admin");
       console.error("ERROR: \n", error);
@@ -239,53 +266,71 @@ class UserController {
   // Add Admin
   static async addAdmin(req: Request, res: Response) {
     Logger.start("addAdmin");
+
     try {
-      const { phonenumber } = req.body;
-      if (!phonenumber) {
+      const { phoneNumber } = req.body;
+
+      if (!phoneNumber) {
         Logger.error("addAdmin", "Phone number is required");
+
         return res
           .status(400)
           .json({ error: true, message: "Phone number is required" });
       }
-      const user = await UserService.findUserByPhoneNumber(phonenumber);
+      // find user
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
 
+      // if user not found return status 404
       if (!user) {
         Logger.error("addAdmin", "User not found");
         return res.status(404).json({ message: "user not found" });
       }
-      const username = user.name;
-      const isAdmin = user.isAdmin;
 
-      if (isAdmin) {
+      // init vars
+      const username = user.name;
+
+      // User is already an admin
+      if (user.isAdmin) {
+        // Log actoins
         Logger.warn(
           "addAdmin",
           "Tried to add admin privileges to the user who is already admin"
         );
         Logger.end("addAdmin");
+
+        // Return status OK since user is already an admin
         return res.status(200).json({
           error: false,
           message: "User is already an admin",
           username,
-          isAdmin,
+          isAdmin: true,
         });
+
+        // Update user status and return status OK
       } else {
-        await UserService.updateUserAdminStatus(phonenumber, true);
+        await UserService.updateUserAdminStatus(phoneNumber, true);
         Logger.end("addAdmin");
-        res.json({
-          error: false,
-          message: "User granted admin privileges",
-          username,
-          isAdmin,
-        });
+
+        // Notify to restart bot
         await bot.sendMessage(
           user.chatId,
           i18n.t("admin_granted_notification")
         );
+
+        // return status OK when isAdin is updated to true
+        return res.status(200).json({
+          error: false,
+          message: "User granted admin privileges",
+          username,
+          isAdmin: true,
+        });
       }
+      // catch the unhadlned error during the code
     } catch (error) {
+      // if error of type ERROR return the error itself
       if (error instanceof Error) {
         Logger.error("addAdmin", "Could not admin status for the user");
-        res.status(500).json({ error: true, message: error.message });
+        return res.status(500).json({ error: true, message: error.message });
       } else {
         Logger.error(
           "addAdmin",
@@ -302,9 +347,9 @@ class UserController {
   static async updateRequestStatus(req: Request, res: Response) {
     Logger.start("updateRequestStatus");
     try {
-      const { phonenumber } = req.body;
-      const user = await UserService.findUserByPhoneNumber(phonenumber);
-      if (!phonenumber) {
+      const { phoneNumber } = req.body;
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      if (!phoneNumber) {
         Logger.error(
           "updateRequestStatus",
           "phonenumbe is required to update request status"
@@ -318,7 +363,7 @@ class UserController {
         return res.status(400).json({ error: true, message: "User not found" });
       }
       const purchaseRequest = await PurchaseRequest.findOneAndUpdate(
-        { phonenumber: phonenumber, isActive: true },
+        { phoneNumber: phoneNumber, isActive: true },
         //property to update
         { isActive: false }
       );

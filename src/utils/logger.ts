@@ -14,5 +14,9 @@ export default class Logger {
       `[END] [${new Date().toISOString()}] [${action}] Action ended\n[MESSAGE] ${message}.`
     );
   }
-  static warn(action: string, message: string = "") {}
+  static warn(action: string, message: string = "") {
+    console.warn(
+      `[WARN] [${new Date().toISOString()}] [${action}] Action warning\n[MESSAGE] ${message}.`
+    );
+  }
 }

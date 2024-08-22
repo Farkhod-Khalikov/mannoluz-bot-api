@@ -13,7 +13,7 @@ const TEMP_DIR = path.join(__dirname, '../temp/credit-cards'); // Adjust the pat
 export const generateQRCodeText = (
   phoneNumber: string
 ): string => {
-  return `PhoneNumber: ${phoneNumber}`; // Example text; adjust as needed
+  return `phoneNumber: ${phoneNumber}`; // Example text; adjust as needed
 };
 
 const generateBarcodeImage = async (text: string): Promise<Buffer> => {

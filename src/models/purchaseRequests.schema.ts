@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from "mongoose";
 
 export interface IPurchaseRequest extends Document {
   username: string;
-  phonenumber: number;
+  phoneNumber: number;
   comment: string;
   createdAt: Date; // update using timestampts P.S: updatedAt required if you are goint to update isActive
   updatedAt: Date;
@@ -12,7 +12,7 @@ export interface IPurchaseRequest extends Document {
 const PurchaseRequestSchema: Schema = new Schema(
   {
     username: { type: String, required: true },
-    phonenumber: { type: Number, required: true },
+    phoneNumber: { type: Number, required: true },
     comment: { type: String, required: true },
     isActive: { type: Boolean, default: true },
   },

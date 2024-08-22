@@ -7,7 +7,7 @@ export default class UserService {
     return User.findOne({ chatId });
   }
 
-  public static async findUserByPhoneNumber(
+  public static async findUserByphoneNumber(
     phoneNumber: string
   ): Promise<IUser | null> {
     return User.findOne({ phone: phoneNumber });
@@ -108,8 +108,8 @@ export default class UserService {
   }
 
   // use it to check before sending a new request
-  public static async hasActiveRequests(phonenumber: string) {
-    return (await Transaction.find({ isActive: true, phone: phonenumber }))
+  public static async hasActiveRequests(phoneNumber: string) {
+    return (await Transaction.find({ isActive: true, phone: phoneNumber }))
       ? true
       : false;
   }
@@ -118,9 +118,9 @@ export default class UserService {
     // update this the get documentId and agentId
   }
 
-  static async updateUserAdminStatus(phonenumber: string, isAdmin: boolean) {
+  static async updateUserAdminStatus(phoneNumber: string, isAdmin: boolean) {
     try {
-      const user = await this.findUserByPhoneNumber(phonenumber);
+      const user = await this.findUserByphoneNumber(phoneNumber);
       if (!user) {
         throw new Error("User not found");
       }

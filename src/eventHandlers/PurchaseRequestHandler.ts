@@ -43,7 +43,7 @@ export default class PurchaseRequestHandler {
       .map(
         (request: any) =>
           `*Request by:* ${request.username}\n*Phone:* ${
-            request.phonenumber
+            request.phoneNumber
           }\n*Comment:* ${request.comment}\n*Active:* ${
             request.isActive ? "Yes" : "No"
           }\n*Date:* ${request.createdAt.toLocaleDateString()}`
