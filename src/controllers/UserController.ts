@@ -3,19 +3,26 @@ import { Request, Response } from "express";
 import UserService from "../services/user.service";
 import Transaction from "../models/transactions.schema";
 import TelegramBot from "node-telegram-bot-api";
-import dotenv from "dotenv";
+// import * as dotenv from "dotenv";
 import i18n from "../utils/i18n";
 import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import User from "../models/users.schema";
 
-dotenv.config();
-// Possible server dropping issue is that I am declaring 2nd TelegramBot instance which possibly might end in looping
-const token = process.env.TOKEN || "";
-const bot = new TelegramBot(token);
+// import bot from "../bot";
+
+// dotenv.config();
+
+// // Possible server dropping issue is that I am declaring 2nd TelegramBot instance which possibly might end in looping
+// const token = process.env.TOKEN || "";
+// const bot = new TelegramBot(token);
 
 class UserController {
+  private bot: TelegramBot;
+  constructor(bot: TelegramBot) {
+    this.bot = bot;
+  }
   // Add bonuses
-  static async addBonuses(req: Request, res: Response) {
+  async addBonuses(req: Request, res: Response) {
     Logger.start("addBonuses");
     try {
       const { phoneNumber, sum, description, documentId, agentId } = req.body;
@@ -31,10 +38,12 @@ class UserController {
       // Find user by phoneNumber
       const user = await UserService.findUserByphoneNumber(phoneNumber);
 
+      // if user not found return error
       if (!user) {
         Logger.error("addBonuses", "User not found");
         return res.status(404).json({ error: true, message: "User not found" });
       }
+
       // Create TransactionSevice.createTransaction
       const transaction = await Transaction.create({
         userId: user.id,
@@ -58,7 +67,7 @@ class UserController {
 
       // Send a message to the User that their balance is updated
       if (user.chatId) {
-        await bot.sendMessage(
+        await this.bot.sendMessage(
           user.chatId,
           `${i18n.t("bonuses_addition")}: ${sum} ${i18n.t("coins")}\n${i18n.t(
             "description"
@@ -78,7 +87,7 @@ class UserController {
         "Could not add bonuses due to unhanlded error"
       );
       if (error instanceof Error) {
-        return res.status(500).json({ error: true, message: error.message });
+        return res.json({ error: true, message: error.message });
       } else {
         return res.status(500).json({
           error: true,
@@ -89,7 +98,7 @@ class UserController {
   }
 
   // Remove Bonuses
-  static async removeBonuses(req: Request, res: Response) {
+  async removeBonuses(req: Request, res: Response) {
     Logger.start("removeBonuses");
     try {
       const { phoneNumber, sum, description, documentId, agentId } = req.body;
@@ -153,7 +162,7 @@ class UserController {
 
       // Send a message to the User that their balance is updated
       if (user.chatId) {
-        await bot.sendMessage(
+        await this.bot.sendMessage(
           user.chatId,
           // Removal | [sum] Coins
           // Description:
@@ -196,7 +205,7 @@ class UserController {
   }
 
   // Remove Admin
-  static async removeAdmin(req: Request, res: Response) {
+  async removeAdmin(req: Request, res: Response) {
     Logger.start("removeAdmin");
 
     try {
@@ -240,7 +249,7 @@ class UserController {
         await UserService.updateUserAdminStatus(phoneNumber, false);
 
         // Send Message to restart bot
-        await bot.sendMessage(
+        await this.bot.sendMessage(
           user.chatId,
           i18n.t("admin_removed_notification")
         );
@@ -264,7 +273,7 @@ class UserController {
   }
 
   // Add Admin
-  static async addAdmin(req: Request, res: Response) {
+  async addAdmin(req: Request, res: Response) {
     Logger.start("addAdmin");
 
     try {
@@ -312,7 +321,7 @@ class UserController {
         Logger.end("addAdmin");
 
         // Notify to restart bot
-        await bot.sendMessage(
+        await this.bot.sendMessage(
           user.chatId,
           i18n.t("admin_granted_notification")
         );
@@ -344,7 +353,7 @@ class UserController {
   }
 
   //Update isActive Request
-  static async updateRequestStatus(req: Request, res: Response) {
+  async updateRequestStatus(req: Request, res: Response) {
     Logger.start("updateRequestStatus");
     try {
       const { phoneNumber } = req.body;
@@ -388,7 +397,7 @@ class UserController {
           isActive,
         });
       }
-      await bot.sendMessage(user.chatId, i18n.t("request_status_update"));
+      await this.bot.sendMessage(user.chatId, i18n.t("request_status_update"));
       Logger.end("updatePurchaseRequeset");
       return res.status(200).json({
         error: false,
@@ -410,7 +419,7 @@ class UserController {
     }
   }
 
-  static async removeTransaction(req: Request, res: Response) {
+  async removeTransaction(req: Request, res: Response) {
     Logger.start("removeTransaction");
     try {
       const { documentId, agentId } = req.body;
@@ -475,7 +484,7 @@ class UserController {
                 )} bonuses due to transaction deletion.`
               : `Your balance has been decreased by ${adjustment} bonuses due to transaction deletion.`;
 
-          await bot.sendMessage(user.chatId, adjustmentMessage);
+          await this.bot.sendMessage(user.chatId, adjustmentMessage);
         }
       }
 

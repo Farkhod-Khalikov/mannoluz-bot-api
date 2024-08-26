@@ -1,20 +1,22 @@
-import { Router } from "express";
-import UserController from "../controllers/UserController";
+// import { Router } from "express";
+// import UserController from "../controllers/UserController";
+// import bot from "../bot";
 
-const userRouter = Router();
+// const userController = new UserController(bot)
+// const userRouter = Router();
 
-// balance
-userRouter.post("/balance/add", UserController.addBonuses);
-userRouter.post("/balance/remove", UserController.removeBonuses);
+// // balance
+// userRouter.post("/balance/add", userController.addBonuses);
+// userRouter.post("/balance/remove", userController.removeBonuses);
 
-// admin-privileges
-userRouter.post("/admin-privileges/add", UserController.addAdmin);
-userRouter.post("/admin-privileges/remove", UserController.removeAdmin);
+// // admin-privileges
+// userRouter.post("/admin-privileges/add", userController.addAdmin);
+// userRouter.post("/admin-privileges/remove", userController.removeAdmin);
 
-// transactions
-userRouter.post("/transactions/remove", UserController.removeTransaction);
+// // transactions
+// userRouter.post("/transactions/remove", userController.removeTransaction);
 
-// purchase requests
-userRouter.post("/purchase-requests/update", UserController.updateRequestStatus);
+// // purchase requests
+// userRouter.post("/purchase-requests/update", userController.updateRequestStatus);
 
-export default userRouter;
+// export default userRouter;

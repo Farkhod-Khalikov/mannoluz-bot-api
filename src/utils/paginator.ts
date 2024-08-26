@@ -5,7 +5,7 @@ export default class Paginator<T> {
   private items: T[];
   private itemsPerPage: number;
   private currentPageMap: Map<number, number> = new Map();
-  
+
   constructor(items: T[], itemsPerPage: number = 5) {
     this.items = items;
     this.itemsPerPage = itemsPerPage;
@@ -29,7 +29,10 @@ export default class Paginator<T> {
     return this.items.slice(startIndex, startIndex + this.itemsPerPage);
   }
 
-  public getPaginationButtons(chatId: number, baseCallbackData: string): TelegramBot.InlineKeyboardButton[][] {
+  public getPaginationButtons(
+    chatId: number,
+    baseCallbackData: string
+  ): TelegramBot.InlineKeyboardButton[][] {
     const currentPage = this.getCurrentPage(chatId);
     const totalPages = this.getTotalPages();
     const numPagesToShow = 3; // Number of page buttons to display in each division
@@ -38,12 +41,18 @@ export default class Paginator<T> {
       1,
       Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
     );
-    const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
+    const endDivision = Math.min(
+      totalPages,
+      startDivision + numPagesToShow - 1
+    );
 
     const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
 
     if (startDivision > 1) {
-      paginationButtons.push({ text: "...", callback_data: `${baseCallbackData}_ellipsis` });
+      paginationButtons.push({
+        text: "...",
+        callback_data: `${baseCallbackData}_ellipsis`,
+      });
     }
 
     for (let i = startDivision; i <= endDivision; i++) {
@@ -54,15 +63,24 @@ export default class Paginator<T> {
     }
 
     if (endDivision < totalPages) {
-      paginationButtons.push({ text: "...", callback_data: `${baseCallbackData}_ellipsis` });
+      paginationButtons.push({
+        text: "...",
+        callback_data: `${baseCallbackData}_ellipsis`,
+      });
     }
 
     const navButtons: TelegramBot.InlineKeyboardButton[] = [];
     if (currentPage > 1) {
-      navButtons.push({ text: i18n.t("prev"), callback_data: `${baseCallbackData}_previous` });
+      navButtons.push({
+        text: i18n.t("prev"),
+        callback_data: `${baseCallbackData}_previous`,
+      });
     }
     if (currentPage < totalPages) {
-      navButtons.push({ text: i18n.t("next"), callback_data: `${baseCallbackData}_next` });
+      navButtons.push({
+        text: i18n.t("next"),
+        callback_data: `${baseCallbackData}_next`,
+      });
     }
 
     const keyboard: TelegramBot.InlineKeyboardButton[][] = [];

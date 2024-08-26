@@ -1,12 +1,6 @@
-//./src/db.ts
 import mongoose from "mongoose";
-import dotenv from "dotenv";
 
-dotenv.config();
-
-const conn = process.env.MONGO || "";
-
-export async function initDB() {
+export async function initDB(conn: string) {
   await mongoose
     .connect(conn)
     .then(() => console.log("[SUCCESS] DB is connected."))

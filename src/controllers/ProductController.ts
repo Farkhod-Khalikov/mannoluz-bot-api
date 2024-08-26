@@ -1,9 +1,14 @@
 import { Request, Response } from "express";
 import ProductService from "../services/product.service";
 import Logger from "../utils/logger";
+import TelegramBot from "node-telegram-bot-api";
 
 export default class ProductController {
-  static async addProduct(req: Request, res: Response) {
+  private bot: TelegramBot;
+  constructor(bot: TelegramBot) {
+    this.bot = bot;
+  }
+  async addProduct(req: Request, res: Response) {
     Logger.start("addProduct", "Adding product...");
     try {
       const { uniqueId, name, price, date } = req.body;
@@ -42,14 +47,13 @@ export default class ProductController {
           result,
         });
       }
-
     } catch (error) {
       Logger.error("addProduct", "Unknown Error");
       return res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  static async removeProduct(req: Request, res: Response) {
+  async removeProduct(req: Request, res: Response) {
     Logger.start("removeProduct");
     try {
       const { uniqueId } = req.body;
