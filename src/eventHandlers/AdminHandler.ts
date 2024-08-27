@@ -169,17 +169,39 @@ export default class AdminHandler {
         { text: i18n.t("about_us_button") },
       ],
     ];
-
+    const adminMenuKeyboard = [
+      [
+        {
+          text: i18n.t("send_post_button"),
+        },
+        { text: i18n.t("purchase_request") },
+      ],
+      [
+        { text: i18n.t("btn_list_products") },
+        { text: i18n.t("btn_list_requests") },
+      ],
+      [{ text: i18n.t("settings_button") }, { text: i18n.t("btn_rules") }],
+      [
+        { text: i18n.t("contact_us_button") },
+        { text: i18n.t("about_us_button") },
+      ],
+    ];
     if (isAdmin) {
-      mainMenuKeyboard.push([{ text: i18n.t("send_post_button") }]);
+      this.bot.sendMessage(chatId, i18n.t("choose_option"), {
+        reply_markup: {
+          keyboard: adminMenuKeyboard,
+          resize_keyboard: true,
+          one_time_keyboard: false,
+        },
+      });
+    } else {
+      this.bot.sendMessage(chatId, i18n.t("choose_option"), {
+        reply_markup: {
+          keyboard: mainMenuKeyboard,
+          resize_keyboard: true,
+          one_time_keyboard: false,
+        },
+      });
     }
-
-    this.bot.sendMessage(chatId, i18n.t("choose_option"), {
-      reply_markup: {
-        keyboard: mainMenuKeyboard,
-        resize_keyboard: true,
-        one_time_keyboard: false,
-      },
-    });
   }
 }

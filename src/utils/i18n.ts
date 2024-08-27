@@ -53,7 +53,7 @@ i18next.init({
         btn_cancel_post_creation: "❌Cancel",
         language_changed: "✅Language's changed successfully.",
         active_request_exist:
-          "You have active request! Please, wait until admins contact you. Sorry for the delay and inconvenience.",
+          "You have active request! Please, wait until admins contact you. We apologize for delay and provided inconvenience.",
         contact_us_information: `Our contacts:
 
 Tashkent: 100002, 

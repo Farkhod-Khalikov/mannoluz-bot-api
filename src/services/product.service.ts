@@ -1,4 +1,5 @@
 import Product, { IProduct } from "../models/products.schema";
+import Logger from "../utils/logger";
 
 export default class ProductService {
   // findProductByUniqueID: string
@@ -26,26 +27,33 @@ export default class ProductService {
         // If the product exists, update it
         if (name) existingProduct.name = name;
         if (price) existingProduct.price = price;
-        existingProduct.date = date || "";
+        if (date) existingProduct.date = date;
         await existingProduct.save();
         return { isNewProduct: false, existingProduct };
         // !existing product means to create one (logic man...)
-      } else {
-        // If the product doesn't exist, create a new one
-        const newProduct = await new Product({
-          documentId,
-          agentId,
-          name,
-          price,
-          date,
-        }).save();
-        return { isNewProduct: true, newProduct };
+      } // If the product doesn't exist, create a new one
+
+      const newProduct = await new Product({
+        documentId,
+        agentId,
+        name,
+        price,
+        date,
+      }).save();
+
+      if (!newProduct) {
+        Logger.error("addOrUpdateProduct", "Could not Create Product Document");
+        throw new Error("Could not create new product document");
       }
+
+      return { isNewProduct: true, newProduct };
 
       // Catch any unhandled error
     } catch (error) {
-      console.error("Error in addOrUpdateProduct:", error);
-      throw new Error("Error in addOrUpdateProduct");
+      if (error instanceof Error) {
+        Logger.error("addOrUpdateProduct", error.message);
+        throw new Error(error.message);
+      }
     }
   }
 
@@ -60,31 +68,27 @@ export default class ProductService {
         });
 
         if (!deletedProduct) {
-          return { error: true, message: "Product Not found" };
+          throw new Error("Product Not Found.");
         }
-        return { error: false, message: "Product deleted" };
+        return deletedProduct;
       }
+
       //Find and delete all products with documentId == documentId
       const products = await Product.deleteMany({ documentId });
 
       // if no products found return error
       if (products.deletedCount === 0) {
-        return {
-          error: true,
-          message: "Products with documentId provided are not found",
-          
-        };
+        throw new Error("Products with specified document ID NOT found");
       }
 
       // when products are deleted return counter
-      return {
-        error: false,
-        deletedCount: products.deletedCount,
-      };
+      return products.deletedCount;
       // Catch any unhandled error
     } catch (error) {
-      console.error("Error in removeProduct:", error);
-      throw new Error("Error in removeProduct");
+      if (error instanceof Error) {
+        console.error("Error in removeProduct:", error);
+        throw new Error(error.message);
+      }
     }
   }
 

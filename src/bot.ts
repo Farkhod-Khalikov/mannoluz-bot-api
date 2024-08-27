@@ -15,26 +15,24 @@ const port = process.env.PORT || 4000;
 const MONGO = process.env.MONGO || "";
 const token = process.env.TOKEN || "";
 
+// init BOT
+const bot = new TelegramBot(token, { polling: true });
+//Controllers and Handlers
+const userController = new UserController(bot);
+const productController = new ProductController(bot);
+const messageHandler = new MessageHandler(bot);
+
 // Database initialization
 initDB(MONGO);
 
-// BOT initialization
-const bot = new TelegramBot(token, { polling: true });
+// EXPRESS initialization
+const app = express();
+app.use(express.json());
 
 // if bot not initialized log the error
 if (!bot) console.log("[FAILED] Bot is not initialized.");
 // SUCCESS if BOT is created
 console.log("[SUCCESS] Bot is started.");
-
-// EXPRESS initialization
-const app = express();
-
-// force requests to be json file
-app.use(express.json());
-
-// api controllers
-const userController = new UserController(bot);
-const productController = new ProductController(bot);
 
 // routes
 // balance routes
@@ -75,9 +73,6 @@ app.post("/products/remove", (req, res) =>
 app.listen(port, () => {
   console.log(`[SUCCESS] Express server is running on port ${port}`);
 });
-
-// initialize Database
-const messageHandler = new MessageHandler(bot);
 
 bot.on("message", (msg) => messageHandler.handleMessage(msg));
 bot.on("callback_query", (callbackQuery) =>

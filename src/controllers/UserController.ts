@@ -403,7 +403,7 @@ class UserController {
         error: false,
         message: "The Request status is updated",
         username,
-        isActive,
+        isActive: false,
       });
     } catch (error) {
       if (error instanceof Error) {
