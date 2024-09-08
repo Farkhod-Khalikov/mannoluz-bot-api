@@ -56,7 +56,7 @@ export default class MessageController {
               msg.text,
               true
             );
-          } 
+          }
           break;
         case i18n.t("settings_button"):
           await this.userHandler.handleSettings(msg);
@@ -98,6 +98,7 @@ export default class MessageController {
       await this.adminHandler.handleImageUpload(msg);
     }
   }
+
   public async handleCallbackQuery(callbackQuery: TelegramBot.CallbackQuery) {
     const chatId = callbackQuery.message?.chat.id;
     const data = callbackQuery.data;
@@ -153,22 +154,22 @@ export default class MessageController {
               "product_previous_page"
             );
             break;
-          case "request_next_page":
-            await this.purchaseRequestHandler.handlePagination(
-              chatId,
-              "request_next_page"
-            );
-            break;
-          case "request_previous_page":
-            await this.purchaseRequestHandler.handlePagination(
-              chatId,
-              "request_previous_page"
-            );
-            break;
           case "product_next_page":
             await this.productHandler.handlePagination(
               chatId,
               "product_next_page"
+            );
+            break;
+          case "product_page_ellipsis_prev":
+            await this.productHandler.handlePagination(
+              chatId,
+              "product_page_ellipsis_prev"
+            );
+            break;
+          case "product_page_ellipsis_next":
+            await this.productHandler.handlePagination(
+              chatId,
+              "product_page_ellipsis_next"
             );
             break;
           default:

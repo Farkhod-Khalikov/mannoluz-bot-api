@@ -16,6 +16,7 @@
     "@types/node": "^20.14.10",
     "@types/node-telegram-bot-api": "^0.64.7",
     "@types/qrcode": "^1.5.5",
+    "@types/uuid": "^10.0.0",
     "bwip-js": "^4.5.0",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -25,7 +26,8 @@
     "node-telegram-bot-api": "^0.66.0",
     "qrcode": "^1.5.3",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "uuid": "^10.0.0"
   },
   "devDependencies": {
     "@types/jest": "^29.5.12",

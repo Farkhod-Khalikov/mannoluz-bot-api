@@ -3,18 +3,9 @@ import { Request, Response } from "express";
 import UserService from "../services/user.service";
 import Transaction from "../models/transactions.schema";
 import TelegramBot from "node-telegram-bot-api";
-// import * as dotenv from "dotenv";
 import i18n from "../utils/i18n";
 import { PurchaseRequest } from "../models/purchaseRequests.schema";
 import User from "../models/users.schema";
-
-// import bot from "../bot";
-
-// dotenv.config();
-
-// // Possible server dropping issue is that I am declaring 2nd TelegramBot instance which possibly might end in looping
-// const token = process.env.TOKEN || "";
-// const bot = new TelegramBot(token);
 
 class UserController {
   private bot: TelegramBot;
@@ -78,7 +69,6 @@ class UserController {
       return res.status(200).json({
         error: false,
         message: "Bonuses added",
-        balance: user.balance,
         agentId: agentId,
       });
     } catch (error) {
@@ -204,7 +194,7 @@ class UserController {
     }
   }
 
-  // Remove Admin
+  // Remove Admin by phoneNumber
   async removeAdmin(req: Request, res: Response) {
     Logger.start("removeAdmin");
 
@@ -272,7 +262,7 @@ class UserController {
     }
   }
 
-  // Add Admin
+  // Add Admin by phoneNumber
   async addAdmin(req: Request, res: Response) {
     Logger.start("addAdmin");
 
@@ -382,13 +372,16 @@ class UserController {
           .status(404)
           .json({ error: true, message: "Purchase request is not found" });
       }
+
       const username = purchaseRequest.username;
       const isActive = purchaseRequest.isActive;
+
       if (!isActive) {
         Logger.warn(
           "updateRequestStatus",
           "Tried to update purchase request status that is already NOT active"
         );
+
         return res.status(200).json({
           error: false,
           message:
@@ -419,6 +412,7 @@ class UserController {
     }
   }
 
+  // Delete transactions by documentId and agentId
   async removeTransaction(req: Request, res: Response) {
     Logger.start("removeTransaction");
     try {

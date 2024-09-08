@@ -2,6 +2,11 @@ import Product, { IProduct } from "../models/products.schema";
 import Logger from "../utils/logger";
 
 export default class ProductService {
+  private static itemsPerPage = 5;
+  public static async getTotalPages(): Promise<number> {
+    const totalProducts = await Product.countDocuments().exec();
+    return Math.ceil(totalProducts / this.itemsPerPage);
+  }
   // findProductByUniqueID: string
   public static async findProductByUniqueId(
     uniqueID: string

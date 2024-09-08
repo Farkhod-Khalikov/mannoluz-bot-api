@@ -22,7 +22,6 @@ export default class UserHandler {
     >();
   }
 
-
   public async handleStart(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
     const isExisted = await UserService.isUserRegistered(chatId);
@@ -83,14 +82,13 @@ export default class UserHandler {
 
     if (msg.contact) {
       const phoneNumber = msg.contact.phone_number.replace("+", "");
-      const name =
-        msg.contact.first_name; 
+      const name = msg.contact.first_name;
 
       if (await UserService.findUserByphoneNumber(phoneNumber)) {
         this.bot.sendMessage(chatId, i18n.t("user_already_exists"));
       } else {
         const language = this.newUserLanguages.get(chatId) || i18n.language;
-        await UserService.createUser(chatId, name, phoneNumber, language);
+        await UserService.createUser(chatId, name, phoneNumber, language)
         this.bot.sendMessage(chatId, i18n.t("contact_saved"));
         this.newUserLanguages.delete(chatId);
         this.sendMainMenu(chatId);
@@ -103,11 +101,13 @@ export default class UserHandler {
     language: string,
     isNewUser: boolean
   ) {
+    console.log("handleLanguageSelection is called");
     const languageCode = language === "🇷🇺Русский" ? "ru-RU" : "en-US";
     i18n.changeLanguage(languageCode);
 
     if (isNewUser) {
       this.newUserLanguages.set(chatId, languageCode);
+      console.log("shared contact inside handleLanguageSelection");
       this.bot.sendMessage(chatId, i18n.t("share_contact"), {
         reply_markup: {
           keyboard: [
@@ -202,7 +202,6 @@ export default class UserHandler {
       this.bot.sendMessage(chatId, i18n.t("user_not_found"));
     }
   }
-
 
   public async handleSettings(msg: TelegramBot.Message) {
     const settingsKeyboard = [

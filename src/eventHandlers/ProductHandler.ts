@@ -1,27 +1,21 @@
 import TelegramBot from "node-telegram-bot-api";
-import i18n from "../utils/i18n";
 import ProductService from "../services/product.service";
+import i18n from "../utils/i18n";
 
-export default class ProductHandler {
+class ProductHandler {
   private bot: TelegramBot;
-  private userProductPages: Map<number, number> = new Map();
+  private userProductPages: Map<number, number>;
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
+    this.userProductPages = new Map();
   }
 
   public async handleListProducts(msg: TelegramBot.Message) {
-    try {
-      const chatId = msg.chat.id;
-      this.resetProductPage(chatId); // Reset the current page to 1 when clicking on button
-      await this.showProducts(chatId);
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      this.bot.sendMessage(
-        msg.chat.id,
-        "There was an error fetching the product list. Please try again later."
-      );
-    }
+    const chatId = msg.chat.id;
+    // Initialize the user's page to 1 before displaying the products
+    this.userProductPages.set(chatId, 1);
+    await this.showProducts(chatId);
   }
 
   private async showProducts(chatId: number) {
@@ -63,13 +57,15 @@ export default class ProductHandler {
     const showPrev = currentPage > 1;
     const showNext = currentPage < totalPages;
 
+    // Add ellipsis before page numbers if applicable
     if (startDivision > 1) {
       paginationButtons.push({
         text: "...",
-        callback_data: "product_page_ellipsis",
+        callback_data: "product_page_ellipsis_prev",
       });
     }
 
+    // Add the page numbers
     for (let i = startDivision; i <= endDivision; i++) {
       paginationButtons.push({
         text: i === currentPage ? `${i} ✅` : i.toString(),
@@ -77,10 +73,11 @@ export default class ProductHandler {
       });
     }
 
+    // Add ellipsis after page numbers if applicable
     if (endDivision < totalPages) {
       paginationButtons.push({
         text: "...",
-        callback_data: "product_page_ellipsis",
+        callback_data: "product_page_ellipsis_next",
       });
     }
 
@@ -93,62 +90,62 @@ export default class ProductHandler {
     }
 
     // Prev and Next buttons
-    const navButtons: TelegramBot.InlineKeyboardButton[] = [];
-    if (showPrev) {
-      navButtons.push({
-        text: i18n.t("prev"),
-        callback_data: "product_previous_page",
-      });
-    }
-    if (showNext) {
-      navButtons.push({
-        text: i18n.t("next"),
-        callback_data: "product_next_page",
-      });
-    }
-
-    if (navButtons.length > 0) {
-      keyboard.push(navButtons);
-    }
-
-    await this.bot.sendMessage(
-      chatId,
-      `*Available Products (Page ${currentPage} of ${totalPages}):*\n\n${productPage}`,
-      {
-        parse_mode: "Markdown",
-        reply_markup: {
-          inline_keyboard: keyboard,
-        },
+    if (showPrev || showNext) {
+      const navigationButtons: TelegramBot.InlineKeyboardButton[] = [];
+      if (showPrev) {
+        navigationButtons.push({
+          text: "Prev",
+          callback_data: "product_previous_page",
+        });
       }
-    );
-  }
-
-  private resetProductPage(chatId: number) {
-    this.userProductPages.set(chatId, 1);
-  }
-
-  public async handlePagination(chatId: number, action: string) {
-    const products = await ProductService.getAllProducts();
-    const totalPages = Math.ceil(products.length / 5);
-
-    if (action === "product_previous_page") {
-      this.userProductPages.set(
-        chatId,
-        Math.max((this.userProductPages.get(chatId) || 1) - 1, 1)
-      );
-    } else if (action === "product_next_page") {
-      this.userProductPages.set(
-        chatId,
-        Math.min((this.userProductPages.get(chatId) || 1) + 1, totalPages)
-      );
-    } else if (action.startsWith("product_page_")) {
-      const page = parseInt(action.split("_")[2], 10);
-      this.userProductPages.set(
-        chatId,
-        Math.max(1, Math.min(page, totalPages))
-      );
+      if (showNext) {
+        navigationButtons.push({
+          text: "Next",
+          callback_data: "product_next_page",
+        });
+      }
+      keyboard.push(navigationButtons);
     }
 
-    await this.showProducts(chatId);
+    await this.bot.sendMessage(chatId, productPage, {
+      parse_mode: "Markdown",
+      reply_markup: {
+        inline_keyboard: keyboard,
+      },
+    });
+  }
+
+  public async handlePagination(chatId: number, callbackData: string) {
+    if (callbackData.startsWith("product_page_")) {
+      const page = parseInt(callbackData.split("_")[2], 10);
+      this.userProductPages.set(chatId, page);
+      await this.showProducts(chatId);
+    } else if (callbackData === "product_previous_page") {
+      const currentPage = this.userProductPages.get(chatId) || 1;
+      if (currentPage > 1) {
+        this.userProductPages.set(chatId, currentPage - 1);
+        await this.showProducts(chatId);
+      }
+    } else if (callbackData === "product_next_page") {
+      const currentPage = this.userProductPages.get(chatId) || 1;
+      const totalPages = await ProductService.getTotalPages(); // You need to implement this method
+      if (currentPage < totalPages) {
+        this.userProductPages.set(chatId, currentPage + 1);
+        await this.showProducts(chatId);
+      }
+    } else if (callbackData === "product_page_ellipsis_prev") {
+      const currentPage = this.userProductPages.get(chatId) || 1;
+      const newPage = Math.max(1, currentPage - 3); // Adjust as needed
+      this.userProductPages.set(chatId, newPage);
+      await this.showProducts(chatId);
+    } else if (callbackData === "product_page_ellipsis_next") {
+      const currentPage = this.userProductPages.get(chatId) || 1;
+      const totalPages = await ProductService.getTotalPages(); // You need to implement this method
+      const newPage = Math.min(totalPages, currentPage + 3); // Adjust as needed
+      this.userProductPages.set(chatId, newPage);
+      await this.showProducts(chatId);
+    }
   }
 }
+
+export default ProductHandler;

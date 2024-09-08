@@ -1,31 +1,32 @@
+// env
 import * as dotenv from "dotenv";
 dotenv.config({ path: __dirname + "/../.env" });
 
+// imports
 import TelegramBot from "node-telegram-bot-api";
 import { initDB } from "./db";
 import express from "express";
 import MessageHandler from "./eventHandlers/MessageHandler";
 import UserController from "./controllers/UserController";
 import ProductController from "./controllers/ProductController";
-// import userRouter from "./routes/user.routes";
-// import productRouter from "./routes/product.routes";
 
 // environment variables
 const port = process.env.PORT || 4000;
 const MONGO = process.env.MONGO || "";
 const token = process.env.TOKEN || "";
 
-// init BOT
+// BOT initialization
 const bot = new TelegramBot(token, { polling: true });
+
+// Database initialization
+initDB(MONGO);
+
 //Controllers and Handlers
 const userController = new UserController(bot);
 const productController = new ProductController(bot);
 const messageHandler = new MessageHandler(bot);
 
-// Database initialization
-initDB(MONGO);
-
-// EXPRESS initialization
+// Express initialization
 const app = express();
 app.use(express.json());
 
@@ -66,9 +67,6 @@ app.post("/products/add", (req, res) => productController.addProduct(req, res));
 app.post("/products/remove", (req, res) =>
   productController.removeProduct(req, res)
 );
-
-// app.use("/users", userRouter);
-// app.use("/products", productRouter);
 
 app.listen(port, () => {
   console.log(`[SUCCESS] Express server is running on port ${port}`);

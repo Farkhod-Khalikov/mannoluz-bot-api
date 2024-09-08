@@ -3,13 +3,14 @@ import UserService from "../services/user.service";
 import i18n from "../utils/i18n";
 import fs from "fs";
 import path from "path";
-import Post from "../models/posts.schema"; // Import the Post model
+import Post from "../models/posts.schema";
+import { v4 as uuidv4 } from "uuid";
 
 export default class AdminHandler {
   private bot: TelegramBot;
   private adminPostData: Map<
     number,
-    { title: string | null; message: string | null; image: string | null }
+    { adminName: string | null; title: string | null; message: string | null; image: string | null }
   > = new Map();
 
   private tempDir: string;
@@ -25,13 +26,16 @@ export default class AdminHandler {
   public async handleSendPost(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
 
+    // Fetch admin name from user service
+    const adminName = await UserService.getUserName(chatId);
+
     this.bot.sendMessage(chatId, i18n.t("provide_post_title"), {
       reply_markup: {
         force_reply: true,
       },
     });
 
-    this.adminPostData.set(chatId, { title: null, message: null, image: null });
+    this.adminPostData.set(chatId, { adminName, title: null, message: null, image: null });
   }
 
   public async handleAdminPostData(chatId: number, text: string) {
@@ -51,9 +55,8 @@ export default class AdminHandler {
           reply_markup: {
             force_reply: true,
           },
-        }); // check if admin has shared correct image format
+        });
       } else if (!currentPostData.image) {
-        // Await for image file
         this.bot.sendMessage(chatId, i18n.t("uploading_image"), {
           reply_markup: {
             force_reply: true,
@@ -69,20 +72,32 @@ export default class AdminHandler {
 
     if (photo) {
       const fileId = photo.file_id;
-      const filePath = await this.bot.downloadFile(fileId, this.tempDir);
-      // const fileName = path.basename(filePath);
+      const tempFilePath = await this.bot.downloadFile(fileId, this.tempDir);
 
-      // Update post data with the local image path
+      // Generate a unique ID for the post
+      const uniqueId = uuidv4();
+
+      // Get admin name from current post data
       const currentPostData = this.adminPostData.get(chatId);
       if (currentPostData) {
-        currentPostData.image = filePath;
+        const fileName = `${currentPostData.adminName}_${uniqueId}.png`;
+        const newFilePath = path.join(this.tempDir, fileName);
+
+        // Rename the file to the new format
+        fs.rename(tempFilePath, newFilePath, (err) => {
+          if (err) {
+            console.error("Failed to rename temp file:", err);
+          }
+        });
+
+        currentPostData.image = newFilePath;
 
         const postSummary = `
 *Title:* ${currentPostData.title}
 
 *Message:* ${currentPostData.message}
         `;
-        this.bot.sendPhoto(chatId, filePath, {
+        this.bot.sendPhoto(chatId, newFilePath, {
           caption: postSummary,
           parse_mode: "Markdown",
           reply_markup: {
@@ -109,13 +124,13 @@ export default class AdminHandler {
   public async handleConfirmPost(chatId: number) {
     const postData = this.adminPostData.get(chatId);
     if (postData && postData.title && postData.message && postData.image) {
-      // Save post data to the database
-      const creator = await UserService.getUserName(chatId); // Assuming you have a method to get admin name
+      // Save post data to the database with the full image path
+      const creator = await UserService.getUserName(chatId);
       const post = new Post({
         creator,
         title: postData.title,
         createdAt: new Date(),
-        imagePath: postData.image,
+        imagePath: postData.image, // Save the full path here
       });
       await post.save();
 
@@ -130,8 +145,7 @@ export default class AdminHandler {
       this.bot.sendMessage(chatId, i18n.t("post_sent"));
       this.sendMainMenu(chatId);
     }
-    // Only clean up temp files if the post is canceled
-    // this.cleanUpTempFiles();
+    // Clean up temp files if the post is canceled
     this.adminPostData.delete(chatId);
   }
 
@@ -148,12 +162,11 @@ export default class AdminHandler {
     this.adminPostData.delete(chatId);
     this.sendMainMenu(chatId);
   }
-  // update sharing AdminMenu
+
   public async sendMainMenu(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
 
-    // create adminMenuKeyboard
     const mainMenuKeyboard = [
       [{ text: i18n.t("credit_card_button") }],
       [

@@ -51,9 +51,8 @@ export default class UserService {
       phone,
       comment,
       isActive, // by default currently true
-      createdAt: new Date(),
     });
-    // purchaseRequest.createdAt = new Date();
+
     await purchaseRequest.save();
   }
 
@@ -71,18 +70,6 @@ export default class UserService {
     });
     user.createdAt = new Date();
     await user.save();
-  }
-
-  // use it for api
-  public static async setAdmin(
-    chatId: number,
-    isAdmin: boolean
-  ): Promise<void> {
-    const user = await User.findOne({ chatId });
-    if (user) {
-      user.isAdmin = isAdmin;
-      await user.save();
-    }
   }
 
   public static async isUserAdmin(chatId: number): Promise<boolean> {
@@ -113,11 +100,7 @@ export default class UserService {
       ? true
       : false;
   }
-
-  public static async findTransactionByDocumentId(documentId: string) {
-    // update this the get documentId and agentId
-  }
-
+  // user could not creat /
   static async updateUserAdminStatus(phoneNumber: string, isAdmin: boolean) {
     try {
       const user = await this.findUserByphoneNumber(phoneNumber);

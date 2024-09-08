@@ -12,7 +12,7 @@ const PostSchema: Schema = new Schema({
   creator: { type: String, required: true },
   title: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
-  imagepath: {type: String, default: "src/temp/admin-posts", required: false}
+  imagepath: { type: String, required: false },
 });
 
 const Post = mongoose.model<IPost>("Post", PostSchema);
