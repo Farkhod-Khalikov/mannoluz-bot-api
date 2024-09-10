@@ -67,7 +67,7 @@ export default class UserHandler {
   }
 
   private async promptLanguageSelection(chatId: number) {
-    const languageKeyboard = [[{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }]];
+    const languageKeyboard = [[{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }]]; // Add uzUzbek
     this.bot.sendMessage(chatId, i18n.t("choose_language"), {
       reply_markup: {
         keyboard: languageKeyboard,
@@ -102,7 +102,7 @@ export default class UserHandler {
     isNewUser: boolean
   ) {
     console.log("handleLanguageSelection is called");
-    const languageCode = language === "🇷🇺Русский" ? "ru-RU" : "en-US";
+    const languageCode = language === "🇷🇺Русский" ? "ru-RU" : "en-US"; // Add uz-Uz
     i18n.changeLanguage(languageCode);
 
     if (isNewUser) {
@@ -129,7 +129,7 @@ export default class UserHandler {
 
   public async handleChangeLanguage(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
-    const languageKeyboard = [[{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }]];
+    const languageKeyboard = [[{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }]]; // add uz-Uz
     this.bot.sendMessage(chatId, i18n.t("choose_language"), {
       reply_markup: {
         keyboard: languageKeyboard,
@@ -141,9 +141,9 @@ export default class UserHandler {
     const changeLanguageListener = async (msg: TelegramBot.Message) => {
       if (msg.chat.id === chatId) {
         const language = msg.text;
-        if (language === "🇷🇺Русский" || language === "🇺🇸English") {
+        if (language === "🇷🇺Русский" || language === "🇺🇸English") { // Add uz-UZ
           this.bot.removeListener("message", changeLanguageListener);
-          const languageCode = language === "🇷🇺Русский" ? "ru-RU" : "en-US";
+          const languageCode = language === "🇷🇺Русский" ? "ru-RU" : "en-US"; // Add uz-UZ
           i18n.changeLanguage(languageCode);
 
           const user = await UserService.findUserByChatId(chatId);

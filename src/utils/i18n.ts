@@ -161,6 +161,9 @@ Thank you for choosing MANNOL!`,
 Сайт: mannol.uz .`,
       },
     },
+    "uz-UZ":{
+
+    }
   },
 });
 

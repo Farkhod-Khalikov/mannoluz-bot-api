@@ -10,7 +10,12 @@ export default class AdminHandler {
   private bot: TelegramBot;
   private adminPostData: Map<
     number,
-    { adminName: string | null; title: string | null; message: string | null; image: string | null }
+    {
+      adminName: string | null;
+      title: string | null;
+      message: string | null;
+      image: string | null;
+    }
   > = new Map();
 
   private tempDir: string;
@@ -35,7 +40,12 @@ export default class AdminHandler {
       },
     });
 
-    this.adminPostData.set(chatId, { adminName, title: null, message: null, image: null });
+    this.adminPostData.set(chatId, {
+      adminName,
+      title: null,
+      message: null,
+      image: null,
+    });
   }
 
   public async handleAdminPostData(chatId: number, text: string) {

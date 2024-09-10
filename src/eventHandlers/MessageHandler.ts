@@ -50,6 +50,7 @@ export default class MessageController {
           break;
         case "🇷🇺Русский":
         case "🇺🇸English":
+        // case "uzUzbek":
           if (this.userHandler.newUserLanguages.has(chatId)) {
             await this.userHandler.handleLanguageSelection(
               chatId,
