@@ -161,9 +161,64 @@ Thank you for choosing MANNOL!`,
 Сайт: mannol.uz .`,
       },
     },
-    "uz-UZ":{
-
-    }
+    "uz-UZ": {
+      translation: {
+        request_status_update:
+          "Sizning so'rovingiz holati 'Nofaol' holatiga o'zgartirildi. Agar administratorlar siz bilan bog'lanmagan bo'lsa, iltimos, so'rovni qaytadan yuboring yoki 'Biz bilan bog'lanish' paneli orqali bog'laning.",
+        request_saved: "Sizning so'rovingiz saqlandi!",
+        btn_list_requests: "So'rovlar ro'yxati",
+        confirm_purchase_request: "Iltimos, so'rov qoldirishni tasdiqlang.",
+        yes_sure: "Ha, albatta",
+        no_thanks: "Yo'q, rahmat",
+        admin_removed_notification:
+          "Siz adminlik huquqlaridan mahrum qilindingiz. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
+        admin_granted_notification:
+          "Sizga adminlik huquqlari berildi. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
+        purchase_request_cancelled: "❌So'rov bekor qilindi",
+        write_comment: "Iltimos, izoh qoldiring:",
+        last_transactions: "Oxirgi tranzaksiyalar",
+        btn_rules: "Qoidalar",
+        btn_list_transactions: "Tranzaksiyalar ro'yxati",
+        coins: "Tanga",
+        prev: "⬅️Oldingi",
+        next: "Keyingi➡️",
+        description: "Tavsif",
+        bonuses_addition: "Qo'shish",
+        bonuses_removal: "Olib tashlash",
+        transaction_date: "Tranzaksiya sanasi",
+        provide_post_title: "Post nomini kiriting:",
+        provide_post_message: "Post matnini kiriting:",
+        confirm_button: "✅Tasdiqlash",
+        post_sent: "✅Muvaffaqiyatli yuborildi",
+        registration_on_start: "Ro'yxatdan o'tish",
+        send_post_button: "✍️Post yuborish",
+        btn_list_products: "🛒Mahsulotlar",
+        balance_caption: "Sizning balansingiz",
+        purchase_request: "So'rov qoldirish",
+        choose_option: "Menu",
+        choose_language: "🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.\n🇺🇿Iltimos, tilni tanlang.",
+        share_contact: "📱Iltimos, kontaktingizni ulashing.",
+        share_contact_button: "📱Kontakt ulashish",
+        contact_saved: "✅Kontakt muvaffaqiyatli saqlandi.",
+        credit_card_button: "💳Mening kredit kartamni olish",
+        settings_button: "⚙️Sozlamalar",
+        settings_menu_prompt:
+          "⚙️Iltimos, yangilamoqchi bo'lgan sozlamalarni tanlang",
+        change_language_button: "🌐Tizim tilini o'zgartirish",
+        contact_us_button: "📞Biz bilan bog'laning",
+        post_creation_cancelled: "❌Post yuborilmadi.",
+        btn_cancel_post_creation: "❌Bekor qilish",
+        language_changed: "✅Til muvaffaqiyatli o'zgartirildi.",
+        active_request_exist:
+          "Sizda faol so'rov mavjud! Iltimos, administratorlar siz bilan bog'lanishini kuting. Kechikish va noqulaylik uchun uzr so'raymiz.",
+        contact_us_information:
+          "Bizning kontaktlarimiz:\n\nToshkent: 100002,\ntelefon: +998-99-011-98-94, +998-93-397-35-72.\n\nFarg'ona vodiysi: 150100,\ntelefon: +998-94-718-54-45.\n\nJanubi-g'arbiy: 140100,\ntelefon: +998-94-718-54-45.\n\nElektron pochta: info@mannol.uz, Mannoloilsale@mail.ru.\n\nVeb-sayt: mannol.uz.",
+        back_button: "🔙Orqaga qaytish",
+        about_us_button: "📃Biz haqimizda",
+        about_us_information:
+          "MANNOLning rasmiy sahifasiga xush kelibsiz!\n\nBiz SCT-Vertriebs GmbH va MANNOLning O'zbekistondagi vakolatli distribyutori bo'lib, Toshkentda joylashganmiz. Bizning maqsadimiz hamkorlarimiz va mijozlarimizga yuqori sifatli avtomobil mahsulotlarini tez va arzon narxlarda yetkazib berishdir.\n\nBiz MANNOL brendi ostida 800 dan ortiq turdagi moylar va suyuqliklarni taklif etamiz, ular o'zining raqobatbardosh narxlari va keng tanlovi bilan mashhur. Avtomobil ehtiyot qismlari bozorida yetakchi sifatida biz mijozlarimizning ehtiyojlari va kutilganlariga javob berishni ustuvor vazifa deb bilamiz.\n\nBiz sizni yangi imkoniyatlarni kashf qilishga taklif qilamiz va sizning takliflaringiz e'tibor bilan ko'rib chiqilishini ta'minlaymiz. Bizning maqsadimiz keng mahsulot tanlovi va samarali xizmat bilan sizning muvaffaqiyatingizni qo'llab-quvvatlashdir.\n\nMANNOLni tanlaganingiz uchun tashakkur!",
+      },
+    },
   },
 });
 

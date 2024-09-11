@@ -94,13 +94,13 @@ class ProductHandler {
       const navigationButtons: TelegramBot.InlineKeyboardButton[] = [];
       if (showPrev) {
         navigationButtons.push({
-          text: "Prev",
+          text: i18n.t("prev"),
           callback_data: "product_previous_page",
         });
       }
       if (showNext) {
         navigationButtons.push({
-          text: "Next",
+          text: i18n.t("next"),
           callback_data: "product_next_page",
         });
       }
