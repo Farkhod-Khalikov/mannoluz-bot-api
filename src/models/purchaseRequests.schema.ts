@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IPurchaseRequest extends Document {
   username: string;
@@ -22,6 +22,6 @@ const PurchaseRequestSchema: Schema = new Schema(
 );
 
 export const PurchaseRequest = mongoose.model<IPurchaseRequest>(
-  "PurchaseRequest",
+  'PurchaseRequest',
   PurchaseRequestSchema
 );

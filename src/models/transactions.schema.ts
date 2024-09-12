@@ -1,5 +1,5 @@
 //./models/transactions.ts
-import { Document, Model, model, Schema } from "mongoose";
+import { Document, Model, model, Schema } from 'mongoose';
 
 export interface ITransaction extends Document {
   documentId: string;
@@ -22,9 +22,6 @@ const transactionSchema = new Schema<ITransaction>(
   { timestamps: true }
 );
 
-const Transaction: Model<ITransaction> = model<ITransaction>(
-  "Transaction",
-  transactionSchema
-);
+const Transaction: Model<ITransaction> = model<ITransaction>('Transaction', transactionSchema);
 
 export default Transaction;

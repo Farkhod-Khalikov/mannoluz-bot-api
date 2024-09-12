@@ -1,8 +1,8 @@
-import TelegramBot from "node-telegram-bot-api";
-import UserService from "../services/user.service";
-import i18n from "../utils/i18n";
-import { generateCreditCard } from "../utils/creditcard.generation";
-import { PurchaseRequest } from "../models/purchaseRequests.schema";
+import TelegramBot from 'node-telegram-bot-api';
+import UserService from '../services/user.service';
+import i18n from '../utils/i18n';
+import { generateCreditCard } from '../utils/creditcard.generation';
+import { PurchaseRequest } from '../models/purchaseRequests.schema';
 
 export default class UserHandler {
   private bot: TelegramBot;
@@ -12,14 +12,8 @@ export default class UserHandler {
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.newUserLanguages = new Map<number, string>();
-    this.languageListeners = new Map<
-      number,
-      (msg: TelegramBot.Message) => void
-    >();
-    this.contactListeners = new Map<
-      number,
-      (msg: TelegramBot.Message) => void
-    >();
+    this.languageListeners = new Map<number, (msg: TelegramBot.Message) => void>();
+    this.contactListeners = new Map<number, (msg: TelegramBot.Message) => void>();
   }
 
   public async handleStart(msg: TelegramBot.Message) {
@@ -41,11 +35,9 @@ export default class UserHandler {
     const languageListener = async (msg: TelegramBot.Message) => {
       if (
         msg.chat.id === chatId &&
-        (msg.text === "🇷🇺Русский" ||
-          msg.text === "🇺🇸English" ||
-          msg.text === "🇺🇿Uzbek")
+        (msg.text === '🇷🇺Русский' || msg.text === '🇺🇸English' || msg.text === '🇺🇿Uzbek')
       ) {
-        this.bot.removeListener("message", languageListener);
+        this.bot.removeListener('message', languageListener);
         this.languageListeners.delete(chatId);
 
         const language = msg.text;
@@ -53,26 +45,24 @@ export default class UserHandler {
 
         const contactListener = async (contactMsg: TelegramBot.Message) => {
           if (contactMsg.chat.id === chatId && contactMsg.contact) {
-            this.bot.removeListener("contact", contactListener);
+            this.bot.removeListener('contact', contactListener);
             this.contactListeners.delete(chatId);
             await this.handleContact(contactMsg);
           }
         };
 
-        this.bot.on("contact", contactListener);
+        this.bot.on('contact', contactListener);
         this.contactListeners.set(chatId, contactListener);
       }
     };
 
-    this.bot.on("message", languageListener);
+    this.bot.on('message', languageListener);
     this.languageListeners.set(chatId, languageListener);
   }
 
   private async promptLanguageSelection(chatId: number) {
-    const languageKeyboard = [
-      [{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }, { text: "🇺🇿Uzbek" }],
-    ]; // Add uzUzbek
-    this.bot.sendMessage(chatId, i18n.t("choose_language"), {
+    const languageKeyboard = [[{ text: '🇷🇺Русский' }, { text: '🇺🇸English' }, { text: '🇺🇿Uzbek' }]]; // Add uzUzbek
+    this.bot.sendMessage(chatId, i18n.t('choose_language'), {
       reply_markup: {
         keyboard: languageKeyboard,
         resize_keyboard: true,
@@ -85,40 +75,36 @@ export default class UserHandler {
     const chatId = msg.chat.id;
 
     if (msg.contact) {
-      const phoneNumber = msg.contact.phone_number.replace("+", "");
+      const phoneNumber = msg.contact.phone_number.replace('+', '');
       const name = msg.contact.first_name;
 
       if (await UserService.findUserByphoneNumber(phoneNumber)) {
-        this.bot.sendMessage(chatId, i18n.t("user_already_exists"));
+        this.bot.sendMessage(chatId, i18n.t('user_already_exists'));
       } else {
         const language = this.newUserLanguages.get(chatId) || i18n.language;
         await UserService.createUser(chatId, name, phoneNumber, language);
-        this.bot.sendMessage(chatId, i18n.t("contact_saved"));
+        this.bot.sendMessage(chatId, i18n.t('contact_saved'));
         this.newUserLanguages.delete(chatId);
         this.sendMainMenu(chatId);
       }
     }
   }
 
-  public async handleLanguageSelection(
-    chatId: number,
-    language: string,
-    isNewUser: boolean
-  ) {
-    console.log("handleLanguageSelection is called");
+  public async handleLanguageSelection(chatId: number, language: string, isNewUser: boolean) {
+    console.log('handleLanguageSelection is called');
     let languageCode: string;
     switch (language) {
-      case "🇷🇺Русский":
-        languageCode = "ru-RU";
+      case '🇷🇺Русский':
+        languageCode = 'ru-RU';
         break;
-      case "🇺🇸English":
-        languageCode = "en-US";
+      case '🇺🇸English':
+        languageCode = 'en-US';
         break;
-      case "🇺🇿Uzbek":
-        languageCode = "uz-UZ";
+      case '🇺🇿Uzbek':
+        languageCode = 'uz-UZ';
         break;
       default:
-        languageCode = "ru-RU";
+        languageCode = 'ru-RU';
         break;
     }
     //const languageCode = language === "🇷🇺Русский" ? "ru-RU" : "en-US"; // Add uz-Uz
@@ -126,12 +112,10 @@ export default class UserHandler {
 
     if (isNewUser === true) {
       this.newUserLanguages.set(chatId, languageCode);
-      console.log("shared contact inside handleLanguageSelection");
-      this.bot.sendMessage(chatId, i18n.t("share_contact"), {
+      console.log('shared contact inside handleLanguageSelection');
+      this.bot.sendMessage(chatId, i18n.t('share_contact'), {
         reply_markup: {
-          keyboard: [
-            [{ text: i18n.t("share_contact_button"), request_contact: true }],
-          ],
+          keyboard: [[{ text: i18n.t('share_contact_button'), request_contact: true }]],
           one_time_keyboard: true,
           resize_keyboard: true,
         },
@@ -141,17 +125,15 @@ export default class UserHandler {
       if (user) {
         user.language = languageCode;
         await user.save();
-        this.bot.sendMessage(chatId, i18n.t("language_changed"));
+        this.bot.sendMessage(chatId, i18n.t('language_changed'));
       }
     }
   }
 
   public async handleChangeLanguage(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
-    const languageKeyboard = [
-      [{ text: "🇷🇺Русский" }, { text: "🇺🇸English" }, { text: "🇺🇿Uzbek" }],
-    ]; // add uz-Uz
-    this.bot.sendMessage(chatId, i18n.t("choose_language"), {
+    const languageKeyboard = [[{ text: '🇷🇺Русский' }, { text: '🇺🇸English' }, { text: '🇺🇿Uzbek' }]]; // add uz-Uz
+    this.bot.sendMessage(chatId, i18n.t('choose_language'), {
       reply_markup: {
         keyboard: languageKeyboard,
         resize_keyboard: true,
@@ -163,25 +145,21 @@ export default class UserHandler {
       if (msg.chat.id === chatId) {
         const language = msg.text;
         let languageCode: string;
-        if (
-          language === "🇷🇺Русский" ||
-          language === "🇺🇸English" ||
-          language === "🇺🇿Uzbek"
-        ) {
+        if (language === '🇷🇺Русский' || language === '🇺🇸English' || language === '🇺🇿Uzbek') {
           // Add uz-UZ
-          this.bot.removeListener("message", changeLanguageListener);
+          this.bot.removeListener('message', changeLanguageListener);
           switch (language) {
-            case "🇷🇺Русский":
-              languageCode = "ru-RU";
+            case '🇷🇺Русский':
+              languageCode = 'ru-RU';
               break;
-            case "🇺🇸English":
-              languageCode = "en-US";
+            case '🇺🇸English':
+              languageCode = 'en-US';
               break;
-            case "🇺🇿Uzbek":
-              languageCode = "uz-UZ";
+            case '🇺🇿Uzbek':
+              languageCode = 'uz-UZ';
               break;
             default:
-              languageCode = "ru-RU";
+              languageCode = 'ru-RU';
               break;
           }
           i18n.changeLanguage(languageCode);
@@ -197,7 +175,7 @@ export default class UserHandler {
       }
     };
 
-    this.bot.on("message", changeLanguageListener);
+    this.bot.on('message', changeLanguageListener);
   }
 
   public async handleMyCreditCard(msg: TelegramBot.Message) {
@@ -210,46 +188,42 @@ export default class UserHandler {
 
       const transactions = await UserService.getAllTransactions(user.id);
       const lastTransactions = transactions
-        .sort(
-          (a: any, b: any) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        )
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
         .slice(0, 5)
         .map((transaction: any) => {
           const date = new Date(transaction.createdAt);
-          const formattedDate = `${date
-            .getDate()
+          const formattedDate = `${date.getDate().toString().padStart(2, '0')}.${(
+            date.getMonth() + 1
+          )
             .toString()
-            .padStart(2, "0")}.${(date.getMonth() + 1)
-            .toString()
-            .padStart(2, "0")}.${date.getFullYear()}`;
+            .padStart(2, '0')}.${date.getFullYear()}`;
           return `${
             transaction.bonuses > 0
-              ? i18n.t("bonuses_addition") /*.padEnd(10, " ")*/
-              : i18n.t("bonuses_removal") /*.padEnd(10, " ")*/
-          } | ${formattedDate} | ${transaction.bonuses} ${i18n.t("coins")}`;
+              ? i18n.t('bonuses_addition') /*.padEnd(10, " ")*/
+              : i18n.t('bonuses_removal') /*.padEnd(10, " ")*/
+          } | ${formattedDate} | ${transaction.bonuses} ${i18n.t('coins')}`;
         })
-        .join("\n");
+        .join('\n');
 
-      const caption = `${i18n.t("balance_caption")}: ${balance || 0} ${i18n.t(
-        "coins"
-      )}\n\n\n${i18n.t("last_transactions")}:\n${lastTransactions}\n`;
+      const caption = `${i18n.t('balance_caption')}: ${balance || 0} ${i18n.t(
+        'coins'
+      )}\n\n\n${i18n.t('last_transactions')}:\n${lastTransactions}\n`;
 
       this.bot
         .sendPhoto(chatId, filePath, { caption })
-        .catch((error) => console.error("Failed to send QR code:", error));
+        .catch((error) => console.error('Failed to send QR code:', error));
     } else {
-      this.bot.sendMessage(chatId, i18n.t("user_not_found"));
+      this.bot.sendMessage(chatId, i18n.t('user_not_found'));
     }
   }
 
   public async handleSettings(msg: TelegramBot.Message) {
     const settingsKeyboard = [
-      [{ text: i18n.t("change_language_button") }],
-      [{ text: i18n.t("back_button") }],
+      [{ text: i18n.t('change_language_button') }],
+      [{ text: i18n.t('back_button') }],
     ];
 
-    this.bot.sendMessage(msg.chat.id, i18n.t("settings_menu_prompt"), {
+    this.bot.sendMessage(msg.chat.id, i18n.t('settings_menu_prompt'), {
       reply_markup: {
         keyboard: settingsKeyboard,
         resize_keyboard: true,
@@ -263,19 +237,13 @@ export default class UserHandler {
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
     if (!isAdmin) {
       const mainMenuKeyboard = [
-        [{ text: i18n.t("credit_card_button") }],
-        [
-          { text: i18n.t("btn_list_products") },
-          { text: i18n.t("btn_list_transactions") },
-        ],
-        [{ text: i18n.t("settings_button") }],
-        [{ text: i18n.t("btn_rules") }, { text: i18n.t("purchase_request") }],
-        [
-          { text: i18n.t("contact_us_button") },
-          { text: i18n.t("about_us_button") },
-        ],
+        [{ text: i18n.t('credit_card_button') }],
+        [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_transactions') }],
+        [{ text: i18n.t('settings_button') }],
+        [{ text: i18n.t('btn_rules') }, { text: i18n.t('purchase_request') }],
+        [{ text: i18n.t('contact_us_button') }, { text: i18n.t('about_us_button') }],
       ];
-      this.bot.sendMessage(chatId, i18n.t("choose_option"), {
+      this.bot.sendMessage(chatId, i18n.t('choose_option'), {
         reply_markup: {
           keyboard: mainMenuKeyboard,
           resize_keyboard: true,
@@ -286,21 +254,15 @@ export default class UserHandler {
       const adminMenuKeyboard = [
         [
           {
-            text: i18n.t("send_post_button"),
+            text: i18n.t('send_post_button'),
           },
-          { text: i18n.t("purchase_request") },
+          { text: i18n.t('purchase_request') },
         ],
-        [
-          { text: i18n.t("btn_list_products") },
-          { text: i18n.t("btn_list_requests") },
-        ],
-        [{ text: i18n.t("settings_button") }, { text: i18n.t("btn_rules") }],
-        [
-          { text: i18n.t("contact_us_button") },
-          { text: i18n.t("about_us_button") },
-        ],
+        [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
+        [{ text: i18n.t('settings_button') }, { text: i18n.t('btn_rules') }],
+        [{ text: i18n.t('contact_us_button') }, { text: i18n.t('about_us_button') }],
       ];
-      this.bot.sendMessage(chatId, i18n.t("choose_option"), {
+      this.bot.sendMessage(chatId, i18n.t('choose_option'), {
         reply_markup: {
           keyboard: adminMenuKeyboard,
           resize_keyboard: true,
@@ -311,11 +273,11 @@ export default class UserHandler {
   }
 
   public async handleContactUs(msg: TelegramBot.Message) {
-    this.bot.sendMessage(msg.chat.id, i18n.t("contact_us_information"));
+    this.bot.sendMessage(msg.chat.id, i18n.t('contact_us_information'));
   }
 
   public async handleAboutUs(msg: TelegramBot.Message) {
-    this.bot.sendMessage(msg.chat.id, i18n.t("about_us_information"));
+    this.bot.sendMessage(msg.chat.id, i18n.t('about_us_information'));
   }
 
   public async handlePurchaseRequest(chatId: number) {
@@ -323,18 +285,18 @@ export default class UserHandler {
       inline_keyboard: [
         [
           {
-            text: i18n.t("yes_sure"),
-            callback_data: "confirm_purchase_request",
+            text: i18n.t('yes_sure'),
+            callback_data: 'confirm_purchase_request',
           },
           {
-            text: i18n.t("no_thanks"),
-            callback_data: "cancel_purchase_request",
+            text: i18n.t('no_thanks'),
+            callback_data: 'cancel_purchase_request',
           },
         ],
       ],
     };
 
-    this.bot.sendMessage(chatId, i18n.t("confirm_purchase_request"), {
+    this.bot.sendMessage(chatId, i18n.t('confirm_purchase_request'), {
       reply_markup: confirmKeyboard,
     });
   }
@@ -346,15 +308,15 @@ export default class UserHandler {
       isActive: true,
     });
     if (activeRequest) {
-      this.bot.sendMessage(chatId, i18n.t("active_request_exist"));
+      this.bot.sendMessage(chatId, i18n.t('active_request_exist'));
       this.sendMainMenu(chatId);
       return;
     }
-    this.bot.sendMessage(chatId, i18n.t("write_comment"));
+    this.bot.sendMessage(chatId, i18n.t('write_comment'));
 
     const commentListener = async (msg: TelegramBot.Message) => {
       if (msg.chat.id === chatId) {
-        const comment = msg.text || "";
+        const comment = msg.text || '';
 
         if (user) {
           const username = user.name;
@@ -365,28 +327,24 @@ export default class UserHandler {
             comment,
           });
           if (purchaseRequest) {
-            this.bot.sendMessage(chatId, i18n.t("request_saved"));
+            this.bot.sendMessage(chatId, i18n.t('request_saved'));
 
             // notify admins
-            await this.notifyAdminsOfPurchaseRequest(
-              username,
-              phoneNumber,
-              comment
-            );
-            this.bot.removeListener("message", commentListener);
+            await this.notifyAdminsOfPurchaseRequest(username, phoneNumber, comment);
+            this.bot.removeListener('message', commentListener);
             this.sendMainMenu(chatId);
           }
         } else {
-          this.bot.sendMessage(chatId, i18n.t("user_not_found"));
+          this.bot.sendMessage(chatId, i18n.t('user_not_found'));
         }
       }
     };
 
-    this.bot.on("message", commentListener);
+    this.bot.on('message', commentListener);
   }
 
   public async handleCancelPurchaseRequest(chatId: number) {
-    this.bot.sendMessage(chatId, i18n.t("purchase_request_cancelled"));
+    this.bot.sendMessage(chatId, i18n.t('purchase_request_cancelled'));
     this.sendMainMenu(chatId);
   }
   public async notifyAdminsOfPurchaseRequest(

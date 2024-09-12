@@ -1,6 +1,6 @@
-import TelegramBot from "node-telegram-bot-api";
-import { PurchaseRequest } from "../models/purchaseRequests.schema";
-import i18n from "../utils/i18n";
+import TelegramBot from 'node-telegram-bot-api';
+import { PurchaseRequest } from '../models/purchaseRequests.schema';
+import i18n from '../utils/i18n';
 
 export default class PurchaseRequestHandler {
   private bot: TelegramBot;
@@ -16,10 +16,10 @@ export default class PurchaseRequestHandler {
       this.resetRequestPage(chatId); // Reset the current page to 1
       await this.showRequests(chatId);
     } catch (error) {
-      console.error("Error fetching requests:", error);
+      console.error('Error fetching requests:', error);
       this.bot.sendMessage(
         msg.chat.id,
-        "There was an error fetching the requests. Please try again later."
+        'There was an error fetching the requests. Please try again later.'
       );
     }
   }
@@ -28,7 +28,7 @@ export default class PurchaseRequestHandler {
     const requests = await PurchaseRequest.find().sort({ isActive: -1, createdAt: -1 });
 
     if (requests.length === 0) {
-      this.bot.sendMessage(chatId, "No purchase requests available.");
+      this.bot.sendMessage(chatId, 'No purchase requests available.');
       return;
     }
 
@@ -42,13 +42,13 @@ export default class PurchaseRequestHandler {
       .slice(startIndex, endIndex)
       .map(
         (request: any) =>
-          `*Request by:* ${request.username}\n*Phone:* ${
-            request.phoneNumber
-          }\n*Comment:* ${request.comment}\n*Active:* ${
-            request.isActive ? "Yes" : "No"
+          `*Request by:* ${request.username}\n*Phone:* ${request.phoneNumber}\n*Comment:* ${
+            request.comment
+          }\n*Active:* ${
+            request.isActive ? 'Yes' : 'No'
           }\n*Date:* ${request.createdAt.toLocaleDateString()}`
       )
-      .join("\n\n");
+      .join('\n\n');
 
     const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
     const numPagesToShow = 3;
@@ -57,18 +57,15 @@ export default class PurchaseRequestHandler {
       1,
       Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
     );
-    const endDivision = Math.min(
-      totalPages,
-      startDivision + numPagesToShow - 1
-    );
+    const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
 
     const showPrev = currentPage > 1;
     const showNext = currentPage < totalPages;
 
     if (startDivision > 1) {
       paginationButtons.push({
-        text: "...",
-        callback_data: "request_page_ellipsis", // request_page_prev_ellipsis
+        text: '...',
+        callback_data: 'request_page_ellipsis', // request_page_prev_ellipsis
       });
     }
 
@@ -81,8 +78,8 @@ export default class PurchaseRequestHandler {
 
     if (endDivision < totalPages) {
       paginationButtons.push({
-        text: "...",
-        callback_data: "request_page_ellipsis",
+        text: '...',
+        callback_data: 'request_page_ellipsis',
       });
     }
 
@@ -95,14 +92,14 @@ export default class PurchaseRequestHandler {
     const navButtons: TelegramBot.InlineKeyboardButton[] = [];
     if (showPrev) {
       navButtons.push({
-        text: i18n.t("prev"),
-        callback_data: "request_previous_page",
+        text: i18n.t('prev'),
+        callback_data: 'request_previous_page',
       });
     }
     if (showNext) {
       navButtons.push({
-        text: i18n.t("next"),
-        callback_data: "request_next_page",
+        text: i18n.t('next'),
+        callback_data: 'request_next_page',
       });
     }
 
@@ -114,7 +111,7 @@ export default class PurchaseRequestHandler {
       chatId,
       `*Purchase Requests (Page ${currentPage} of ${totalPages}):*\n\n${requestPage}`,
       {
-        parse_mode: "Markdown",
+        parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: keyboard,
         },
@@ -130,22 +127,16 @@ export default class PurchaseRequestHandler {
     const requests = await PurchaseRequest.find().sort({ isActive: -1 });
     const totalPages = Math.ceil(requests.length / 5);
 
-    if (action === "request_previous_page") {
-      this.userRequestPages.set(
-        chatId,
-        Math.max((this.userRequestPages.get(chatId) || 1) - 1, 1)
-      );
-    } else if (action === "request_next_page") {
+    if (action === 'request_previous_page') {
+      this.userRequestPages.set(chatId, Math.max((this.userRequestPages.get(chatId) || 1) - 1, 1));
+    } else if (action === 'request_next_page') {
       this.userRequestPages.set(
         chatId,
         Math.min((this.userRequestPages.get(chatId) || 1) + 1, totalPages)
       );
-    } else if (action.startsWith("request_page_")) {
-      const page = parseInt(action.split("_")[2], 10);
-      this.userRequestPages.set(
-        chatId,
-        Math.max(1, Math.min(page, totalPages))
-      );
+    } else if (action.startsWith('request_page_')) {
+      const page = parseInt(action.split('_')[2], 10);
+      this.userRequestPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
     }
 
     await this.showRequests(chatId);

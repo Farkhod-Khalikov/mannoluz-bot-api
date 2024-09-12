@@ -1,5 +1,5 @@
-import TelegramBot from "node-telegram-bot-api";
-import i18n from "./i18n";
+import TelegramBot from 'node-telegram-bot-api';
+import i18n from './i18n';
 
 export default class Paginator<T> {
   private items: T[];
@@ -41,16 +41,13 @@ export default class Paginator<T> {
       1,
       Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
     );
-    const endDivision = Math.min(
-      totalPages,
-      startDivision + numPagesToShow - 1
-    );
+    const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
 
     const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
 
     if (startDivision > 1) {
       paginationButtons.push({
-        text: "...",
+        text: '...',
         callback_data: `${baseCallbackData}_ellipsis`,
       });
     }
@@ -64,7 +61,7 @@ export default class Paginator<T> {
 
     if (endDivision < totalPages) {
       paginationButtons.push({
-        text: "...",
+        text: '...',
         callback_data: `${baseCallbackData}_ellipsis`,
       });
     }
@@ -72,13 +69,13 @@ export default class Paginator<T> {
     const navButtons: TelegramBot.InlineKeyboardButton[] = [];
     if (currentPage > 1) {
       navButtons.push({
-        text: i18n.t("prev"),
+        text: i18n.t('prev'),
         callback_data: `${baseCallbackData}_previous`,
       });
     }
     if (currentPage < totalPages) {
       navButtons.push({
-        text: i18n.t("next"),
+        text: i18n.t('next'),
         callback_data: `${baseCallbackData}_next`,
       });
     }
@@ -98,12 +95,12 @@ export default class Paginator<T> {
     const currentPage = this.getCurrentPage(chatId);
     const totalPages = this.getTotalPages();
 
-    if (action === "previous") {
+    if (action === 'previous') {
       this.setCurrentPage(chatId, Math.max(currentPage - 1, 1));
-    } else if (action === "next") {
+    } else if (action === 'next') {
       this.setCurrentPage(chatId, Math.min(currentPage + 1, totalPages));
-    } else if (action.startsWith("page_")) {
-      const page = parseInt(action.split("_")[1], 10);
+    } else if (action.startsWith('page_')) {
+      const page = parseInt(action.split('_')[1], 10);
       this.setCurrentPage(chatId, Math.max(1, Math.min(page, totalPages)));
     }
   }

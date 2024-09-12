@@ -1,4 +1,4 @@
-import Transaction from "../models/transactions.schema";
+import Transaction from '../models/transactions.schema';
 
 export default class TransactionService {
   public static async createTransacton(
@@ -8,17 +8,15 @@ export default class TransactionService {
     description: string
   ) {
     try {
-        //try to create transacton
+      //try to create transacton
     } catch (error) {
-        // catch the error -> log it -> return
+      // catch the error -> log it -> return
     }
   }
   public static async findTransactionByUniqueId(uniqueId: string) {
     return Transaction.findOne({ uniqueId: uniqueId });
   }
-  public static async deleteTransactionByUniqueId(uniqueId: string){
-
-  }
+  public static async deleteTransactionByUniqueId(uniqueId: string) {}
   public static async isDuplicated(uniqueId: string) {
     const transaction = await this.findTransactionByUniqueId(uniqueId);
     if (!transaction) return false;

@@ -1,15 +1,13 @@
-import { PurchaseRequest } from "../models/purchaseRequests.schema";
-import Transaction from "../models/transactions.schema";
-import User, { IUser } from "../models/users.schema";
+import { PurchaseRequest } from '../models/purchaseRequests.schema';
+import Transaction from '../models/transactions.schema';
+import User, { IUser } from '../models/users.schema';
 
 export default class UserService {
   public static async findUserByChatId(chatId: number): Promise<IUser | null> {
     return User.findOne({ chatId });
   }
 
-  public static async findUserByphoneNumber(
-    phoneNumber: string
-  ): Promise<IUser | null> {
+  public static async findUserByphoneNumber(phoneNumber: string): Promise<IUser | null> {
     return User.findOne({ phone: phoneNumber });
   }
 
@@ -19,14 +17,14 @@ export default class UserService {
       const user = await User.findOne({ chatId }).exec();
 
       if (!user) {
-        throw new Error("User not found");
+        throw new Error('User not found');
       }
 
       // Return the user's name (assuming your User model has a name field)
-      return user.name || "Unknown User"; // Adjust as necessary
+      return user.name || 'Unknown User'; // Adjust as necessary
     } catch (error) {
-      console.error("Error fetching user name:", error);
-      return "Unknown User";
+      console.error('Error fetching user name:', error);
+      return 'Unknown User';
     }
   }
 
@@ -35,7 +33,7 @@ export default class UserService {
     if (user) {
       return user.language;
     }
-    throw new Error("user is not found");
+    throw new Error('user is not found');
   }
 
   public static async createPurchaseRequest(
@@ -96,21 +94,19 @@ export default class UserService {
 
   // use it to check before sending a new request
   public static async hasActiveRequests(phoneNumber: string) {
-    return (await Transaction.find({ isActive: true, phone: phoneNumber }))
-      ? true
-      : false;
+    return (await Transaction.find({ isActive: true, phone: phoneNumber })) ? true : false;
   }
   // user could not creat /
   static async updateUserAdminStatus(phoneNumber: string, isAdmin: boolean) {
     try {
       const user = await this.findUserByphoneNumber(phoneNumber);
       if (!user) {
-        throw new Error("User not found");
+        throw new Error('User not found');
       }
       await user.updateOne({ $set: { isAdmin } });
     } catch (error) {
-      console.error("Error updating admin status:", error);
-      throw new Error("Error updating admin status");
+      console.error('Error updating admin status:', error);
+      throw new Error('Error updating admin status');
     }
   }
 }

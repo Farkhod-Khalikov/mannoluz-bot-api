@@ -1,5 +1,5 @@
-import Product, { IProduct } from "../models/products.schema";
-import Logger from "../utils/logger";
+import Product, { IProduct } from '../models/products.schema';
+import Logger from '../utils/logger';
 
 export default class ProductService {
   private static itemsPerPage = 5;
@@ -8,9 +8,7 @@ export default class ProductService {
     return Math.ceil(totalProducts / this.itemsPerPage);
   }
   // findProductByUniqueID: string
-  public static async findProductByUniqueId(
-    uniqueID: string
-  ): Promise<IProduct | null> {
+  public static async findProductByUniqueId(uniqueID: string): Promise<IProduct | null> {
     return Product.findOne({ uniqueID });
   }
   // static async addProduct(documentId: string ,agentId: string, name: string, price: number, date:string){
@@ -47,8 +45,8 @@ export default class ProductService {
       }).save();
 
       if (!newProduct) {
-        Logger.error("addOrUpdateProduct", "Could not Create Product Document");
-        throw new Error("Could not create new product document");
+        Logger.error('addOrUpdateProduct', 'Could not Create Product Document');
+        throw new Error('Could not create new product document');
       }
 
       return { isNewProduct: true, newProduct };
@@ -56,7 +54,7 @@ export default class ProductService {
       // Catch any unhandled error
     } catch (error) {
       if (error instanceof Error) {
-        Logger.error("addOrUpdateProduct", error.message);
+        Logger.error('addOrUpdateProduct', error.message);
         throw new Error(error.message);
       }
     }
@@ -73,7 +71,7 @@ export default class ProductService {
         });
 
         if (!deletedProduct) {
-          throw new Error("Product Not Found.");
+          throw new Error('Product Not Found.');
         }
         return deletedProduct;
       }
@@ -83,7 +81,7 @@ export default class ProductService {
 
       // if no products found return error
       if (products.deletedCount === 0) {
-        throw new Error("Products with specified document ID NOT found");
+        throw new Error('Products with specified document ID NOT found');
       }
 
       // when products are deleted return counter
@@ -91,19 +89,14 @@ export default class ProductService {
       // Catch any unhandled error
     } catch (error) {
       if (error instanceof Error) {
-        console.error("Error in removeProduct:", error);
+        console.error('Error in removeProduct:', error);
         throw new Error(error.message);
       }
     }
   }
 
   //createProduct
-  public static async createProduct(
-    uniqueID: string,
-    name: string,
-    price: number,
-    amount: number
-  ) {
+  public static async createProduct(uniqueID: string, name: string, price: number, amount: number) {
     const product = new Product({
       uniqueID,
       name,
@@ -113,11 +106,7 @@ export default class ProductService {
     await product.save();
   }
 
-  public static async updateProductByUniqueID(
-    uniqueID: string,
-    amount?: number,
-    price?: number
-  ) {
+  public static async updateProductByUniqueID(uniqueID: string, amount?: number, price?: number) {
     // update record regarding to amount or price
   }
 
