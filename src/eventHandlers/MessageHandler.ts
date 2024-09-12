@@ -144,6 +144,12 @@ export default class MessageController {
           case 'product_page_ellipsis_next':
             await this.productHandler.handlePagination(chatId, 'product_page_ellipsis_next');
             break;
+          case 'request_next_page':
+            await this.purchaseRequestHandler.handlePagination(chatId, 'request_next_page');
+            break;
+          case 'request_previous_page':
+            await this.purchaseRequestHandler.handlePagination(chatId, 'request_previous_page');
+            break;
           default:
             console.warn(`Unknown callback query data: ${data}`);
         }
