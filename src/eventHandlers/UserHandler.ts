@@ -281,6 +281,12 @@ export default class UserHandler {
   }
 
   public async handlePurchaseRequest(chatId: number) {
+    const user = await UserService.findUserByChatId(chatId);
+
+    if (!user){
+      this.bot.sendMessage(chatId, i18n.t("user_not_found") );
+      return
+    }
     const confirmKeyboard = {
       inline_keyboard: [
         [

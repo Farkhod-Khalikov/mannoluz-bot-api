@@ -103,17 +103,54 @@ export default class MessageController {
     const data = callbackQuery.data;
 
     if (chatId && data) {
+      // transaction PAGE callback data
       if (data.startsWith('transaction_page_')) {
         const page = parseInt(data.split('_')[2], 10);
         await this.transactionHandler.handlePagination(chatId, `transaction_page_${page}`);
+        // product PAGE callback data
       } else if (data.startsWith('product_page_')) {
         const page = parseInt(data.split('_')[2], 10);
         await this.productHandler.handlePagination(chatId, `product_page_${page}`);
+        // requests' PAGE callback data
       } else if (data.startsWith('request_page_')) {
         const page = parseInt(data.split('_')[2], 10);
         await this.purchaseRequestHandler.handlePagination(chatId, `request_page_${page}`);
       } else {
         switch (data) {
+            // transaction callback data
+          case 'transaction_previous_page':
+            await this.transactionHandler.handlePagination(chatId, 'transaction_previous_page');
+            break;
+          case 'transaction_next_page':
+            await this.transactionHandler.handlePagination(chatId, 'transaction_next_page');
+            break;
+          case 'transaction_ellipsis_prev':
+            await this.transactionHandler.handlePagination(chatId, 'transaction_ellipsis_prev');
+            break;
+          case 'transaction_ellipsis_next':
+            await this.transactionHandler.handlePagination(chatId, 'transaction_ellipsis_next');
+            break;
+
+            // prodcut callback data
+          case 'product_previous_page':
+            await this.productHandler.handlePagination(chatId, 'product_previous_page');
+            break;
+          case 'product_next_page':
+            await this.productHandler.handlePagination(chatId, 'product_next_page');
+            break;
+          case 'product_ellipsis_prev':
+            await this.productHandler.handlePagination(chatId, 'product_ellipsis_prev');
+            break;
+          case 'product_ellipsis_next':
+            await this.productHandler.handlePagination(chatId, 'product_ellipsis_next');
+            break;
+            // purchase request callback data
+          case 'request_next_page':
+            await this.purchaseRequestHandler.handlePagination(chatId, 'request_next_page');
+            break;
+          case 'request_previous_page':
+            await this.purchaseRequestHandler.handlePagination(chatId, 'request_previous_page');
+            break;
           case 'confirm_purchase_request':
             await this.userHandler.handleConfirmPurchaseRequest(chatId);
             break;
@@ -126,35 +163,11 @@ export default class MessageController {
           case 'cancel_post':
             await this.adminHandler.handleCancelPost(chatId);
             break;
-          case 'transaction_previous_page':
-            await this.transactionHandler.handlePagination(chatId, 'transaction_previous_page');
-            break;
-          case 'transaction_next_page':
-            await this.transactionHandler.handlePagination(chatId, 'transaction_next_page');
-            break;
-          case 'product_previous_page':
-            await this.productHandler.handlePagination(chatId, 'product_previous_page');
-            break;
-          case 'product_next_page':
-            await this.productHandler.handlePagination(chatId, 'product_next_page');
-            break;
-          case 'product_page_ellipsis_prev':
-            await this.productHandler.handlePagination(chatId, 'product_page_ellipsis_prev');
-            break;
-          case 'product_page_ellipsis_next':
-            await this.productHandler.handlePagination(chatId, 'product_page_ellipsis_next');
-            break;
-          case 'request_next_page':
-            await this.purchaseRequestHandler.handlePagination(chatId, 'request_next_page');
-            break;
-          case 'request_previous_page':
-            await this.purchaseRequestHandler.handlePagination(chatId, 'request_previous_page');
-            break;
+
           default:
             console.warn(`Unknown callback query data: ${data}`);
         }
       }
-
       await this.bot.answerCallbackQuery(callbackQuery.id);
     }
   }

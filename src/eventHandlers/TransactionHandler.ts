@@ -11,9 +11,10 @@ export default class TransactionHandler {
   }
 
   public async handleListTransactions(msg: TelegramBot.Message) {
+    // add user_not_found case if(!user) => do something
     try {
       const chatId = msg.chat.id;
-      this.resetTransactionPage(chatId); // Reset the current page to 1
+    this.resetTransactionPage(chatId); // Reset the current page to 1
       await this.showTransactions(chatId);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -26,6 +27,7 @@ export default class TransactionHandler {
 
   private async showTransactions(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
+
     if (!user) {
       throw new Error('Could not retrieve user');
     }
@@ -77,7 +79,7 @@ export default class TransactionHandler {
     if (startDivision > 1) {
       paginationButtons.push({
         text: '...',
-        callback_data: 'transaction_page_ellipsis',
+        callback_data: 'transaction_ellipsis_prev',
       });
     }
 
@@ -91,7 +93,7 @@ export default class TransactionHandler {
     if (endDivision < totalPages) {
       paginationButtons.push({
         text: '...',
-        callback_data: 'transaction_page_ellipsis',
+        callback_data: 'transaction_ellipsis_next',
       });
     }
 
@@ -111,6 +113,7 @@ export default class TransactionHandler {
         callback_data: 'transaction_previous_page',
       });
     }
+
     if (showNext) {
       navButtons.push({
         text: i18n.t('next'),
@@ -145,7 +148,8 @@ export default class TransactionHandler {
     }
     const transactions = await UserService.getAllTransactions(user.id);
     const totalPages = Math.ceil(transactions.length / 5);
-
+    const currentPage = this.userTransactionPages.get(chatId) || 1;
+    const numPagesToShow = 3;
     if (action === 'transaction_previous_page') {
       this.userTransactionPages.set(
         chatId,
@@ -159,6 +163,16 @@ export default class TransactionHandler {
     } else if (action.startsWith('transaction_page_')) {
       const page = parseInt(action.split('_')[2], 10);
       this.userTransactionPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
+    } else if (action === 'transaction_ellipsis_prev') {
+      const startDivision = Math.max(
+        1,
+        Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
+      );
+      const newStartPage = Math.min(totalPages, startDivision - numPagesToShow);
+      this.userTransactionPages.set(chatId, newStartPage);
+    } else if (action === 'transaction_ellipsis_next') {
+      const newStartPage = Math.min(totalPages, currentPage + numPagesToShow);
+      this.userTransactionPages.set(chatId, newStartPage);
     }
 
     await this.showTransactions(chatId);
