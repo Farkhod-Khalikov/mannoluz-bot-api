@@ -36,7 +36,7 @@ i18next.init({
         btn_send_post: '✍️Send Post',
         btn_list_products: '🛒Products',
         balance_caption: 'Your balance',
-        btn_purchase_request: '💌Leave the Request',
+        btn_purchase_request: '💌Leave Request',
         choose_option: '🤖MannolUZBot Main Page',
         choose_language:
           '🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.\n🇺🇿Iltimos, tilni tanlang.',
