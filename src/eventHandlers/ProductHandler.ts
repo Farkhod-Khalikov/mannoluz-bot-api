@@ -115,7 +115,7 @@ class ProductHandler {
 
     await this.bot.sendMessage(
       chatId,
-      `*Products (Page ${currentPage} of ${totalPages}):*\n\n ${productPage}`,
+      `🛒*Products (${currentPage} of ${totalPages})*\n\n ${productPage}`,
       {
         parse_mode: 'Markdown',
         reply_markup: {

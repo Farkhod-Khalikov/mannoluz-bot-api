@@ -107,12 +107,10 @@ export default class UserHandler {
         languageCode = 'ru-RU';
         break;
     }
-    //const languageCode = language === "🇷🇺Русский" ? "ru-RU" : "en-US"; // Add uz-Uz
     i18n.changeLanguage(languageCode);
 
     if (isNewUser === true) {
       this.newUserLanguages.set(chatId, languageCode);
-      console.log('shared contact inside handleLanguageSelection');
       this.bot.sendMessage(chatId, i18n.t('share_contact'), {
         reply_markup: {
           keyboard: [[{ text: i18n.t('btn_share_contact'), request_contact: true }]],
@@ -174,7 +172,6 @@ export default class UserHandler {
         }
       }
     };
-
     this.bot.on('message', changeLanguageListener);
   }
 
@@ -207,7 +204,7 @@ export default class UserHandler {
 
       const caption = `${i18n.t('balance_caption')}: ${balance || 0} ${i18n.t(
         'coins'
-      )}\n\n\n${i18n.t('last_transactions')}:\n${lastTransactions}\n`;
+      )}\n\n${i18n.t('last_transactions')}\n${lastTransactions}\n`;
 
       this.bot
         .sendPhoto(chatId, filePath, { caption })

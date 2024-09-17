@@ -7,20 +7,20 @@ i18next.init({
       translation: {
         request_status_update:
           "Your request status is updated to 'Not Active'. If admins didnt contact you, please repeat the request or contact  us through panel 'Contact Us'",
-        request_saved: 'Your request is saved!',
-        btn_list_requests: 'Requests List',
+        request_saved: '✅Your request is saved!',
+        btn_list_requests: '📭Requests',
         confirm_btn_purchase_request: 'Please, confirm if you want to leave a request.',
-        yes_sure: 'Yes, sure',
-        no_thanks: 'No, thanks',
+        yes_sure: '✅Yes, sure',
+        no_thanks: '❌No, thanks',
         admin_removed_notification:
-          "You've been removed with admin's privileges. Please, restart bot with /start command",
+          "⚠️You've been removed with admin's privileges. Please, restart bot with /start command",
         admin_granted_notification:
-          "You've been provided with admin's privileges. Pleaes, restart bot with /start command",
+          "⚠️You've been provided with admin's privileges. Please, restart bot with /start command",
         btn_purchase_request_cancelled: '❌Request cancelled',
         write_comment: 'Please leave a comment:',
-        last_transactions: 'Last Transactions',
-        btn_rules: 'Rules',
-        btn_list_transactions: 'List Transactions',
+        last_transactions: '💸Last Transactions',
+        btn_rules: '⁉️Rules',
+        btn_list_transactions: '💸List Transactions',
         coins: 'Coins',
         prev: '⬅️prev',
         next: 'next➡️',
@@ -36,8 +36,8 @@ i18next.init({
         btn_send_post: '✍️Send Post',
         btn_list_products: '🛒Products',
         balance_caption: 'Your balance',
-        btn_purchase_request: 'Leave the Request',
-        choose_option: 'Menu',
+        btn_purchase_request: '💌Leave the Request',
+        choose_option: '🤖MannolUZBot Main Page',
         choose_language:
           '🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.\n🇺🇿Iltimos, tilni tanlang.',
         share_contact: '📱Please share your contact.',
@@ -53,23 +53,10 @@ i18next.init({
         language_changed: "✅Language's changed successfully.",
         active_request_exist:
           'You have active request! Please, wait until admins contact you. We apologize for delay and provided inconvenience.',
-        contact_us_information: `Our contacts:
-
-Tashkent: 100002, 
-phone: +998-99-011-98-94, +998-93-397-35-72.
-
-Fergana Valley: 150100, 
-phone: +998-94-718-54-45.
-
-Southwest: 140100, 
-phone: +998-94-718-54-45.
-
-Mail: info@mannol.uz, Mannoloilsale@mail.ru.
-
-Website: mannol.uz .`,
+        contact_us_information: `📞Our contacts\n\nTashkent: 100002,\nphone: +998-99-011-98-94, +998-93-397-35-72.\n\nFergana Valley: 150100,\nphone: +998-94-718-54-45.\n\nSouthwest: 140100,\nphone: +998-94-718-54-45.\n\nMail: info@mannol.uz, Mannoloilsale@mail.ru.\n\nWebsite: mannol.uz.`,
         btn_go_back: '🔙Go Back',
         btn_about_us: '📃About Us',
-        about_us_information: `Welcome to MANNOL’s official page!
+        about_us_information: `📃Welcome to MANNOL’s official page!
 
 As the authorized distributor for SCT-Vertriebs GmbH and MANNOL in Uzbekistan, we are based in Tashkent. Our mission is to provide high-quality vehicle products quickly and affordably to our partners and customers.
 
@@ -85,26 +72,26 @@ Thank you for choosing MANNOL!`,
         request_status_update:
           "Статус вашей последнее заявки обновлен на не активный. Если с вами не связались пожалуйста оставьте заявку снова или свяжетесь с нами по предоставленным контактам через панель 'Связаться с нами'.",
         request_saved: 'Ваша заявка сохранена!',
-        btn_list_requests: 'Список Заявок',
+        btn_list_requests: '📭Список Заявок',
         active_request_exist:
           'У вас уже есть активная заявка! Пожалуйста, дождитесь пока администраторы свяжутся с вам. Просим извинение за вынужденное ожидание.',
         prev: '⬅️пред',
         next: 'след➡️',
-        yes_sure: 'Да, конечно',
-        no_thanks: 'Нет, спасибо',
+        yes_sure: '✅Да, конечно',
+        no_thanks: '❌Нет, спасибо',
         admin_removed_notification:
           'У вас забрали привилегии админа. Пожалуйста перезапустите бота коммандой /start.',
         admin_granted_notification:
           'Вам предаставили привилегии админа. Пожалуйста перезапустите бота коммандой /start',
         btn_purchase_request_cancelled: '❌Отмена заявки',
         confirm_btn_purchase_request: 'Пожалуйста подтвердите что хотите оставить заявку.',
-        btn_list_transactions: 'Список Транзакций',
-        last_transactions: 'Последнии транзакции',
-        btn_rules: 'Правила Использования бонусов',
+        btn_list_transactions: '💸Список Транзакций',
+        last_transactions: '💸Последнии транзакции',
+        btn_rules: '⁉️Правила Использования бонусов',
         coins: 'Монет',
         write_comment: 'Пожалуйста, оставьте комментарий:',
         bonuses_addition: 'Начисление',
-        btn_purchase_request: 'Оставить запрос',
+        btn_purchase_request: '💌Оставить заявку',
         description: 'Описание',
         transaction_date: 'Дата транзакции',
         bonuses_removal: 'Списание',
@@ -115,7 +102,7 @@ Thank you for choosing MANNOL!`,
         registration_on_start: 'Регистрация',
         btn_send_post: '✍️Отправить Пост',
         balance_caption: 'Ваш баланс',
-        choose_option: 'Меню',
+        choose_option: '🤖MannolUzBot Main Page',
         choose_language:
           '🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.\n🇺🇿Iltimos, tilni tanlang.',
         share_contact: '📱Пожалуйста, поделитесь своим контактом.',
@@ -133,7 +120,7 @@ Thank you for choosing MANNOL!`,
         post_creation_cancelled: '❌Пост НЕ отправлен.',
         btn_cancel_post_creation: '❌Отмена',
 
-        about_us_information: `Добро пожаловать на официальную страницу MANNOL!
+        about_us_information: `📃Добро пожаловать на официальную страницу MANNOL!
 
 Являясь официальным дистрибьютором SCT-Vertriebs GmbH и MANNOL в Узбекистане, мы находимся в Ташкенте. Наша миссия — быстро и по доступной цене предоставлять высококачественную автомобильную продукцию нашим партнерам и клиентам.
 
@@ -143,7 +130,7 @@ Thank you for choosing MANNOL!`,
 
 Благодарим вас за выбор MANNOL!`,
 
-        contact_us_information: `Наши Контакты:
+        contact_us_information: `📞Наши Контакты
 
 Ташкент: 100002, 
 тел: +998-99-011-98-94, +998-93-397-35-72.
@@ -163,20 +150,20 @@ Thank you for choosing MANNOL!`,
       translation: {
         request_status_update:
           "Sizning so'rovingiz holati 'Nofaol' holatiga o'zgartirildi. Agar administratorlar siz bilan bog'lanmagan bo'lsa, iltimos, so'rovni qaytadan yuboring yoki 'Biz bilan bog'lanish' paneli orqali bog'laning.",
-        request_saved: "Sizning so'rovingiz saqlandi!",
-        btn_list_requests: "So'rovlar ro'yxati",
-        confirm_btn_purchase_request: "Iltimos, so'rov qoldirishni tasdiqlang.",
-        yes_sure: 'Ha, albatta',
-        no_thanks: "Yo'q, rahmat",
+        request_saved: "✅Sizning so'rovingiz saqlandi!",
+        btn_list_requests: "📭So'rovlar",
+        confirm_btn_purchase_request: "⚠️Iltimos, so'rov qoldirishni tasdiqlang.",
+        yes_sure: '✅Ha, albatta',
+        no_thanks: "❌Yo'q, rahmat",
         admin_removed_notification:
-          "Siz adminlik huquqlaridan mahrum qilindingiz. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
+          "⚠️Siz adminlik huquqlaridan mahrum qilindingiz. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
         admin_granted_notification:
-          "Sizga adminlik huquqlari berildi. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
+          "⚠️Sizga adminlik huquqlari berildi. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
         btn_purchase_request_cancelled: "❌So'rov bekor qilindi",
         write_comment: 'Iltimos, izoh qoldiring:',
-        last_transactions: 'Oxirgi tranzaksiyalar',
-        btn_rules: 'Qoidalar',
-        btn_list_transactions: "Tranzaksiyalar ro'yxati",
+        last_transactions: '💸Oxirgi tranzaksiyalar',
+        btn_rules: '⁉️Qoidalar',
+        btn_list_transactions: "💸Tranzaksiyalar",
         coins: 'Tanga',
         prev: '⬅️Oldingi',
         next: 'Keyingi➡️',
@@ -192,8 +179,8 @@ Thank you for choosing MANNOL!`,
         btn_send_post: '✍️Post yuborish',
         btn_list_products: '🛒Mahsulotlar',
         balance_caption: 'Sizning balansingiz',
-        btn_purchase_request: "So'rov qoldirish",
-        choose_option: 'Menu',
+        btn_purchase_request: "💌So'rov qoldirish",
+        choose_option: '🤖MannolUZBot Main Page',
         choose_language:
           '🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.\n🇺🇿Iltimos, tilni tanlang.',
         share_contact: '📱Iltimos, kontaktingizni ulashing.',
@@ -208,9 +195,9 @@ Thank you for choosing MANNOL!`,
         btn_cancel_post_creation: '❌Bekor qilish',
         language_changed: "✅Til muvaffaqiyatli o'zgartirildi.",
         active_request_exist:
-          "Sizda faol so'rov mavjud! Iltimos, administratorlar siz bilan bog'lanishini kuting. Kechikish va noqulaylik uchun uzr so'raymiz.",
+          "❌Sizda faol so'rov mavjud! Iltimos, administratorlar siz bilan bog'lanishini kuting. Kechikish va noqulaylik uchun uzr so'raymiz.",
         contact_us_information:
-          "Bizning kontaktlarimiz:\n\nToshkent: 100002,\ntelefon: +998-99-011-98-94, +998-93-397-35-72.\n\nFarg'ona vodiysi: 150100,\ntelefon: +998-94-718-54-45.\n\nJanubi-g'arbiy: 140100,\ntelefon: +998-94-718-54-45.\n\nElektron pochta: info@mannol.uz, Mannoloilsale@mail.ru.\n\nVeb-sayt: mannol.uz.",
+          "📞Bizning kontaktlarimiz\n\nToshkent: 100002,\ntelefon: +998-99-011-98-94, +998-93-397-35-72.\n\nFarg'ona vodiysi: 150100,\ntelefon: +998-94-718-54-45.\n\nJanubi-g'arbiy: 140100,\ntelefon: +998-94-718-54-45.\n\nElektron pochta: info@mannol.uz, Mannoloilsale@mail.ru.\n\nVeb-sayt: mannol.uz.",
         btn_go_back: '🔙Orqaga qaytish',
         btn_about_us: '📃Biz haqimizda',
         about_us_information:

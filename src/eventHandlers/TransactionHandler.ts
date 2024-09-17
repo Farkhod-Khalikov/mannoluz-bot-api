@@ -58,8 +58,8 @@ export default class TransactionHandler {
           .padStart(2, '0')}.${date.getFullYear()}`;
         return `${
           transaction.bonuses > 0
-            ? i18n.t('bonuses_addition').padEnd(10, ' ')
-            : i18n.t('bonuses_removal').padEnd(10, ' ')
+            ? i18n.t('bonuses_addition')/*.padEnd(10, ' ')*/
+            : i18n.t('bonuses_removal')/*.padEnd(10, ' ')*/
         } | ${formattedDate} | ${transaction.bonuses} ${i18n.t('coins')}\n`;
       })
       .join('\n');
@@ -127,7 +127,7 @@ export default class TransactionHandler {
 
     await this.bot.sendMessage(
       chatId,
-      `*Transactions (Page ${currentPage} of ${totalPages}):*\n\n${transactionPage}`,
+      `💸*Transactions (${currentPage} of ${totalPages})*\n\n${transactionPage}`,
       {
         parse_mode: 'Markdown',
         reply_markup: {

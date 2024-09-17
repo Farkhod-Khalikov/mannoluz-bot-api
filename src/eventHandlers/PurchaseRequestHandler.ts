@@ -129,7 +129,7 @@ export default class PurchaseRequesHandler {
 
     await this.bot.sendMessage(
       chatId,
-      `*Requests (Page ${currentPage} of ${totalPages}):*\n\n${requestPage}`,
+      `📭*Requests (${currentPage} of ${totalPages})*\n\n${requestPage}`,
       {
         parse_mode: 'Markdown',
         reply_markup: {
