@@ -11,19 +11,33 @@ class ProductHandler {
   }
 
   public async handleListProducts(msg: TelegramBot.Message) {
-    const chatId = msg.chat.id;
-    // Initialize the user's page to 1 before displaying the products
+    try {
+      const chatId = msg.chat.id;
+      this.resetProductPage(chatId);
+      await this.showProducts(chatId);
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      this.bot.sendMessage(msg.chat.id, 'Could not fetch products');
+    }
+  }
+
+  // Reset to first page when user clicks on button
+  private resetProductPage(chatId: number) {
     this.userProductPages.set(chatId, 1);
-    await this.showProducts(chatId);
   }
 
   private async showProducts(chatId: number) {
-    const products = await ProductService.getAllProducts();
+    let products = await ProductService.getAllProducts();
 
     if (products.length === 0) {
       this.bot.sendMessage(chatId, 'No products available.');
       return;
     }
+
+    // sort by date added (created)
+    products = products.sort(
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
 
     const currentPage = this.userProductPages.get(chatId) || 1;
     const itemsPerPage = 5;
@@ -82,64 +96,63 @@ class ProductHandler {
       keyboard.push(paginationButtons);
     }
 
-    // Prev and Next buttons
-    if (showPrev || showNext) {
-      const navigationButtons: TelegramBot.InlineKeyboardButton[] = [];
-      if (showPrev) {
-        navigationButtons.push({
-          text: i18n.t('prev'),
-          callback_data: 'product_previous_page',
-        });
-      }
-      if (showNext) {
-        navigationButtons.push({
-          text: i18n.t('next'),
-          callback_data: 'product_next_page',
-        });
-      }
+    const navigationButtons: TelegramBot.InlineKeyboardButton[] = [];
+    if (showPrev) {
+      navigationButtons.push({
+        text: i18n.t('prev'),
+        callback_data: 'product_previous_page',
+      });
+    }
+    if (showNext) {
+      navigationButtons.push({
+        text: i18n.t('next'),
+        callback_data: 'product_next_page',
+      });
+    }
+    if (navigationButtons.length > 0) {
       keyboard.push(navigationButtons);
     }
 
-    await this.bot.sendMessage(chatId, productPage, {
-      parse_mode: 'Markdown',
-      reply_markup: {
-        inline_keyboard: keyboard,
-      },
-    });
+    await this.bot.sendMessage(
+      chatId,
+      `*Products (Page ${currentPage} of ${totalPages}):*\n\n ${productPage}`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: keyboard,
+        },
+      }
+    );
   }
 
-  public async handlePagination(chatId: number, callbackData: string) {
+  public async handlePagination(chatId: number, action: string) {
     const products = await ProductService.getAllProducts();
     const totalPages = Math.ceil(products.length / 5);
     const currentPage = this.userProductPages.get(chatId) || 1;
     const numPagesToShow = 3;
-    if (callbackData.startsWith('product_page_')) {
-      const page = parseInt(callbackData.split('_')[2], 10);
-      this.userProductPages.set(chatId, page);
-      await this.showProducts(chatId);
-    } else if (callbackData === 'product_previous_page') {
-      const currentPage = this.userProductPages.get(chatId) || 1;
-      if (currentPage > 1) {
-        this.userProductPages.set(chatId, currentPage - 1);
-        await this.showProducts(chatId);
-      }
-    } else if (callbackData === 'product_next_page') {
-      const currentPage = this.userProductPages.get(chatId) || 1;
-      const totalPages = await ProductService.getTotalPages(); // You need to implement this method
-      if (currentPage < totalPages) {
-        this.userProductPages.set(chatId, currentPage + 1);
-        await this.showProducts(chatId);
-      }
-    } else if (callbackData === 'product_ellipsis_prev') {
-      const startDivision = Math.max(1, Math.floor(currentPage - 1) / numPagesToShow + 1);
+
+    if (action.startsWith('product_page_')) {
+      const page = parseInt(action.split('_')[2], 10);
+      this.userProductPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
+    } else if (action === 'product_previous_page') {
+      this.userProductPages.set(chatId, Math.max((this.userProductPages.get(chatId) || 1) - 1, 1));
+    } else if (action === 'product_next_page') {
+      this.userProductPages.set(
+        chatId,
+        Math.min((this.userProductPages.get(chatId) || 1) + 1, totalPages)
+      );
+    } else if (action === 'product_ellipsis_prev') {
+      const startDivision = Math.max(
+        1,
+        Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
+      );
       const newStartPage = Math.min(totalPages, startDivision - numPagesToShow);
       this.userProductPages.set(chatId, newStartPage);
-      await this.showProducts(chatId);
-    } else if (callbackData === 'product_ellipisis_next') {
+    } else if (action === 'product_ellipsis_next') {
       const newStartPage = Math.min(totalPages, currentPage + numPagesToShow);
       this.userProductPages.set(chatId, newStartPage);
-      await this.showProducts(chatId);
     }
+    await this.showProducts(chatId);
   }
 }
 

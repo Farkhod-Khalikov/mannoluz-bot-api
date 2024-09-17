@@ -14,7 +14,7 @@ export default class TransactionHandler {
     // add user_not_found case if(!user) => do something
     try {
       const chatId = msg.chat.id;
-    this.resetTransactionPage(chatId); // Reset the current page to 1
+      this.resetTransactionPage(chatId); // Reset the current page to 1
       await this.showTransactions(chatId);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -143,13 +143,16 @@ export default class TransactionHandler {
 
   public async handlePagination(chatId: number, action: string) {
     const user = await UserService.findUserByChatId(chatId);
+
     if (!user) {
       throw new Error('Could not retrieve user');
     }
+
     const transactions = await UserService.getAllTransactions(user.id);
     const totalPages = Math.ceil(transactions.length / 5);
     const currentPage = this.userTransactionPages.get(chatId) || 1;
     const numPagesToShow = 3;
+
     if (action === 'transaction_previous_page') {
       this.userTransactionPages.set(
         chatId,
