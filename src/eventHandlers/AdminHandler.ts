@@ -1,10 +1,10 @@
-import TelegramBot from "node-telegram-bot-api";
-import UserService from "../services/user.service";
-import i18n from "../utils/i18n";
-import fs from "fs";
-import path from "path";
-import Post from "../models/posts.schema";
-import { v4 as uuidv4 } from "uuid";
+import TelegramBot from 'node-telegram-bot-api';
+import UserService from '../services/user.service';
+import i18n from '../utils/i18n';
+import fs from 'fs';
+import path from 'path';
+import Post from '../models/posts.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 export default class AdminHandler {
   private bot: TelegramBot;
@@ -22,7 +22,7 @@ export default class AdminHandler {
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
-    this.tempDir = path.join(__dirname, "..", "temp/admin-posts"); // Ensure temp folder is created
+    this.tempDir = path.join(__dirname, '..', 'temp/admin-posts'); // Ensure temp folder is created
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir);
     }
@@ -34,7 +34,7 @@ export default class AdminHandler {
     // Fetch admin name from user service
     const adminName = await UserService.getUserName(chatId);
 
-    this.bot.sendMessage(chatId, i18n.t("provide_post_title"), {
+    this.bot.sendMessage(chatId, i18n.t('provide_post_title'), {
       reply_markup: {
         force_reply: true,
       },
@@ -54,20 +54,20 @@ export default class AdminHandler {
     if (currentPostData) {
       if (!currentPostData.title) {
         currentPostData.title = text;
-        this.bot.sendMessage(chatId, i18n.t("provide_post_message"), {
+        this.bot.sendMessage(chatId, i18n.t('provide_post_message'), {
           reply_markup: {
             force_reply: true,
           },
         });
       } else if (!currentPostData.message) {
         currentPostData.message = text;
-        this.bot.sendMessage(chatId, i18n.t("provide_post_image"), {
+        this.bot.sendMessage(chatId, i18n.t('provide_post_image'), {
           reply_markup: {
             force_reply: true,
           },
         });
       } else if (!currentPostData.image) {
-        this.bot.sendMessage(chatId, i18n.t("uploading_image"), {
+        this.bot.sendMessage(chatId, i18n.t('uploading_image'), {
           reply_markup: {
             force_reply: true,
           },
@@ -96,7 +96,7 @@ export default class AdminHandler {
         // Rename the file to the new format
         fs.rename(tempFilePath, newFilePath, (err) => {
           if (err) {
-            console.error("Failed to rename temp file:", err);
+            console.error('Failed to rename temp file:', err);
           }
         });
 
@@ -109,19 +109,19 @@ export default class AdminHandler {
         `;
         this.bot.sendPhoto(chatId, newFilePath, {
           caption: postSummary,
-          parse_mode: "Markdown",
+          parse_mode: 'Markdown',
           reply_markup: {
             inline_keyboard: [
               [
                 {
-                  text: i18n.t("confirm_button"),
-                  callback_data: "confirm_post",
+                  text: i18n.t('btn_confirm'),
+                  callback_data: 'confirm_post',
                 },
               ],
               [
                 {
-                  text: i18n.t("btn_cancel_post_creation"),
-                  callback_data: "cancel_post",
+                  text: i18n.t('btn_cancel_post_creation'),
+                  callback_data: 'cancel_post',
                 },
               ],
             ],
@@ -149,10 +149,10 @@ export default class AdminHandler {
       for (const user of users) {
         this.bot.sendPhoto(user.chatId, postData.image, {
           caption: `*${postData.title}*\n\n${postData.message}`,
-          parse_mode: "Markdown",
+          parse_mode: 'Markdown',
         });
       }
-      this.bot.sendMessage(chatId, i18n.t("post_sent"));
+      this.bot.sendMessage(chatId, i18n.t('post_sent'));
       this.sendMainMenu(chatId);
     }
     // Clean up temp files if the post is canceled
@@ -165,7 +165,7 @@ export default class AdminHandler {
       // Remove the image file if the post is canceled
       fs.unlink(currentPostData.image, (err) => {
         if (err) {
-          console.error("Failed to delete temp file:", err);
+          console.error('Failed to delete temp file:', err);
         }
       });
     }
@@ -178,39 +178,23 @@ export default class AdminHandler {
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
 
     const mainMenuKeyboard = [
-      [{ text: i18n.t("credit_card_button") }],
-      [
-        { text: i18n.t("btn_list_products") },
-        { text: i18n.t("btn_list_transactions") },
-      ],
-      [
-        { text: i18n.t("settings_button") },
-        { text: i18n.t("purchase_request") },
-      ],
-      [
-        { text: i18n.t("contact_us_button") },
-        { text: i18n.t("about_us_button") },
-      ],
+      [{ text: i18n.t('btn_credit_card') }],
+      [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_transactions') }],
+      [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_purchase_request') }],
+      [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
     ];
     const adminMenuKeyboard = [
       [
         {
-          text: i18n.t("send_post_button"),
+          text: i18n.t('btn_send_post'),
         },
-        { text: i18n.t("purchase_request") },
       ],
-      [
-        { text: i18n.t("btn_list_products") },
-        { text: i18n.t("btn_list_requests") },
-      ],
-      [{ text: i18n.t("settings_button") }, { text: i18n.t("btn_rules") }],
-      [
-        { text: i18n.t("contact_us_button") },
-        { text: i18n.t("about_us_button") },
-      ],
+      [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
+      [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
+      [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
     ];
     if (isAdmin) {
-      this.bot.sendMessage(chatId, i18n.t("choose_option"), {
+      this.bot.sendMessage(chatId, i18n.t('choose_option'), {
         reply_markup: {
           keyboard: adminMenuKeyboard,
           resize_keyboard: true,
@@ -218,7 +202,7 @@ export default class AdminHandler {
         },
       });
     } else {
-      this.bot.sendMessage(chatId, i18n.t("choose_option"), {
+      this.bot.sendMessage(chatId, i18n.t('choose_option'), {
         reply_markup: {
           keyboard: mainMenuKeyboard,
           resize_keyboard: true,

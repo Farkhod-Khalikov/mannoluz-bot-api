@@ -115,7 +115,7 @@ export default class UserHandler {
       console.log('shared contact inside handleLanguageSelection');
       this.bot.sendMessage(chatId, i18n.t('share_contact'), {
         reply_markup: {
-          keyboard: [[{ text: i18n.t('share_contact_button'), request_contact: true }]],
+          keyboard: [[{ text: i18n.t('btn_share_contact'), request_contact: true }]],
           one_time_keyboard: true,
           resize_keyboard: true,
         },
@@ -219,8 +219,8 @@ export default class UserHandler {
 
   public async handleSettings(msg: TelegramBot.Message) {
     const settingsKeyboard = [
-      [{ text: i18n.t('change_language_button') }],
-      [{ text: i18n.t('back_button') }],
+      [{ text: i18n.t('btn_change_language') }],
+      [{ text: i18n.t('btn_go_back') }],
     ];
 
     this.bot.sendMessage(msg.chat.id, i18n.t('settings_menu_prompt'), {
@@ -237,11 +237,11 @@ export default class UserHandler {
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
     if (!isAdmin) {
       const mainMenuKeyboard = [
-        [{ text: i18n.t('credit_card_button') }],
+        [{ text: i18n.t('btn_credit_card') }],
         [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_transactions') }],
-        [{ text: i18n.t('settings_button') }],
-        [{ text: i18n.t('btn_rules') }, { text: i18n.t('purchase_request') }],
-        [{ text: i18n.t('contact_us_button') }, { text: i18n.t('about_us_button') }],
+        [{ text: i18n.t('btn_settings') }],
+        [{ text: i18n.t('btn_rules') }, { text: i18n.t('btn_purchase_request') }],
+        [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
       ];
       this.bot.sendMessage(chatId, i18n.t('choose_option'), {
         reply_markup: {
@@ -254,13 +254,13 @@ export default class UserHandler {
       const adminMenuKeyboard = [
         [
           {
-            text: i18n.t('send_post_button'),
+            text: i18n.t('btn_send_post'),
           },
-          { text: i18n.t('purchase_request') },
+          { text: i18n.t('btn_purchase_request') },
         ],
         [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
-        [{ text: i18n.t('settings_button') }, { text: i18n.t('btn_rules') }],
-        [{ text: i18n.t('contact_us_button') }, { text: i18n.t('about_us_button') }],
+        [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
+        [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
       ];
       this.bot.sendMessage(chatId, i18n.t('choose_option'), {
         reply_markup: {
@@ -292,17 +292,17 @@ export default class UserHandler {
         [
           {
             text: i18n.t('yes_sure'),
-            callback_data: 'confirm_purchase_request',
+            callback_data: 'confirm_btn_purchase_request',
           },
           {
             text: i18n.t('no_thanks'),
-            callback_data: 'cancel_purchase_request',
+            callback_data: 'cancel_btn_purchase_request',
           },
         ],
       ],
     };
 
-    this.bot.sendMessage(chatId, i18n.t('confirm_purchase_request'), {
+    this.bot.sendMessage(chatId, i18n.t('confirm_btn_purchase_request'), {
       reply_markup: confirmKeyboard,
     });
   }
@@ -350,7 +350,7 @@ export default class UserHandler {
   }
 
   public async handleCancelPurchaseRequest(chatId: number) {
-    this.bot.sendMessage(chatId, i18n.t('purchase_request_cancelled'));
+    this.bot.sendMessage(chatId, i18n.t('btn_purchase_request_cancelled'));
     this.sendMainMenu(chatId);
   }
   public async notifyAdminsOfPurchaseRequest(

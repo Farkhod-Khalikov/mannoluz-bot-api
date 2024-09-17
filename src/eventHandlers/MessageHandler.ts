@@ -39,7 +39,7 @@ export default class MessageController {
         case '/start':
           await this.userHandler.handleStart(msg);
           break;
-        case i18n.t('purchase_request'):
+        case i18n.t('btn_purchase_request'):
           await this.userHandler.handlePurchaseRequest(chatId);
           break;
         case i18n.t('btn_list_requests'):
@@ -57,7 +57,7 @@ export default class MessageController {
             await this.userHandler.handleLanguageSelection(chatId, msg.text, false);
           }
           break;
-        case i18n.t('settings_button'):
+        case i18n.t('btn_settings'):
           await this.userHandler.handleSettings(msg);
           break;
         case i18n.t('btn_list_products'):
@@ -66,22 +66,22 @@ export default class MessageController {
         case i18n.t('btn_list_transactions'):
           await this.transactionHandler.handleListTransactions(msg);
           break;
-        case i18n.t('change_language_button'):
+        case i18n.t('btn_change_language'):
           await this.userHandler.handleChangeLanguage(msg);
           break;
-        case i18n.t('credit_card_button'):
+        case i18n.t('btn_credit_card'):
           await this.userHandler.handleMyCreditCard(msg);
           break;
-        case i18n.t('contact_us_button'):
+        case i18n.t('btn_contact_us'):
           await this.userHandler.handleContactUs(msg);
           break;
-        case i18n.t('about_us_button'):
+        case i18n.t('btn_about_us'):
           await this.userHandler.handleAboutUs(msg);
           break;
-        case i18n.t('back_button'):
+        case i18n.t('btn_go_back'):
           await this.userHandler.sendMainMenu(chatId);
           break;
-        case i18n.t('send_post_button'):
+        case i18n.t('btn_send_post'):
           if (isUserAdmin) {
             await this.adminHandler.handleSendPost(msg);
           }
@@ -157,10 +157,10 @@ export default class MessageController {
           case 'request_ellipsis_prev':
             await this.purchaseRequestHandler.handlePagination(chatId, 'request_ellipsis_prev');
             break;
-          case 'confirm_purchase_request':
+          case 'confirm_btn_purchase_request':
             await this.userHandler.handleConfirmPurchaseRequest(chatId);
             break;
-          case 'cancel_purchase_request':
+          case 'cancel_btn_purchase_request':
             await this.userHandler.handleCancelPurchaseRequest(chatId);
             break;
           case 'confirm_post':
