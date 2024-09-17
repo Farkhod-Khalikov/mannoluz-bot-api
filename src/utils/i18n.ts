@@ -6,10 +6,10 @@ i18next.init({
     'en-US': {
       translation: {
         request_status_update:
-          "Your request status is updated to 'Not Active'. If admins didnt contact you, please repeat the request or contact  us through panel 'Contact Us'",
+          "⚠СYour request status is updated to 'NOT aCTIVE'. If admins didnt contact you, please repeat the request or contact  us through panel 'Contact Us'",
         request_saved: '✅Your request is saved!',
         btn_list_requests: '📭Requests',
-        confirm_btn_purchase_request: 'Please, confirm if you want to leave a request.',
+        confirm_btn_purchase_request: '⚠Please, confirm if you want to leave the request.',
         yes_sure: '✅Yes, sure',
         no_thanks: '❌No, thanks',
         admin_removed_notification:
@@ -70,11 +70,11 @@ Thank you for choosing MANNOL!`,
     'ru-RU': {
       translation: {
         request_status_update:
-          "Статус вашей последнее заявки обновлен на не активный. Если с вами не связались пожалуйста оставьте заявку снова или свяжетесь с нами по предоставленным контактам через панель 'Связаться с нами'.",
-        request_saved: 'Ваша заявка сохранена!',
+          "⚠Статус вашей последнее заявки обновлен на НЕАКТИВНЫЙ. Если с вами не связались пожалуйста оставьте заявку снова или свяжетесь с нами по предоставленным контактам через панель 'Связаться с нами'.",
+        request_saved: '✅Ваша заявка сохранена!',
         btn_list_requests: '📭Список Заявок',
         active_request_exist:
-          'У вас уже есть активная заявка! Пожалуйста, дождитесь пока администраторы свяжутся с вам. Просим извинение за вынужденное ожидание.',
+          '⚠У вас уже есть активная заявка! Пожалуйста, дождитесь пока администраторы свяжутся с вам. Просим извинение за вынужденное ожидание.',
         prev: '⬅️пред',
         next: 'след➡️',
         yes_sure: '✅Да, конечно',
@@ -82,9 +82,9 @@ Thank you for choosing MANNOL!`,
         admin_removed_notification:
           'У вас забрали привилегии админа. Пожалуйста перезапустите бота коммандой /start.',
         admin_granted_notification:
-          'Вам предаставили привилегии админа. Пожалуйста перезапустите бота коммандой /start',
+          '⚠Вам предаставили привилегии админа. Пожалуйста перезапустите бота коммандой /start',
         btn_purchase_request_cancelled: '❌Отмена заявки',
-        confirm_btn_purchase_request: 'Пожалуйста подтвердите что хотите оставить заявку.',
+        confirm_btn_purchase_request: '⚠Пожалуйста подтвердите что хотите оставить заявку.',
         btn_list_transactions: '💸Список Транзакций',
         last_transactions: '💸Последнии транзакции',
         btn_rules: '⁉️Правила Использования бонусов',
@@ -130,35 +130,19 @@ Thank you for choosing MANNOL!`,
 
 Благодарим вас за выбор MANNOL!`,
 
-        contact_us_information: `📞Наши Контакты
-
-Ташкент: 100002, 
-тел: +998-99-011-98-94, +998-93-397-35-72.
-
-Ферганская долина: 150100, 
-тел: +998-94-718-54-45.
-
-Юго-запад: 140100, 
-тел: +998-94-718-54-45.
-
-Почта: info@mannol.uz, Mannoloilsale@mail.ru.
-
-Сайт: mannol.uz .`,
+        contact_us_information: `📞Наши Контакты\n\n Ташкент: 100002,\nтел: +998-99-011-98-94, +998-93-397-35-72.\n\nФерганская долина: 150100,\nтел: +998-94-718-54-45.\n\nЮго-запад: 140100,\nтел: +998-94-718-54-45.\n\nПочта: info@mannol.uz, Mannoloilsale@mail.ru.\n\nСайт: mannol.uz .`,
       },
     },
     'uz-UZ': {
       translation: {
-        request_status_update:
-          "Sizning so'rovingiz holati 'Nofaol' holatiga o'zgartirildi. Agar administratorlar siz bilan bog'lanmagan bo'lsa, iltimos, so'rovni qaytadan yuboring yoki 'Biz bilan bog'lanish' paneli orqali bog'laning.",
+        request_status_update:"⚠Sizning so'rovingiz holati 'NOFAOL' holatiga o'zgartirildi. Agar administratorlar siz bilan bog'lanmagan bo'lsa, iltimos, so'rovni qaytadan yuboring yoki 'Biz bilan bog'lanish' paneli orqali bog'laning.",
         request_saved: "✅Sizning so'rovingiz saqlandi!",
         btn_list_requests: "📭So'rovlar",
         confirm_btn_purchase_request: "⚠️Iltimos, so'rov qoldirishni tasdiqlang.",
         yes_sure: '✅Ha, albatta',
         no_thanks: "❌Yo'q, rahmat",
-        admin_removed_notification:
-          "⚠️Siz adminlik huquqlaridan mahrum qilindingiz. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
-        admin_granted_notification:
-          "⚠️Sizga adminlik huquqlari berildi. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
+        admin_removed_notification: "⚠️Siz adminlik huquqlaridan mahrum qilindingiz. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
+        admin_granted_notification: "⚠️Sizga adminlik huquqlari berildi. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
         btn_purchase_request_cancelled: "❌So'rov bekor qilindi",
         write_comment: 'Iltimos, izoh qoldiring:',
         last_transactions: '💸Oxirgi tranzaksiyalar',
@@ -181,8 +165,7 @@ Thank you for choosing MANNOL!`,
         balance_caption: 'Sizning balansingiz',
         btn_purchase_request: "💌So'rov qoldirish",
         choose_option: '🤖MannolUZBot Main Page',
-        choose_language:
-          '🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.\n🇺🇿Iltimos, tilni tanlang.',
+        choose_language: '🇺🇸Please choose your language.\n🇷🇺Пожалуйста, выберите свой язык.\n🇺🇿Iltimos, tilni tanlang.',
         share_contact: '📱Iltimos, kontaktingizni ulashing.',
         btn_share_contact: '📱Kontakt ulashish',
         contact_saved: '✅Kontakt muvaffaqiyatli saqlandi.',
@@ -194,14 +177,11 @@ Thank you for choosing MANNOL!`,
         post_creation_cancelled: '❌Post yuborilmadi.',
         btn_cancel_post_creation: '❌Bekor qilish',
         language_changed: "✅Til muvaffaqiyatli o'zgartirildi.",
-        active_request_exist:
-          "❌Sizda faol so'rov mavjud! Iltimos, administratorlar siz bilan bog'lanishini kuting. Kechikish va noqulaylik uchun uzr so'raymiz.",
-        contact_us_information:
-          "📞Bizning kontaktlarimiz\n\nToshkent: 100002,\ntelefon: +998-99-011-98-94, +998-93-397-35-72.\n\nFarg'ona vodiysi: 150100,\ntelefon: +998-94-718-54-45.\n\nJanubi-g'arbiy: 140100,\ntelefon: +998-94-718-54-45.\n\nElektron pochta: info@mannol.uz, Mannoloilsale@mail.ru.\n\nVeb-sayt: mannol.uz.",
+        active_request_exist:"❌Sizda faol so'rov mavjud! Iltimos, administratorlar siz bilan bog'lanishini kuting. Kechikish va noqulaylik uchun uzr so'raymiz.",
+        contact_us_information: "📞Bizning kontaktlarimiz\n\nToshkent: 100002,\ntelefon: +998-99-011-98-94, +998-93-397-35-72.\n\nFarg'ona vodiysi: 150100,\ntelefon: +998-94-718-54-45.\n\nJanubi-g'arbiy: 140100,\ntelefon: +998-94-718-54-45.\n\nElektron pochta: info@mannol.uz, Mannoloilsale@mail.ru.\n\nVeb-sayt: mannol.uz.",
         btn_go_back: '🔙Orqaga qaytish',
         btn_about_us: '📃Biz haqimizda',
-        about_us_information:
-          "MANNOLning rasmiy sahifasiga xush kelibsiz!\n\nBiz SCT-Vertriebs GmbH va MANNOLning O'zbekistondagi vakolatli distribyutori bo'lib, Toshkentda joylashganmiz. Bizning maqsadimiz hamkorlarimiz va mijozlarimizga yuqori sifatli avtomobil mahsulotlarini tez va arzon narxlarda yetkazib berishdir.\n\nBiz MANNOL brendi ostida 800 dan ortiq turdagi moylar va suyuqliklarni taklif etamiz, ular o'zining raqobatbardosh narxlari va keng tanlovi bilan mashhur. Avtomobil ehtiyot qismlari bozorida yetakchi sifatida biz mijozlarimizning ehtiyojlari va kutilganlariga javob berishni ustuvor vazifa deb bilamiz.\n\nBiz sizni yangi imkoniyatlarni kashf qilishga taklif qilamiz va sizning takliflaringiz e'tibor bilan ko'rib chiqilishini ta'minlaymiz. Bizning maqsadimiz keng mahsulot tanlovi va samarali xizmat bilan sizning muvaffaqiyatingizni qo'llab-quvvatlashdir.\n\nMANNOLni tanlaganingiz uchun tashakkur!",
+        about_us_information: "MANNOLning rasmiy sahifasiga xush kelibsiz!\n\nBiz SCT-Vertriebs GmbH va MANNOLning O'zbekistondagi vakolatli distribyutori bo'lib, Toshkentda joylashganmiz. Bizning maqsadimiz hamkorlarimiz va mijozlarimizga yuqori sifatli avtomobil mahsulotlarini tez va arzon narxlarda yetkazib berishdir.\n\nBiz MANNOL brendi ostida 800 dan ortiq turdagi moylar va suyuqliklarni taklif etamiz, ular o'zining raqobatbardosh narxlari va keng tanlovi bilan mashhur. Avtomobil ehtiyot qismlari bozorida yetakchi sifatida biz mijozlarimizning ehtiyojlari va kutilganlariga javob berishni ustuvor vazifa deb bilamiz.\n\nBiz sizni yangi imkoniyatlarni kashf qilishga taklif qilamiz va sizning takliflaringiz e'tibor bilan ko'rib chiqilishini ta'minlaymiz. Bizning maqsadimiz keng mahsulot tanlovi va samarali xizmat bilan sizning muvaffaqiyatingizni qo'llab-quvvatlashdir.\n\nMANNOLni tanlaganingiz uchun tashakkur!",
       },
     },
   },
