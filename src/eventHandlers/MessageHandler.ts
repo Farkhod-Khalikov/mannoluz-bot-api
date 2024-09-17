@@ -151,6 +151,12 @@ export default class MessageController {
           case 'request_previous_page':
             await this.purchaseRequestHandler.handlePagination(chatId, 'request_previous_page');
             break;
+          case 'request_ellipsis_next':
+            await this.purchaseRequestHandler.handlePagination(chatId, 'request_ellipsis_next');
+            break;
+          case 'request_ellipsis_prev':
+            await this.purchaseRequestHandler.handlePagination(chatId, 'request_ellipsis_prev');
+            break;
           case 'confirm_purchase_request':
             await this.userHandler.handleConfirmPurchaseRequest(chatId);
             break;
