@@ -19,8 +19,9 @@ const userSchema = new Schema<IUser>(
     name: { type: String, required: true },
     phone: { type: String, required: true },
     language: { type: String, required: true },
-    balance: { type: Number, default: 0 },
+    balance: { type: Number, default: 0 }, // split the balance: bonuses, money
     isAdmin: { type: Boolean, default: false },
+    // Add isSudo
   },
   {
     timestamps: true,
