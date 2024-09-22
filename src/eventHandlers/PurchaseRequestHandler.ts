@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import UserService from '../services/user.service';
 import i18n from '../utils/i18n';
-import { PurchaseRequest } from '../models/purchaseRequests.schema';
+import { PurchaseRequest } from '../models/purchase-requests.schema';
 
 export default class PurchaseRequesHandler {
   private bot: TelegramBot;

@@ -1,8 +1,8 @@
 // src/tests/transaction.service.test.ts
 import TransactionService from "../services/transaction.service";
-import Transaction from "../models/transactions.schema";
+import BonusesTransaction from "../models/bonuses-transactions.schema";
 
-// Mock the Transaction model
+// Mock the BonusesTransaction model
 jest.mock("../models/transactions.schema");
 
 describe('TransactionService', () => {
@@ -11,7 +11,7 @@ describe('TransactionService', () => {
       // Arrange
       const uniqueId = '5';
       // Mock the findOne method to return a transaction
-      (Transaction.findOne as jest.Mock).mockResolvedValue({ uniqueId });
+      (BonusesTransaction.findOne as jest.Mock).mockResolvedValue({ uniqueId });
 
       // Act
       const result = await TransactionService.isDuplicated(uniqueId);
@@ -24,7 +24,7 @@ describe('TransactionService', () => {
       // Arrange
       const uniqueId = '5';
       // Mock the findOne method to return null
-      (Transaction.findOne as jest.Mock).mockResolvedValue(null);
+      (BonusesTransaction.findOne as jest.Mock).mockResolvedValue(null);
 
       // Act
       const result = await TransactionService.isDuplicated(uniqueId);

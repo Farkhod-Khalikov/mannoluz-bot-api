@@ -1,18 +1,241 @@
 import Logger from '../utils/logger';
 import { Request, Response } from 'express';
 import UserService from '../services/user.service';
-import Transaction from '../models/transactions.schema';
+import BonusesTransaction from '../models/bonuses-transactions.schema';
 import TelegramBot from 'node-telegram-bot-api';
 import i18n from '../utils/i18n';
-import { PurchaseRequest } from '../models/purchaseRequests.schema';
+import { PurchaseRequest } from '../models/purchase-requests.schema';
 import User from '../models/users.schema';
+import MoneyTransaction from '../models/money-transactions.schema';
 
 class UserController {
   private bot: TelegramBot;
   constructor(bot: TelegramBot) {
     this.bot = bot;
   }
-  // Add bonuses
+
+  // Add Money
+  // RemoveMoney
+  // Remove Money Transactions by documentId and agentId
+  async addMoney(req: Request, res: Response) {
+    Logger.start('addMoney');
+    try {
+      const { phoneNumber, sum, description, documentId, agentId } = req.body;
+      if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
+        Logger.error('addMoney', 'Invalid arguments provided');
+        return res.status(400).json({ error: true, message: 'Ivalid args provided' });
+      }
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      if (!user) {
+        Logger.error('addMoney', 'User not found');
+        return res.status(404).json({ error: true, message: 'User not found' });
+      }
+      const moneyTransaction = await MoneyTransaction.create({
+        userId: user.id,
+        documentId: documentId,
+        agentId: agentId,
+        sum: sum,
+        description: description,
+      });
+      if (!moneyTransaction) {
+        Logger.error('addMoney', 'Could not create transaction');
+        return res.status(409).json({ error: true, message: 'Could not create transaction' });
+      }
+      await moneyTransaction.save();
+      user.money += sum;
+      await user.save();
+      if (user.chatId) {
+        await this.bot.sendMessage(
+          user.chatId,
+          `${i18n.t('money_addition')}: ${sum} ${i18n.t('$')}\n${i18n.t(
+            'description'
+          )}: ${description}`
+        );
+      }
+      Logger.end('addMoney', 'Money added');
+      return res.status(200).json({
+        error: false,
+        message: 'Money added',
+        agentId: agentId,
+      });
+    } catch (error) {
+      Logger.error('addMoney', '');
+    }
+  }
+  async removeMoney(req: Request, res: Response) {
+    Logger.start('removeMoney');
+    try {
+      const { phoneNumber, sum, description, documentId, agentId } = req.body;
+
+      if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
+        return res.status(400).json({
+          error: true,
+          message: 'Invalid args provided',
+        });
+      }
+
+      // Find user by phoneNumber
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
+
+      // If user not found return error
+      if (!user) {
+        Logger.error('removeMoney', 'User not found');
+        return res.status(404).json({ error: true, message: 'User not found' });
+      }
+
+      // If user doesnt have enough sum return error
+      if ((user.money || 0) < sum) {
+        Logger.error('removeBonuses', 'User has less sum than it is required to remove');
+        return res.status(400).json({
+          error: true,
+          message: 'Not enough sum',
+          currentMoney: user.money,
+        });
+      }
+
+      //TransactionService.createTransaction method to accomplish
+      const transaction = await MoneyTransaction.create({
+        userId: user.id, //Mongo's ObjectId
+        documentId: documentId,
+        agentId: agentId,
+        sum: -sum,
+        description: description,
+      });
+
+      // If transaction was not created return error
+      if (!transaction) {
+        Logger.error('removeMoney', 'Could not create transaction');
+        return res.status(500).json({ error: true, message: 'Could not create transaction' });
+      }
+
+      //Save transaction document
+      await transaction.save();
+
+      // Update user balance
+      if (user.money && user.money > 0) {
+        user.money -= sum;
+        // Save user with updated balance
+        await user.save();
+      }
+
+      // Send a message to the User that their balance is updated
+      if (user.chatId) {
+        await this.bot.sendMessage(
+          user.chatId,
+          // Removal | [sum] Coins
+          // Description:
+          `${i18n.t('money_removal')}: -${sum} ${i18n.t('$')}\n${i18n.t(
+            'description'
+          )}: ${description}`
+        );
+      }
+      const newBalance = user.money;
+      Logger.end('removeMoney');
+
+      // response OK with updated user's balanace
+      return res.status(200).json({
+        error: false,
+        message: 'Money removed',
+        newMoneyBalance: newBalance,
+        agentId,
+      });
+      // Catch any unhandled error
+    } catch (error) {
+      Logger.error('removeMoney', 'Unhandled Error occured while removing sum');
+      // If error of type "ERROR" then return error itself
+      if (error instanceof Error) {
+        res.status(500).json({
+          error: true,
+          message: error.message,
+        });
+        // Otherwise return Unknown Error
+      } else {
+        res.status(500).json({
+          error: true,
+          message: 'Internal server error. Unknow error occured',
+        });
+      }
+    }
+  }
+
+  async removeMoneyTransaction(req: Request, res: Response) {
+    Logger.start('removeMoneyTransaction');
+    try {
+      const { documentId, agentId } = req.body;
+
+      if (!documentId) {
+        Logger.error('removeMoneyTransaction', 'documentId is required');
+        return res.status(400).json({ error: true, message: 'documentId is required' });
+      }
+
+      // Find all transactions with the provided documentId (and agentId if available)
+      const query = { documentId: documentId } as any;
+      if (agentId) query.agentId = agentId;
+
+      const transactions = await MoneyTransaction.find(query);
+
+      if (transactions.length === 0) {
+        Logger.error('removeMoneyTransaction', 'No transactions found');
+        return res.status(404).json({ error: true, message: 'No transactions found' });
+      }
+
+      // Track user balances that need to be updated
+      const userBalances = new Map<string, number>();
+
+      for (const transaction of transactions) {
+        // Accumulate the total sum adjustment for each user
+        if (!userBalances.has(transaction.userId.toString())) {
+          userBalances.set(transaction.userId.toString(), 0);
+        }
+
+        const currentAdjustment = userBalances.get(transaction.userId.toString()) || 0;
+        userBalances.set(transaction.userId.toString(), currentAdjustment + transaction.sum);
+      }
+
+      // Update each user's balance based on accumulated adjustments
+      for (const [userId, adjustment] of userBalances.entries()) {
+        const user = await User.findById(userId);
+
+        // Update this to simly save the transaction those could not be deleted
+        // instead of just dropping the response User Not Found
+        if (!user) {
+          Logger.error('removeMoneyTransaction', 'User not found');
+          return res.status(404).json({ error: true, message: 'User not found' });
+        }
+
+        user.money = (user.money || 0) - adjustment;
+        await user.save();
+
+        // Notify the user
+        if (user.chatId) {
+          const adjustmentMessage =
+            adjustment < 0
+              ? `Your money balance has been increased by ${Math.abs(
+                  adjustment
+                )} sum due to transaction deletion.`
+              : `Your money balance has been decreased by ${adjustment} sum due to transaction deletion.`;
+
+          await this.bot.sendMessage(user.chatId, adjustmentMessage);
+        }
+      }
+
+      // Delete all found transactions
+      await MoneyTransaction.deleteMany(query);
+      Logger.end('removeMoneyTransaction');
+      return res.status(200).json({
+        error: false,
+        message: "Transactions deleted and users' balances updated",
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        const msg = error.message.toString();
+        Logger.error('removeMoneyTransacton', msg);
+        return res.status(500).json({ error: true, message: msg });
+      }
+      Logger.error('removeMoneyTransaction', 'Unhandled Error occured');
+      return res.status(500).json({ error: true, message: 'Internal server error' });
+    }
+  }
   async addBonuses(req: Request, res: Response) {
     Logger.start('addBonuses');
     try {
@@ -34,11 +257,11 @@ class UserController {
       }
 
       // Create TransactionSevice.createTransaction
-      const transaction = await Transaction.create({
+      const transaction = await BonusesTransaction.create({
         userId: user.id,
         documentId: documentId,
         agentId: agentId,
-        bonuses: sum,
+        sum: sum,
         description: description,
       });
 
@@ -49,7 +272,7 @@ class UserController {
 
       await transaction.save();
 
-      user.balance += sum;
+      user.bonuses += sum;
       await user.save();
 
       // Send a message to the User that their balance is updated
@@ -68,7 +291,7 @@ class UserController {
         agentId: agentId,
       });
     } catch (error) {
-      Logger.error('addBonuses', 'Could not add bonuses due to unhanlded error');
+      Logger.error('addBonuses', 'Could not add sum due to unhanlded error');
       if (error instanceof Error) {
         return res.json({ error: true, message: error.message });
       } else {
@@ -102,22 +325,22 @@ class UserController {
         return res.status(404).json({ error: true, message: 'User not found' });
       }
 
-      // If user doesnt have enough bonuses return error
-      if ((user.balance || 0) < sum) {
-        Logger.error('removeBonuses', 'User has less bonuses than it is required to remove');
+      // If user doesnt have enough sum return error
+      if ((user.bonuses || 0) < sum) {
+        Logger.error('removeBonuses', 'User has less sum than it is required to remove');
         return res.status(400).json({
           error: true,
-          message: 'Not enough bonuses',
-          currentBalance: user.balance,
+          message: 'Not enough sum',
+          currentBalance: user.bonuses,
         });
       }
 
       //TransactionService.createTransaction method to accomplish
-      const transaction = await Transaction.create({
+      const transaction = await BonusesTransaction.create({
         userId: user.id, //Mongo's ObjectId
         documentId: documentId,
         agentId: agentId,
-        bonuses: -sum,
+        sum: -sum,
         description: description,
       });
 
@@ -131,8 +354,8 @@ class UserController {
       await transaction.save();
 
       // Update user balance
-      if (user.balance && user.balance > 0) {
-        user.balance -= sum;
+      if (user.bonuses && user.bonuses > 0) {
+        user.bonuses -= sum;
         // Save user with updated balance
         await user.save();
       }
@@ -150,7 +373,7 @@ class UserController {
       }
 
       Logger.end('removeBonuses');
-      const newBalance = user.balance;
+      const newBalance = user.bonuses;
 
       // response OK with updated user's balanace
       return res.status(200).json({
@@ -161,7 +384,7 @@ class UserController {
       });
       // Catch any unhandled error
     } catch (error) {
-      Logger.error('removeBonuses', 'Unhandled Error occured while removing bonuses');
+      Logger.error('removeBonuses', 'Unhandled Error occured while removing sum');
       // If error of type "ERROR" then return error itself
       if (error instanceof Error) {
         res.status(500).json({
@@ -368,7 +591,7 @@ class UserController {
   }
 
   // Delete transactions by documentId and agentId
-  async removeTransaction(req: Request, res: Response) {
+  async removeBonusesTransaction(req: Request, res: Response) {
     Logger.start('removeTransaction');
     try {
       const { documentId, agentId } = req.body;
@@ -382,7 +605,7 @@ class UserController {
       const query = { documentId: documentId } as any;
       if (agentId) query.agentId = agentId;
 
-      const transactions = await Transaction.find(query);
+      const transactions = await BonusesTransaction.find(query);
 
       if (transactions.length === 0) {
         Logger.error('removeTransaction', 'No transactions found');
@@ -393,13 +616,13 @@ class UserController {
       const userBalances = new Map<string, number>();
 
       for (const transaction of transactions) {
-        // Accumulate the total bonuses adjustment for each user
+        // Accumulate the total sum adjustment for each user
         if (!userBalances.has(transaction.userId.toString())) {
           userBalances.set(transaction.userId.toString(), 0);
         }
 
         const currentAdjustment = userBalances.get(transaction.userId.toString()) || 0;
-        userBalances.set(transaction.userId.toString(), currentAdjustment + transaction.bonuses);
+        userBalances.set(transaction.userId.toString(), currentAdjustment + transaction.sum);
       }
 
       // Update each user's balance based on accumulated adjustments
@@ -411,7 +634,7 @@ class UserController {
           return res.status(404).json({ error: true, message: 'User not found' });
         }
 
-        user.balance = (user.balance || 0) - adjustment;
+        user.bonuses = (user.bonuses || 0) - adjustment;
         await user.save();
 
         // Notify the user
@@ -420,15 +643,15 @@ class UserController {
             adjustment < 0
               ? `Your balance has been increased by ${Math.abs(
                   adjustment
-                )} bonuses due to transaction deletion.`
-              : `Your balance has been decreased by ${adjustment} bonuses due to transaction deletion.`;
+                )} sum due to transaction deletion.`
+              : `Your balance has been decreased by ${adjustment} sum due to transaction deletion.`;
 
           await this.bot.sendMessage(user.chatId, adjustmentMessage);
         }
       }
 
       // Delete all found transactions
-      await Transaction.deleteMany(query);
+      await BonusesTransaction.deleteMany(query);
       Logger.end('removeTransaction');
       return res.status(200).json({
         error: false,
@@ -447,4 +670,3 @@ class UserController {
 }
 
 export default UserController;
-

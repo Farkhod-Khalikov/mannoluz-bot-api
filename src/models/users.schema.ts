@@ -6,10 +6,12 @@ export interface IUser extends Document {
   name: string;
   phone: string;
   language: string;
-  balance?: number;
+  bonuses?: number;
+  money?: number;
   isAdmin?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  // isSudo?: boolean; 
 }
 
 // Define the schema for the User model
@@ -19,9 +21,11 @@ const userSchema = new Schema<IUser>(
     name: { type: String, required: true },
     phone: { type: String, required: true },
     language: { type: String, required: true },
-    balance: { type: Number, default: 0 }, // split the balance: bonuses, money
+    bonuses: { type: Number, default: 0 }, // split the balance: sum, money
+    money: {type: Number, default: 0},
     isAdmin: { type: Boolean, default: false },
     // Add isSudo
+    // isSudo: {type: Boolean, default: false},
   },
   {
     timestamps: true,

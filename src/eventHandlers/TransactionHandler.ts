@@ -53,14 +53,15 @@ export default class TransactionHandler {
       .slice(startIndex, endIndex)
       .map((transaction: any) => {
         const date = new Date(transaction.createdAt);
+        const symbol = transaction.transactionType === 'money' ? '$' : i18n.t('coins');
         const formattedDate = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1)
           .toString()
           .padStart(2, '0')}.${date.getFullYear()}`;
         return `${
-          transaction.bonuses > 0
+          transaction.sum > 0
             ? i18n.t('bonuses_addition')/*.padEnd(10, ' ')*/
             : i18n.t('bonuses_removal')/*.padEnd(10, ' ')*/
-        } | ${formattedDate} | ${transaction.bonuses} ${i18n.t('coins')}\n`;
+        } | ${formattedDate} | ${transaction.sum} ${symbol}\n`;
       })
       .join('\n');
 

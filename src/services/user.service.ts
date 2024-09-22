@@ -1,6 +1,7 @@
-import { PurchaseRequest } from '../models/purchaseRequests.schema';
-import Transaction from '../models/transactions.schema';
+import { PurchaseRequest } from '../models/purchase-requests.schema';
+import BonusesTransaction from '../models/bonuses-transactions.schema';
 import User, { IUser } from '../models/users.schema';
+import MoneyTransaction from '../models/money-transactions.schema';
 
 export default class UserService {
   public static async findUserByChatId(chatId: number): Promise<IUser | null> {
@@ -85,7 +86,9 @@ export default class UserService {
 
   //by userId which is saved in transaction schema
   public static async getAllTransactions(userId: string) {
-    return Transaction.find({ userId: userId });
+    const bonusesTransactions =  await BonusesTransaction.find({userId: userId});
+    const moneyTransactions = await MoneyTransaction.find({userId: userId});
+    return [...bonusesTransactions, ...moneyTransactions];
   }
 
   public static async getAllAdmins(): Promise<IUser[]> {
@@ -94,7 +97,7 @@ export default class UserService {
 
   // use it to check before sending a new request
   public static async hasActiveRequests(phoneNumber: string) {
-    return (await Transaction.find({ isActive: true, phone: phoneNumber })) ? true : false;
+    return (await BonusesTransaction.find({ isActive: true, phone: phoneNumber })) ? true : false;
   }
   // user could not creat /
   static async updateUserAdminStatus(phoneNumber: string, isAdmin: boolean) {

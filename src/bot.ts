@@ -36,16 +36,25 @@ if (!bot) console.log('[FAILED] Bot is not initialized.');
 console.log('[SUCCESS] Bot is started.');
 
 // routes
-// balance routes
-app.post('/users/balance/add', (req, res) => userController.addBonuses(req, res));
-app.post('/users/balance/remove', (req, res) => userController.removeBonuses(req, res));
+// Bonuses
+app.post('/users/balance/bonuses/add', (req, res) => userController.addBonuses(req, res));
+app.post('/users/balance/bonuses/remove', (req, res) => userController.removeBonuses(req, res));
+
+// Money
+app.post('/users/balance/money/add', (req, res) => userController.addMoney(req, res));
+app.post('/users/balance/money/remove', (req, res) => userController.removeMoney(req, res));
 
 // Admin privileges routes
 app.post('/users/admin-privileges/add', (req, res) => userController.addAdmin(req, res));
 app.post('/users/admin-privileges/remove', (req, res) => userController.removeAdmin(req, res));
 
 // Transactions routes
-app.post('/users/transactions/remove', (req, res) => userController.removeTransaction(req, res));
+app.post('/users/transactions/bonuses/remove', (req, res) =>
+  userController.removeBonusesTransaction(req, res)
+);
+app.post('/users/transactions/money/remove', (req, res) =>
+  userController.removeMoneyTransaction(req, res)
+);
 
 // Purchase requests routes
 app.post('/users/purchase-requests/update', (req, res) =>

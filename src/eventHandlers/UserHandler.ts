@@ -2,7 +2,7 @@ import TelegramBot from 'node-telegram-bot-api';
 import UserService from '../services/user.service';
 import i18n from '../utils/i18n';
 import { generateCreditCard } from '../utils/creditcard.generation';
-import { PurchaseRequest } from '../models/purchaseRequests.schema';
+import { PurchaseRequest } from '../models/purchase-requests.schema';
 
 export default class UserHandler {
   private bot: TelegramBot;
@@ -180,7 +180,8 @@ export default class UserHandler {
     const user = await UserService.findUserByChatId(chatId);
 
     if (user) {
-      const balance = user.balance;
+      const bonuses = user.bonuses;
+      const money = user.money;
       const filePath = await generateCreditCard(user.phone, user.id);
 
       const transactions = await UserService.getAllTransactions(user.id);
@@ -189,22 +190,23 @@ export default class UserHandler {
         .slice(0, 5)
         .map((transaction: any) => {
           const date = new Date(transaction.createdAt);
+          const symbol = transaction.transactionType === 'money' ? '$' : i18n.t('coins');
           const formattedDate = `${date.getDate().toString().padStart(2, '0')}.${(
             date.getMonth() + 1
           )
             .toString()
             .padStart(2, '0')}.${date.getFullYear()}`;
           return `${
-            transaction.bonuses > 0
+            transaction.sum > 0
               ? i18n.t('bonuses_addition') /*.padEnd(10, " ")*/
               : i18n.t('bonuses_removal') /*.padEnd(10, " ")*/
-          } | ${formattedDate} | ${transaction.bonuses} ${i18n.t('coins')}`;
+          } | ${formattedDate} | ${transaction.sum} ${symbol}`;
         })
         .join('\n');
 
-      const caption = `${i18n.t('balance_caption')}: ${balance || 0} ${i18n.t(
-        'coins'
-      )}\n\n${i18n.t('last_transactions')}\n${lastTransactions}\n`;
+      const caption = `${i18n.t('balance_caption')}: ${bonuses || 0} ${i18n.t('coins')}\n${i18n.t(
+        'money_caption'
+      )}: ${money || 0}$\n\n${i18n.t('last_transactions')}\n${lastTransactions}\n`;
 
       this.bot
         .sendPhoto(chatId, filePath, { caption })
@@ -280,9 +282,9 @@ export default class UserHandler {
   public async handlePurchaseRequest(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
 
-    if (!user){
-      this.bot.sendMessage(chatId, i18n.t("user_not_found") );
-      return
+    if (!user) {
+      this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+      return;
     }
     const confirmKeyboard = {
       inline_keyboard: [
