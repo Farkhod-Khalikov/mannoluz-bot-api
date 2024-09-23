@@ -67,6 +67,7 @@ export default class AdminHandler {
           },
         });
       } else if (!currentPostData.image) {
+        currentPostData.image = text;
         this.bot.sendMessage(chatId, i18n.t('uploading_image'), {
           reply_markup: {
             force_reply: true,
@@ -176,14 +177,14 @@ export default class AdminHandler {
   public async sendMainMenu(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
-
+    const isSudo = user && (await user.isSudo);
     const mainMenuKeyboard = [
       [{ text: i18n.t('btn_credit_card') }],
       [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_transactions') }],
       [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_purchase_request') }],
-      [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
+      // [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
     ];
-    const adminMenuKeyboard = [
+    const sudoAdminMenuKeyboard = [
       [
         {
           text: i18n.t('btn_send_post'),
@@ -191,8 +192,27 @@ export default class AdminHandler {
       ],
       [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
       [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
-      [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
     ];
+    const adminMenuKeyboard = [
+      [
+        {
+          text: i18n.t('btn_send_post'),
+        },
+        { text: i18n.t('btn_add_admin') },
+        { text: i18n.t('btn_remove_admin') },
+      ],
+      [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
+      [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
+    ];
+    if (isSudo) {
+      this.bot.sendMessage(chatId, i18n.t('choose_option'), {
+        reply_markup: {
+          keyboard: sudoAdminMenuKeyboard,
+          resize_keyboard: true,
+          one_time_keyboard: false,
+        },
+      });
+    }
     if (isAdmin) {
       this.bot.sendMessage(chatId, i18n.t('choose_option'), {
         reply_markup: {
@@ -210,5 +230,51 @@ export default class AdminHandler {
         },
       });
     }
+  }
+  public async handleAddAdmin(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
+
+    this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
+      reply_markup: {
+        force_reply: true,
+      },
+    });
+
+    this.bot.onReplyToMessage(chatId, msg.message_id, async (replyMsg) => {
+      const phoneNumber = replyMsg.text || '';
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
+
+      if (user) {
+        user.isAdmin = true;
+        await user.save();
+        this.bot.sendMessage(chatId, i18n.t('admin_added_success'));
+      } else {
+        this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+      }
+    });
+  }
+
+  // Handle Remove Admin button click
+  public async handleRemoveAdmin(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
+
+    this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
+      reply_markup: {
+        force_reply: true,
+      },
+    });
+
+    this.bot.onReplyToMessage(chatId, msg.message_id, async (replyMsg) => {
+      const phoneNumber = replyMsg.text || '';
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
+
+      if (user) {
+        user.isAdmin = false;
+        await user.save();
+        this.bot.sendMessage(chatId, i18n.t('admin_removed_success'));
+      } else {
+        this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+      }
+    });
   }
 }

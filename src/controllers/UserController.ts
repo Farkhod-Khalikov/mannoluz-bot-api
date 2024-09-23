@@ -485,7 +485,6 @@ class UserController {
         return res.status(404).json({ message: 'user not found' });
       }
 
-      // init vars
       const username = user.name;
 
       // User is already an admin

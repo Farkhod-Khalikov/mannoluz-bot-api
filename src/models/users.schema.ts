@@ -11,7 +11,7 @@ export interface IUser extends Document {
   isAdmin?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  // isSudo?: boolean; 
+  isSudo?: boolean; 
 }
 
 // Define the schema for the User model
@@ -25,7 +25,7 @@ const userSchema = new Schema<IUser>(
     money: {type: Number, default: 0},
     isAdmin: { type: Boolean, default: false },
     // Add isSudo
-    // isSudo: {type: Boolean, default: false},
+    isSudo: {type: Boolean, default: false},
   },
   {
     timestamps: true,

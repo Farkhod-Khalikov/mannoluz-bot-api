@@ -59,8 +59,8 @@ export default class TransactionHandler {
           .padStart(2, '0')}.${date.getFullYear()}`;
         return `${
           transaction.sum > 0
-            ? i18n.t('bonuses_addition')/*.padEnd(10, ' ')*/
-            : i18n.t('bonuses_removal')/*.padEnd(10, ' ')*/
+            ? i18n.t('bonuses_addition') /*.padEnd(10, ' ')*/
+            : i18n.t('bonuses_removal') /*.padEnd(10, ' ')*/
         } | ${formattedDate} | ${transaction.sum} ${symbol}\n`;
       })
       .join('\n');

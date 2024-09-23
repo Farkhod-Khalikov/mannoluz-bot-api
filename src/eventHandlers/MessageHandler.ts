@@ -26,11 +26,12 @@ export default class MessageController {
 
   public async handleMessage(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
+    const user = await UserService.findUserByChatId(chatId);
+    const isSudo = user?.isSudo;
     const isUserAdmin = await UserService.isUserAdmin(chatId);
     const isExisted = await UserService.isUserRegistered(chatId);
 
     if (isExisted) {
-      const user = await UserService.findUserByChatId(chatId);
       i18n.changeLanguage(user?.language);
     }
 
@@ -38,6 +39,21 @@ export default class MessageController {
       switch (msg.text) {
         case '/start':
           await this.userHandler.handleStart(msg);
+          break;
+        case 'btn_add_admin':
+          if (isUserAdmin || isSudo) {
+            await this.userHandler.handleAddAdmin(msg);
+          } else {
+            await this.bot.sendMessage(chatId, i18n.t('not_admin'));
+          }
+
+          break;
+        case 'btn_remove_admin':
+          if (isUserAdmin || isSudo) {
+            await this.userHandler.handleRemoveAdmin(msg);
+          } else {
+            await this.bot.sendMessage(chatId, i18n.t('not_admin'));
+          }
           break;
         case i18n.t('btn_purchase_request'):
           await this.userHandler.handlePurchaseRequest(chatId);
@@ -117,7 +133,7 @@ export default class MessageController {
         await this.purchaseRequestHandler.handlePagination(chatId, `request_page_${page}`);
       } else {
         switch (data) {
-            // transaction callback data
+          // transaction callback data
           case 'transaction_previous_page':
             await this.transactionHandler.handlePagination(chatId, 'transaction_previous_page');
             break;
@@ -131,7 +147,7 @@ export default class MessageController {
             await this.transactionHandler.handlePagination(chatId, 'transaction_ellipsis_next');
             break;
 
-            // prodcut callback data
+          // prodcut callback data
           case 'product_previous_page':
             await this.productHandler.handlePagination(chatId, 'product_previous_page');
             break;
@@ -144,7 +160,7 @@ export default class MessageController {
           case 'product_ellipsis_next':
             await this.productHandler.handlePagination(chatId, 'product_ellipsis_next');
             break;
-            // purchase request callback data
+          // purchase request callback data
           case 'request_next_page':
             await this.purchaseRequestHandler.handlePagination(chatId, 'request_next_page');
             break;

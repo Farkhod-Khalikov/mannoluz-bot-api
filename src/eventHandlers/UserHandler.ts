@@ -3,6 +3,7 @@ import UserService from '../services/user.service';
 import i18n from '../utils/i18n';
 import { generateCreditCard } from '../utils/creditcard.generation';
 import { PurchaseRequest } from '../models/purchase-requests.schema';
+import { REPLServer } from 'repl';
 
 export default class UserHandler {
   private bot: TelegramBot;
@@ -234,6 +235,7 @@ export default class UserHandler {
   public async sendMainMenu(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
+    const isSudo = user && (await user.isSudo);
     if (!isAdmin) {
       const mainMenuKeyboard = [
         [{ text: i18n.t('btn_credit_card') }],
@@ -249,17 +251,15 @@ export default class UserHandler {
           one_time_keyboard: false,
         },
       });
-    } else {
+    } else if (isAdmin && !isSudo) {
       const adminMenuKeyboard = [
         [
           {
             text: i18n.t('btn_send_post'),
           },
-          { text: i18n.t('btn_purchase_request') },
         ],
         [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
-        [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
-        [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
+        [{ text: i18n.t('btn_settings') }],
       ];
       this.bot.sendMessage(chatId, i18n.t('choose_option'), {
         reply_markup: {
@@ -268,9 +268,119 @@ export default class UserHandler {
           one_time_keyboard: false,
         },
       });
+    } else if (isSudo) {
+      const sudoAdminMenuKeyboard = [
+        [
+          {
+            text: i18n.t('btn_send_post'),
+          },
+        ],
+        [{ text: i18n.t('btn_add_admin') }, { text: i18n.t('btn_remove_admin') }],
+        [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
+        [{ text: i18n.t('btn_settings') }],
+      ];
+      this.bot.sendMessage(chatId, i18n.t('choose_option'), {
+        reply_markup: {
+          keyboard: sudoAdminMenuKeyboard,
+          resize_keyboard: true,
+          one_time_keyboard: false,
+        },
+      });
     }
   }
 
+  public async handleAddAdmin(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
+
+    try {
+      const replyMessage = await this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
+        reply_markup: {
+          force_reply: true,
+        },
+      });
+
+      console.log(`Received message: ${replyMessage.message_id}`);
+
+      // Set up reply listener
+      this.bot.onReplyToMessage(chatId, replyMessage.message_id, async (replyMsg) => {
+        const phoneNumber = replyMsg.text?.trim() || '';
+
+        // Validate phone number
+        if (!/^998\d{9}$/.test(phoneNumber)) {
+          await this.bot.sendMessage(chatId, i18n.t('invalid_phone_number'));
+          return this.sendMainMenu(chatId);
+        }
+
+        console.log(`Phone number received: ${phoneNumber}`);
+
+        // Check if user exists
+        const user = await UserService.findUserByphoneNumber(phoneNumber);
+        if (user) {
+          user.isAdmin = true;
+          await user.save();
+          console.log(`User admin status: ${user.isAdmin}`);
+
+          await this.bot.sendMessage(chatId, i18n.t('admin_added_success'));
+        } else {
+          await this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+        }
+
+        // Always return to main menu
+        return this.sendMainMenu(chatId);
+      });
+    } catch (error) {
+      console.error('Error handling add admin:', error);
+      await this.bot.sendMessage(chatId, i18n.t('something_went_wrong'));
+      return this.sendMainMenu(chatId);
+    }
+  }
+
+ public async handleRemoveAdmin(msg: TelegramBot.Message) {
+  const chatId = msg.chat.id;
+
+  try {
+    const replyMessage = await this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
+      reply_markup: {
+        force_reply: true,
+      },
+    });
+
+    console.log(`Received message: ${replyMessage.message_id}`);
+
+    // Set up reply listener
+    this.bot.onReplyToMessage(chatId, replyMessage.message_id, async (replyMsg) => {
+      const phoneNumber = replyMsg.text?.trim() || '';
+
+      // Validate phone number
+      if (!/^998\d{9}$/.test(phoneNumber)) {
+        await this.bot.sendMessage(chatId, i18n.t('invalid_phone_number'));
+        return this.sendMainMenu(chatId);
+      }
+
+      console.log(`Phone number received: ${phoneNumber}`);
+
+      // Check if user exists
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      if (user) {
+        user.isAdmin = false;
+        await user.save();
+        console.log(`User admin status: ${user.isAdmin}`);
+
+        await this.bot.sendMessage(chatId, i18n.t('admin_removed_success'));
+      } else {
+        await this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+      }
+
+      // Always return to main menu
+      return this.sendMainMenu(chatId);
+    });
+
+  } catch (error) {
+    console.error('Error handling remove admin:', error);
+    await this.bot.sendMessage(chatId, i18n.t('something_went_wrong'));
+    return this.sendMainMenu(chatId);
+  }
+} 
   public async handleContactUs(msg: TelegramBot.Message) {
     this.bot.sendMessage(msg.chat.id, i18n.t('contact_us_information'));
   }
