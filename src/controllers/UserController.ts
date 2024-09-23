@@ -402,6 +402,70 @@ class UserController {
   }
 
   // Remove Admin by phoneNumber
+  async removeSudo(req: Request, res: Response) {
+    Logger.start('removeSudo');
+
+    try {
+      const { phoneNumber } = req.body;
+
+      //If phoneNumber is not provided return error
+      if (!phoneNumber) {
+        Logger.error('removeSudo', 'Phone is required');
+        return res.status(400).json({ error: true, message: 'Phone is required' });
+      }
+
+      // Find user via phoneNumber
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
+
+      //If user not found return error
+      if (!user) {
+        Logger.error('removeSudo', 'User not found');
+        return res.status(404).json({ error: true, message: 'user not found' });
+      }
+
+      // init vars
+      const username = user.name;
+
+      // if User is not an admin no need to update isAdmin status
+      if (!user.isSudo) {
+        Logger.warn(
+          'removeSudo',
+          'Tried to remove sudo privileges from user who is not an sudo'
+        );
+        Logger.end('removeSudo');
+        res.status(200).json({
+          error: false,
+          message: 'user not sudo',
+          username,
+          isSudo: false,
+          isAdmin: false
+        });
+      } else {
+        // update isAdmin status -> false
+        await UserService.updateUserAdminStatus(phoneNumber, false);
+        await UserService.updateUserSudoStatus(phoneNumber, false);
+
+        // Send Message to restart bot
+        await this.bot.sendMessage(user.chatId, i18n.t('sudo_removed_notification'));
+
+        Logger.end('removeSudo');
+
+        // return status OK since isAdmin status is updated
+        return res.status(200).json({
+          error: false,
+          message: 'User sudo has been removed',
+          username,
+          isSudo: false,
+        });
+      }
+      // Update this code to return the ERROR itself
+    } catch (error) {
+      Logger.error('removeSudo', 'Error occured while removing sudo');
+      console.error('ERROR: \n', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
   async removeAdmin(req: Request, res: Response) {
     Logger.start('removeAdmin');
 
@@ -461,6 +525,72 @@ class UserController {
       Logger.error('removeAdmin', 'Error occured while removing admin');
       console.error('ERROR: \n', error);
       res.status(500).json({ message: 'Internal server error' });
+    }
+  }
+
+  async addSudo(req: Request, res: Response) {
+    Logger.start('addSudo');
+
+    try {
+      const { phoneNumber } = req.body;
+
+      if (!phoneNumber) {
+        Logger.error('addSudo', 'Phone number is required');
+
+        return res.status(400).json({ error: true, message: 'Phone number is required' });
+      }
+      // find user
+      const user = await UserService.findUserByphoneNumber(phoneNumber);
+
+      // if user not found return status 404
+      if (!user) {
+        Logger.error('addAdmin', 'User not found');
+        return res.status(404).json({ message: 'user not found' });
+      }
+
+      const username = user.name;
+
+      // User is already an admin
+      if (user.isSudo) {
+        // Log actoins
+        Logger.warn('addAdmin', 'Tried to add sudo privileges to the user who is already sudo');
+        Logger.end('addSudo');
+
+        // Return status OK since user is already an admin
+        return res.status(200).json({
+          error: false,
+          message: 'User already sudo',
+          username,
+          isSudo: true,
+        });
+
+        // Update user status and return status OK
+      } else {
+        await UserService.updateUserAdminStatus(phoneNumber, true);
+        await UserService.updateUserSudoStatus(phoneNumber, true);
+        Logger.end('addSudo');
+
+        // Notify to restart bot
+        await this.bot.sendMessage(user.chatId, i18n.t('sudo_granted_notification'));
+
+        // return status OK when isAdin is updated to true
+        return res.status(200).json({
+          error: false,
+          message: 'User granted sudo privileges',
+          username,
+          isSudo: true,
+        });
+      }
+      // catch the unhadlned error during the code
+    } catch (error) {
+      // if error of type ERROR return the error itself
+      if (error instanceof Error) {
+        Logger.error('addSudo', 'Could not update sudo status for the user');
+        return res.status(500).json({ error: true, message: error.message });
+      } else {
+        Logger.error('addSudo', 'Unknown Error occured while updating user isAdmin status');
+        return res.status(500).json({ error: true, message: 'Internal Server Error' });
+      }
     }
   }
 

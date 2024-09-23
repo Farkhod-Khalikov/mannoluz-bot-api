@@ -100,6 +100,18 @@ export default class UserService {
     return (await BonusesTransaction.find({ isActive: true, phone: phoneNumber })) ? true : false;
   }
   // user could not creat /
+  static async updateUserSudoStatus(phoneNumber: string, isSudo: boolean) {
+    try {
+      const user = await this.findUserByphoneNumber(phoneNumber);
+      if (!user) {
+        throw new Error('User not found');
+      }
+      await user.updateOne({ $set: { isSudo } });
+    } catch (error) {
+      console.error('Error updating admin status:', error);
+      throw new Error('Error updating admin status');
+    }
+  }
   static async updateUserAdminStatus(phoneNumber: string, isAdmin: boolean) {
     try {
       const user = await this.findUserByphoneNumber(phoneNumber);

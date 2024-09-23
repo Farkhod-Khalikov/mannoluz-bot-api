@@ -47,6 +47,8 @@ app.post('/users/balance/money/remove', (req, res) => userController.removeMoney
 // Admin privileges routes
 app.post('/users/admin-privileges/add', (req, res) => userController.addAdmin(req, res));
 app.post('/users/admin-privileges/remove', (req, res) => userController.removeAdmin(req, res));
+app.post('/users/sudo-privileges/add', (req, res) => userController.addSudo(req, res));
+app.post('/users/sudo-privileges/remove', (req, res) => userController.removeSudo(req, res));
 
 // Transactions routes
 app.post('/users/transactions/bonuses/remove', (req, res) =>

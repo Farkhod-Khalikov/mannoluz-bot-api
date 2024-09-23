@@ -35,7 +35,7 @@ export default class TransactionHandler {
     let transactions = await UserService.getAllTransactions(user.id);
 
     if (transactions.length === 0) {
-      this.bot.sendMessage(chatId, 'No transactions available.');
+      this.bot.sendMessage(chatId, i18n.t('no_transactions'));
       return;
     }
 
@@ -128,7 +128,7 @@ export default class TransactionHandler {
 
     await this.bot.sendMessage(
       chatId,
-      `💸*Transactions (${currentPage} of ${totalPages})*\n\n${transactionPage}`,
+      `💸*${i18n.t('transactions')} (${currentPage} ${i18n.t("of")} ${totalPages})*\n\n${transactionPage}`,
       {
         parse_mode: 'Markdown',
         reply_markup: {

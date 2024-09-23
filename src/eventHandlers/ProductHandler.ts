@@ -17,7 +17,7 @@ class ProductHandler {
       await this.showProducts(chatId);
     } catch (error) {
       console.error('Error fetching products:', error);
-      this.bot.sendMessage(msg.chat.id, 'Could not fetch products');
+      this.bot.sendMessage(msg.chat.id, i18n.t('error_fetching_products'));
     }
   }
 
@@ -30,7 +30,7 @@ class ProductHandler {
     let products = await ProductService.getAllProducts();
 
     if (products.length === 0) {
-      this.bot.sendMessage(chatId, 'No products available.');
+      this.bot.sendMessage(chatId,i18n.t('products_not_found'));
       return;
     }
 
@@ -48,7 +48,7 @@ class ProductHandler {
     const productPage = products
       .slice(startIndex, endIndex)
       .map(
-        (product: any) => `*Product:* ${product.name}\n*Price:* ${product.price} ${i18n.t('coins')}`
+        (product: any) => `*${i18n.t('product')}:* ${product.name}\n*${i18n.t('price')}:* ${product.price} ${i18n.t('coins')}`
       )
       .join('\n\n');
 
@@ -115,7 +115,7 @@ class ProductHandler {
 
     await this.bot.sendMessage(
       chatId,
-      `🛒*Products (${currentPage} of ${totalPages})*\n\n${productPage}`,
+      `🛒*${i18n.t('products')} (${currentPage} ${i18n.t('of')} ${totalPages})*\n\n${productPage}`,
       {
         parse_mode: 'Markdown',
         reply_markup: {
