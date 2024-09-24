@@ -236,6 +236,7 @@ export default class UserHandler {
     const user = await UserService.findUserByChatId(chatId);
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
     const isSudo = user && (await user.isSudo);
+    // Default User Panel
     if (!isAdmin) {
       const mainMenuKeyboard = [
         [{ text: i18n.t('btn_credit_card') }],
@@ -251,6 +252,7 @@ export default class UserHandler {
           one_time_keyboard: false,
         },
       });
+      // Admin Panel
     } else if (isAdmin && !isSudo) {
       const adminMenuKeyboard = [
         [
@@ -268,6 +270,7 @@ export default class UserHandler {
           one_time_keyboard: false,
         },
       });
+      // Sudo panel
     } else if (isSudo) {
       const sudoAdminMenuKeyboard = [
         [
@@ -319,7 +322,7 @@ export default class UserHandler {
           user.isAdmin = true;
           await user.save();
           console.log(`User admin status: ${user.isAdmin}`);
-
+          await this.bot.sendMessage(user.chatId,i18n.t("admin_granted_notification"));
           await this.bot.sendMessage(chatId, i18n.t('admin_added_success'));
         } else {
           await this.bot.sendMessage(chatId, i18n.t('user_not_found'));
@@ -335,52 +338,51 @@ export default class UserHandler {
     }
   }
 
- public async handleRemoveAdmin(msg: TelegramBot.Message) {
-  const chatId = msg.chat.id;
+  public async handleRemoveAdmin(msg: TelegramBot.Message) {
+    const chatId = msg.chat.id;
 
-  try {
-    const replyMessage = await this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
-      reply_markup: {
-        force_reply: true,
-      },
-    });
+    try {
+      const replyMessage = await this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
+        reply_markup: {
+          force_reply: true,
+        },
+      });
 
-    console.log(`Received message: ${replyMessage.message_id}`);
+      console.log(`Received message: ${replyMessage.message_id}`);
 
-    // Set up reply listener
-    this.bot.onReplyToMessage(chatId, replyMessage.message_id, async (replyMsg) => {
-      const phoneNumber = replyMsg.text?.trim() || '';
+      // Set up reply listener
+      this.bot.onReplyToMessage(chatId, replyMessage.message_id, async (replyMsg) => {
+        const phoneNumber = replyMsg.text?.trim() || '';
 
-      // Validate phone number
-      if (!/^998\d{9}$/.test(phoneNumber)) {
-        await this.bot.sendMessage(chatId, i18n.t('invalid_phone_number'));
+        // Validate phone number
+        if (!/^998\d{9}$/.test(phoneNumber)) {
+          await this.bot.sendMessage(chatId, i18n.t('invalid_phone_number'));
+          return this.sendMainMenu(chatId);
+        }
+
+        console.log(`Phone number received: ${phoneNumber}`);
+
+        // Check if user exists
+        const user = await UserService.findUserByphoneNumber(phoneNumber);
+        if (user) {
+          user.isAdmin = false;
+          await user.save();
+          console.log(`User admin status: ${user.isAdmin}`);
+          await this.bot.sendMessage(user.chatId,i18n.t("admin_removed_notification"));
+          await this.bot.sendMessage(chatId, i18n.t('admin_removed_success'));
+        } else {
+          await this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+        }
+
+        // Always return to main menu
         return this.sendMainMenu(chatId);
-      }
-
-      console.log(`Phone number received: ${phoneNumber}`);
-
-      // Check if user exists
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
-      if (user) {
-        user.isAdmin = false;
-        await user.save();
-        console.log(`User admin status: ${user.isAdmin}`);
-
-        await this.bot.sendMessage(chatId, i18n.t('admin_removed_success'));
-      } else {
-        await this.bot.sendMessage(chatId, i18n.t('user_not_found'));
-      }
-
-      // Always return to main menu
+      });
+    } catch (error) {
+      console.error('Error handling remove admin:', error);
+      await this.bot.sendMessage(chatId, i18n.t('something_went_wrong'));
       return this.sendMainMenu(chatId);
-    });
-
-  } catch (error) {
-    console.error('Error handling remove admin:', error);
-    await this.bot.sendMessage(chatId, i18n.t('something_went_wrong'));
-    return this.sendMainMenu(chatId);
+    }
   }
-} 
   public async handleContactUs(msg: TelegramBot.Message) {
     this.bot.sendMessage(msg.chat.id, i18n.t('contact_us_information'));
   }

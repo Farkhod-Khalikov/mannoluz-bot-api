@@ -231,50 +231,50 @@ export default class AdminHandler {
       });
     }
   }
-  public async handleAddAdmin(msg: TelegramBot.Message) {
-    const chatId = msg.chat.id;
+  // public async handleAddAdmin(msg: TelegramBot.Message) {
+  //   const chatId = msg.chat.id;
 
-    this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
-      reply_markup: {
-        force_reply: true,
-      },
-    });
+  //   this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
+  //     reply_markup: {
+  //       force_reply: true,
+  //     },
+  //   });
 
-    this.bot.onReplyToMessage(chatId, msg.message_id, async (replyMsg) => {
-      const phoneNumber = replyMsg.text || '';
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+  //   this.bot.onReplyToMessage(chatId, msg.message_id, async (replyMsg) => {
+  //     const phoneNumber = replyMsg.text || '';
+  //     const user = await UserService.findUserByphoneNumber(phoneNumber);
 
-      if (user) {
-        user.isAdmin = true;
-        await user.save();
-        this.bot.sendMessage(chatId, i18n.t('admin_added_success'));
-      } else {
-        this.bot.sendMessage(chatId, i18n.t('user_not_found'));
-      }
-    });
-  }
+  //     if (user) {
+  //       user.isAdmin = true;
+  //       await user.save();
+  //       this.bot.sendMessage(chatId, i18n.t('admin_added_success'));
+  //     } else {
+  //       this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+  //     }
+  //   });
+  // }
 
-  // Handle Remove Admin button click
-  public async handleRemoveAdmin(msg: TelegramBot.Message) {
-    const chatId = msg.chat.id;
+  // // Handle Remove Admin button click
+  // public async handleRemoveAdmin(msg: TelegramBot.Message) {
+  //   const chatId = msg.chat.id;
 
-    this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
-      reply_markup: {
-        force_reply: true,
-      },
-    });
+  //   this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
+  //     reply_markup: {
+  //       force_reply: true,
+  //     },
+  //   });
 
-    this.bot.onReplyToMessage(chatId, msg.message_id, async (replyMsg) => {
-      const phoneNumber = replyMsg.text || '';
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+  //   this.bot.onReplyToMessage(chatId, msg.message_id, async (replyMsg) => {
+  //     const phoneNumber = replyMsg.text || '';
+  //     const user = await UserService.findUserByphoneNumber(phoneNumber);
 
-      if (user) {
-        user.isAdmin = false;
-        await user.save();
-        this.bot.sendMessage(chatId, i18n.t('admin_removed_success'));
-      } else {
-        this.bot.sendMessage(chatId, i18n.t('user_not_found'));
-      }
-    });
-  }
+  //     if (user) {
+  //       user.isAdmin = false;
+  //       await user.save();
+  //       this.bot.sendMessage(chatId, i18n.t('admin_removed_success'));
+  //     } else {
+  //       this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+  //     }
+  //   });
+  // }
 }

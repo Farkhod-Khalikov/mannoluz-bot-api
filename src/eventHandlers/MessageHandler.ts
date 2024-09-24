@@ -40,7 +40,7 @@ export default class MessageController {
         case '/start':
           await this.userHandler.handleStart(msg);
           break;
-        case 'btn_add_admin':
+        case i18n.t('btn_add_admin'):
           if (isUserAdmin || isSudo) {
             await this.userHandler.handleAddAdmin(msg);
           } else {
@@ -48,7 +48,7 @@ export default class MessageController {
           }
 
           break;
-        case 'btn_remove_admin':
+        case i18n.t('btn_remove_admin'):
           if (isUserAdmin || isSudo) {
             await this.userHandler.handleRemoveAdmin(msg);
           } else {

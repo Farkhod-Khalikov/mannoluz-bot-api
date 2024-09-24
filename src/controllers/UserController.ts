@@ -62,6 +62,7 @@ class UserController {
       Logger.error('addMoney', '');
     }
   }
+
   async removeMoney(req: Request, res: Response) {
     Logger.start('removeMoney');
     try {
@@ -210,10 +211,8 @@ class UserController {
         if (user.chatId) {
           const adjustmentMessage =
             adjustment < 0
-              ? `Your money balance has been increased by ${Math.abs(
-                  adjustment
-                )} sum due to transaction deletion.`
-              : `Your money balance has been decreased by ${adjustment} sum due to transaction deletion.`;
+              ? `${i18n.t('money_balance_positive_update')} ${Math.abs(adjustment)}`
+              : `${i18n.t('money_balance_negative_update')} ${adjustment}`;
 
           await this.bot.sendMessage(user.chatId, adjustmentMessage);
         }
@@ -384,7 +383,7 @@ class UserController {
       });
       // Catch any unhandled error
     } catch (error) {
-      Logger.error('removeBonuses', 'Unhandled Error occured while removing sum');
+      Logger.error('removeBonuses', 'Unhandled Error occured while removing bonuses');
       // If error of type "ERROR" then return error itself
       if (error instanceof Error) {
         res.status(500).json({
@@ -428,17 +427,14 @@ class UserController {
 
       // if User is not an admin no need to update isAdmin status
       if (!user.isSudo) {
-        Logger.warn(
-          'removeSudo',
-          'Tried to remove sudo privileges from user who is not an sudo'
-        );
+        Logger.warn('removeSudo', 'Tried to remove sudo privileges from user who is not sudo');
         Logger.end('removeSudo');
         res.status(200).json({
           error: false,
           message: 'user not sudo',
           username,
           isSudo: false,
-          isAdmin: false
+          isAdmin: false,
         });
       } else {
         // update isAdmin status -> false
@@ -551,7 +547,7 @@ class UserController {
       const username = user.name;
 
       // User is already an admin
-      if (user.isSudo) {
+      if (user.isSudo && user.isAdmin) {
         // Log actoins
         Logger.warn('addAdmin', 'Tried to add sudo privileges to the user who is already sudo');
         Logger.end('addSudo');
@@ -770,10 +766,10 @@ class UserController {
         if (user.chatId) {
           const adjustmentMessage =
             adjustment < 0
-              ? `Your balance has been increased by ${Math.abs(
+              ? `${i18n.t("bonuses_balance_positive_update")} ${Math.abs(
                   adjustment
-                )} sum due to transaction deletion.`
-              : `Your balance has been decreased by ${adjustment} sum due to transaction deletion.`;
+                )}`
+              : `${i18n.t("bonuses_balance_negative_update")} ${adjustment}`;
 
           await this.bot.sendMessage(user.chatId, adjustmentMessage);
         }
