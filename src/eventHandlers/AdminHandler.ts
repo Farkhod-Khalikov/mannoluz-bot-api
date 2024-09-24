@@ -148,7 +148,7 @@ export default class AdminHandler {
     }
 
     // Clean up temp files if the post is canceled or completed
-    this.adminPostData.delete(chatId);
+    // this.adminPostData.delete(chatId);
   }
 
   public async handleConfirmPost(chatId: number) {
