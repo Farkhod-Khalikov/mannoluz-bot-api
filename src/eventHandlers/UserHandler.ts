@@ -3,7 +3,6 @@ import UserService from '../services/user.service';
 import i18n from '../utils/i18n';
 import { generateCreditCard } from '../utils/creditcard.generation';
 import { PurchaseRequest } from '../models/purchase-requests.schema';
-import { REPLServer } from 'repl';
 
 export default class UserHandler {
   private bot: TelegramBot;
@@ -232,7 +231,7 @@ export default class UserHandler {
     });
   }
 
-  public async sendMainMenu(chatId: number) {
+   public async sendMainMenu(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
     const isSudo = user && (await user.isSudo);

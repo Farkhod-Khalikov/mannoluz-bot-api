@@ -5,8 +5,9 @@ import fs from 'fs';
 import path from 'path';
 import Post from '../models/posts.schema';
 import { v4 as uuidv4 } from 'uuid';
-
+import UserHandler from './UserHandler';
 export default class AdminHandler {
+  private userHandler: UserHandler;
   private bot: TelegramBot;
   private adminPostData: Map<
     number,
@@ -22,6 +23,7 @@ export default class AdminHandler {
 
   constructor(bot: TelegramBot) {
     this.bot = bot;
+    this.userHandler = new UserHandler(bot);
     this.tempDir = path.join(__dirname, '..', 'temp/admin-posts'); // Ensure temp folder is created
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir);
@@ -154,7 +156,7 @@ export default class AdminHandler {
         });
       }
       this.bot.sendMessage(chatId, i18n.t('post_sent'));
-      this.sendMainMenu(chatId);
+      this.userHandler.sendMainMenu(chatId);
     }
     // Clean up temp files if the post is canceled
     this.adminPostData.delete(chatId);
@@ -171,66 +173,65 @@ export default class AdminHandler {
       });
     }
     this.adminPostData.delete(chatId);
-    this.sendMainMenu(chatId);
+    this.userHandler.sendMainMenu(chatId);
   }
 
-  public async sendMainMenu(chatId: number) {
-    const user = await UserService.findUserByChatId(chatId);
-    const isAdmin = user && (await UserService.isUserAdmin(chatId));
-    const isSudo = user && (await user.isSudo);
-    const mainMenuKeyboard = [
-      [{ text: i18n.t('btn_credit_card') }],
-      [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_transactions') }],
-      [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_purchase_request') }],
-      // [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
-    ];
-    const sudoAdminMenuKeyboard = [
-      [
-        {
-          text: i18n.t('btn_send_post'),
-        },
-      ],
-      [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
-      [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
-    ];
-    const adminMenuKeyboard = [
-      [
-        {
-          text: i18n.t('btn_send_post'),
-        },
-        { text: i18n.t('btn_add_admin') },
-        { text: i18n.t('btn_remove_admin') },
-      ],
-      [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
-      [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
-    ];
-    if (isSudo) {
-      this.bot.sendMessage(chatId, i18n.t('choose_option'), {
-        reply_markup: {
-          keyboard: sudoAdminMenuKeyboard,
-          resize_keyboard: true,
-          one_time_keyboard: false,
-        },
-      });
-    }
-    if (isAdmin) {
-      this.bot.sendMessage(chatId, i18n.t('choose_option'), {
-        reply_markup: {
-          keyboard: adminMenuKeyboard,
-          resize_keyboard: true,
-          one_time_keyboard: false,
-        },
-      });
-    } else {
-      this.bot.sendMessage(chatId, i18n.t('choose_option'), {
-        reply_markup: {
-          keyboard: mainMenuKeyboard,
-          resize_keyboard: true,
-          one_time_keyboard: false,
-        },
-      });
-    }
-  }
+  // public async sendMainMenu(chatId: number) {
+  //   const user = await UserService.findUserByChatId(chatId);
+  //   const isAdmin = user && (await UserService.isUserAdmin(chatId));
+  //   const isSudo = user && (await user.isSudo);
+  //   const mainMenuKeyboard = [
+  //     [{ text: i18n.t('btn_credit_card') }],
+  //     [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_transactions') }],
+  //     [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_purchase_request') }],
+  //     // [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
+  //   ];
+  //   const sudoAdminMenuKeyboard = [
+  //     [
+  //       {
+  //         text: i18n.t('btn_send_post'),
+  //       },
+  //     ],
+  //     [{ text: i18n.t('btn_add_admin') }, { text: i18n.t('btn_remove_admin') }],
+  //     [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
+  //     [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
+  //   ];
+  //   const adminMenuKeyboard = [
+  //     [
+  //       {
+  //         text: i18n.t('btn_send_post'),
+  //       },
+  //     ],
+  //     [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
+  //     [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
+  //   ];
+  //   if (isSudo) {
+  //     this.bot.sendMessage(chatId, i18n.t('choose_option'), {
+  //       reply_markup: {
+  //         keyboard: sudoAdminMenuKeyboard,
+  //         resize_keyboard: true,
+  //         one_time_keyboard: false,
+  //       },
+  //     });
+  //   }
+  //   if (isAdmin && !isSudo) {
+  //     this.bot.sendMessage(chatId, i18n.t('choose_option'), {
+  //       reply_markup: {
+  //         keyboard: adminMenuKeyboard,
+  //         resize_keyboard: true,
+  //         one_time_keyboard: false,
+  //       },
+  //     });
+  //   } else {
+  //     this.bot.sendMessage(chatId, i18n.t('choose_option'), {
+  //       reply_markup: {
+  //         keyboard: mainMenuKeyboard,
+  //         resize_keyboard: true,
+  //         one_time_keyboard: false,
+  //       },
+  //     });
+  //   }
+  // }
   // public async handleAddAdmin(msg: TelegramBot.Message) {
   //   const chatId = msg.chat.id;
 
