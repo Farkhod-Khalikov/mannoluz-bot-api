@@ -324,7 +324,7 @@ export default class UserHandler {
           await this.bot.sendMessage(user.chatId,i18n.t("admin_granted_notification"));
           await this.bot.sendMessage(chatId, i18n.t('admin_added_success'));
         } else {
-          await this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+          await this.bot.sendMessage(chatId, i18n.t('admin_not_found'));
         }
 
         // Always return to main menu
@@ -370,7 +370,7 @@ export default class UserHandler {
           await this.bot.sendMessage(user.chatId,i18n.t("admin_removed_notification"));
           await this.bot.sendMessage(chatId, i18n.t('admin_removed_success'));
         } else {
-          await this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+          await this.bot.sendMessage(chatId, i18n.t('admin_not_found'));
         }
 
         // Always return to main menu

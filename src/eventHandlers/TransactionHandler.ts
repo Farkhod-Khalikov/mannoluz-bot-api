@@ -14,6 +14,11 @@ export default class TransactionHandler {
     // add user_not_found case if(!user) => do something
     try {
       const chatId = msg.chat.id;
+      const user = await UserService.findUserByChatId(chatId);
+      if (!user){
+        this.bot.sendMessage(chatId, i18n.t('user_not_found'));
+        return
+      }
       this.resetTransactionPage(chatId); // Reset the current page to 1
       await this.showTransactions(chatId);
     } catch (error) {

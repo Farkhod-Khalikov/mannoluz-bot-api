@@ -6,6 +6,7 @@ import path from 'path';
 import Post from '../models/posts.schema';
 import { v4 as uuidv4 } from 'uuid';
 import UserHandler from './UserHandler';
+
 export default class AdminHandler {
   private userHandler: UserHandler;
   private bot: TelegramBot;
@@ -68,21 +69,20 @@ export default class AdminHandler {
             force_reply: true,
           },
         });
-      } else if (!currentPostData.image) {
-        currentPostData.image = text;
-        this.bot.sendMessage(chatId, i18n.t('uploading_image'), {
-          reply_markup: {
-            force_reply: true,
-          },
-        });
-      }
+      } //else if (!currentPostData.image) {
+      //   currentPostData.image = text;
+      //   this.bot.sendMessage(chatId, i18n.t('uploading_image'), {
+      //     reply_markup: {
+      //       force_reply: true,
+      //     },
+      //   });
+      // }
     }
   }
 
   public async handleImageUpload(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
     const photo = msg.photo ? msg.photo[msg.photo.length - 1] : null;
-
     if (photo) {
       const fileId = photo.file_id;
       const tempFilePath = await this.bot.downloadFile(fileId, this.tempDir);
@@ -130,8 +130,25 @@ export default class AdminHandler {
             ],
           },
         });
-      }
+      } // trying to handle when admin doesnt provide photo for post
+    } else {
+      // If the required data is missing, send an error message
+      this.bot.sendMessage(chatId, i18n.t('error_incomplete_post'), {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: i18n.t('btn_try_again'),
+                callback_data: 'restart_post_creation',
+              },
+            ],
+          ],
+        },
+      });
     }
+
+    // Clean up temp files if the post is canceled or completed
+    this.adminPostData.delete(chatId);
   }
 
   public async handleConfirmPost(chatId: number) {
