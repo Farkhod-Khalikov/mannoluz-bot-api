@@ -763,10 +763,8 @@ class UserController {
         if (user.chatId) {
           const adjustmentMessage =
             adjustment < 0
-              ? `${i18n.t("bonuses_balance_positive_update")} ${Math.abs(
-                  adjustment
-                )}`
-              : `${i18n.t("bonuses_balance_negative_update")} ${adjustment}`;
+              ? `${i18n.t('bonuses_balance_positive_update')} ${Math.abs(adjustment)}`
+              : `${i18n.t('bonuses_balance_negative_update')} ${adjustment}`;
 
           await this.bot.sendMessage(user.chatId, adjustmentMessage);
         }

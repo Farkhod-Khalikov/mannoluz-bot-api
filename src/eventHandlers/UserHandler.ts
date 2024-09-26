@@ -16,33 +16,40 @@ export default class UserHandler {
     this.contactListeners = new Map<number, (msg: TelegramBot.Message) => void>();
   }
 
-  public async handleStart(msg: TelegramBot.Message) {
+ public async handleStart(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
     const isExisted = await UserService.isUserRegistered(chatId);
 
     if (!isExisted) {
+      // If user is not registered, start the registration process
       await this.handleUserRegistration(chatId);
     } else {
+      // If user is already registered, change language and show main menu
       const user = await UserService.findUserByChatId(chatId);
       i18n.changeLanguage(user?.language);
       this.sendMainMenu(chatId);
     }
   }
 
+  // Handles the user registration process
   public async handleUserRegistration(chatId: number) {
+    // Ask the user to select a language
     await this.promptLanguageSelection(chatId);
 
+    // Listen for the selected language
     const languageListener = async (msg: TelegramBot.Message) => {
       if (
         msg.chat.id === chatId &&
-        (msg.text === '🇷🇺Русский' || msg.text === '🇺🇸English' || msg.text === '🇺🇿Uzbek')
+        ['🇷🇺Русский', '🇺🇸English', '🇺🇿Uzbek'].includes(msg.text || '')
       ) {
+        // Remove listener once language is selected
         this.bot.removeListener('message', languageListener);
         this.languageListeners.delete(chatId);
 
-        const language = msg.text;
+        const language = msg.text!;
         await this.handleLanguageSelection(chatId, language, true);
 
+        // Listen for the contact after language selection
         const contactListener = async (contactMsg: TelegramBot.Message) => {
           if (contactMsg.chat.id === chatId && contactMsg.contact) {
             this.bot.removeListener('contact', contactListener);
@@ -56,21 +63,27 @@ export default class UserHandler {
       }
     };
 
+    // Add language selection listener
     this.bot.on('message', languageListener);
     this.languageListeners.set(chatId, languageListener);
   }
 
+  // Prompts the user to select a language during registration
   private async promptLanguageSelection(chatId: number) {
-    const languageKeyboard = [[{ text: '🇷🇺Русский' }, { text: '🇺🇸English' }, { text: '🇺🇿Uzbek' }]]; // Add uzUzbek
+    const languageKeyboard = [
+      [{ text: '🇷🇺Русский' }, { text: '🇺🇸English' }, { text: '🇺🇿Uzbek' }],
+    ];
     this.bot.sendMessage(chatId, i18n.t('choose_language'), {
       reply_markup: {
         keyboard: languageKeyboard,
         resize_keyboard: true,
+        force_reply: true,
         one_time_keyboard: true,
       },
     });
   }
 
+  // Handles contact sharing during registration
   public async handleContact(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
 
@@ -78,9 +91,11 @@ export default class UserHandler {
       const phoneNumber = msg.contact.phone_number.replace('+', '');
       const name = msg.contact.first_name;
 
+      // Check if user already exists by phone number
       if (await UserService.findUserByphoneNumber(phoneNumber)) {
         this.bot.sendMessage(chatId, i18n.t('user_already_exists'));
       } else {
+        // Create a new user if not existing
         const language = this.newUserLanguages.get(chatId) || i18n.language;
         await UserService.createUser(chatId, name, phoneNumber, language);
         this.bot.sendMessage(chatId, i18n.t('contact_saved'));
@@ -90,8 +105,8 @@ export default class UserHandler {
     }
   }
 
+  // Handles language selection during registration and language change for existing users
   public async handleLanguageSelection(chatId: number, language: string, isNewUser: boolean) {
-    console.log('handleLanguageSelection is called');
     let languageCode: string;
     switch (language) {
       case '🇷🇺Русский':
@@ -105,11 +120,11 @@ export default class UserHandler {
         break;
       default:
         languageCode = 'ru-RU';
-        break;
     }
     i18n.changeLanguage(languageCode);
 
-    if (isNewUser === true) {
+    if (isNewUser) {
+      // New user registration: prompt for contact
       this.newUserLanguages.set(chatId, languageCode);
       this.bot.sendMessage(chatId, i18n.t('share_contact'), {
         reply_markup: {
@@ -119,6 +134,7 @@ export default class UserHandler {
         },
       });
     } else {
+      // Existing user: update their language preference
       const user = await UserService.findUserByChatId(chatId);
       if (user) {
         user.language = languageCode;
@@ -128,9 +144,12 @@ export default class UserHandler {
     }
   }
 
+  // Handles language changes for already registered users
   public async handleChangeLanguage(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
-    const languageKeyboard = [[{ text: '🇷🇺Русский' }, { text: '🇺🇸English' }, { text: '🇺🇿Uzbek' }]]; // add uz-Uz
+    const languageKeyboard = [
+      [{ text: '🇷🇺Русский' }, { text: '🇺🇸English' }, { text: '🇺🇿Uzbek' }],
+    ];
     this.bot.sendMessage(chatId, i18n.t('choose_language'), {
       reply_markup: {
         keyboard: languageKeyboard,
@@ -142,10 +161,11 @@ export default class UserHandler {
     const changeLanguageListener = async (msg: TelegramBot.Message) => {
       if (msg.chat.id === chatId) {
         const language = msg.text;
-        let languageCode: string;
-        if (language === '🇷🇺Русский' || language === '🇺🇸English' || language === '🇺🇿Uzbek') {
-          // Add uz-UZ
+        if (['🇷🇺Русский', '🇺🇸English', '🇺🇿Uzbek'].includes(language || '')) {
+          // Remove listener once language is selected
           this.bot.removeListener('message', changeLanguageListener);
+          
+          let languageCode: string;
           switch (language) {
             case '🇷🇺Русский':
               languageCode = 'ru-RU';
@@ -158,22 +178,27 @@ export default class UserHandler {
               break;
             default:
               languageCode = 'ru-RU';
-              break;
           }
           i18n.changeLanguage(languageCode);
 
+          // Update user's language in the database
           const user = await UserService.findUserByChatId(chatId);
           if (user) {
             user.language = languageCode;
             user.updatedAt = new Date();
             await user.save();
           }
+
+          // Send the updated main menu
           this.sendMainMenu(chatId);
         }
       }
     };
+
+    // Add language change listener
     this.bot.on('message', changeLanguageListener);
   }
+
 
   public async handleMyCreditCard(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
