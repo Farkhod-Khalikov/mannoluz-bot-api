@@ -231,7 +231,7 @@ export default class UserHandler {
     });
   }
 
-   public async sendMainMenu(chatId: number) {
+  public async sendMainMenu(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
     const isAdmin = user && (await UserService.isUserAdmin(chatId));
     const isSudo = user && (await user.isSudo);
@@ -321,7 +321,7 @@ export default class UserHandler {
           user.isAdmin = true;
           await user.save();
           console.log(`User admin status: ${user.isAdmin}`);
-          await this.bot.sendMessage(user.chatId,i18n.t("admin_granted_notification"));
+          await this.bot.sendMessage(user.chatId, i18n.t('admin_granted_notification'));
           await this.bot.sendMessage(chatId, i18n.t('admin_added_success'));
         } else {
           await this.bot.sendMessage(chatId, i18n.t('admin_not_found'));
@@ -367,7 +367,7 @@ export default class UserHandler {
           user.isAdmin = false;
           await user.save();
           console.log(`User admin status: ${user.isAdmin}`);
-          await this.bot.sendMessage(user.chatId,i18n.t("admin_removed_notification"));
+          await this.bot.sendMessage(user.chatId, i18n.t('admin_removed_notification'));
           await this.bot.sendMessage(chatId, i18n.t('admin_removed_success'));
         } else {
           await this.bot.sendMessage(chatId, i18n.t('admin_not_found'));

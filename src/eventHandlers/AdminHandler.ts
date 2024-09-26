@@ -6,7 +6,6 @@ import path from 'path';
 import Post from '../models/posts.schema';
 import { v4 as uuidv4 } from 'uuid';
 import UserHandler from './UserHandler';
-
 export default class AdminHandler {
   private userHandler: UserHandler;
   private bot: TelegramBot;
@@ -25,146 +24,162 @@ export default class AdminHandler {
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.userHandler = new UserHandler(bot);
-    this.tempDir = path.join(__dirname, '..', 'temp/admin-posts'); // Ensure temp folder is created
+    this.tempDir = path.join(__dirname, '..', 'temp/admin-posts');
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir);
     }
   }
 
-  public async handleSendPost(msg: TelegramBot.Message) {
-    const chatId = msg.chat.id;
+  // Step 1: Handle Title Input
+  public async handleSendPost(message: TelegramBot.Message) {
+    const chatId = message.chat.id;
+    // add isAdmin check
+    // Step 1: Handle title input
+    const title = await this.handlePostTitleReply(chatId);
+    if (!title) return;
 
-    // Fetch admin name from user service
-    const adminName = await UserService.getUserName(chatId);
+    // Step 2: Handle message input
+    const body = await this.handlePostBodyReply(chatId);
+    if (!body) return;
 
-    this.bot.sendMessage(chatId, i18n.t('provide_post_title'), {
-      reply_markup: {
-        force_reply: true,
-      },
-    });
-
+    // Store title and message
     this.adminPostData.set(chatId, {
-      adminName,
-      title: null,
-      message: null,
+      adminName: 'adminName', // Replace with logic to get the admin's name
+      title: title,
+      message: body,
       image: null,
     });
+
+    // Step 3: Ask for image input
+    await this.askForImage(chatId);
   }
 
-  public async handleAdminPostData(chatId: number, text: string) {
-    const currentPostData = this.adminPostData.get(chatId);
+  // Step 2: Handle title reply
+  private async handlePostTitleReply(chatId: number): Promise<string | null> {
+    const forceReplyMessageId = await this.bot.sendMessage(chatId, i18n.t('provide_post_title'), {
+      reply_markup: { force_reply: true },
+    });
 
-    if (currentPostData) {
-      if (!currentPostData.title) {
-        currentPostData.title = text;
-        this.bot.sendMessage(chatId, i18n.t('provide_post_message'), {
-          reply_markup: {
-            force_reply: true,
-          },
-        });
-      } else if (!currentPostData.message) {
-        currentPostData.message = text;
-        this.bot.sendMessage(chatId, i18n.t('provide_post_image'), {
-          reply_markup: {
-            force_reply: true,
-          },
-        });
-      } //else if (!currentPostData.image) {
-      //   currentPostData.image = text;
-      //   this.bot.sendMessage(chatId, i18n.t('uploading_image'), {
-      //     reply_markup: {
-      //       force_reply: true,
-      //     },
-      //   });
-      // }
-    }
+    return new Promise((resolve) => {
+      this.bot.onReplyToMessage(chatId, forceReplyMessageId.message_id, async (replyMsg) => {
+        if (!replyMsg.text) {
+          this.adminPostData.delete(chatId);
+          await this.bot.sendMessage(
+            chatId,
+            'You have provided incorrect reply message for text (string) holder'
+          );
+          await this.userHandler.sendMainMenu(chatId);
+          return;
+        }
+        resolve(replyMsg.text ? replyMsg.text : null);
+      });
+    });
   }
 
+  // Step 3: Handle message reply
+  private async handlePostBodyReply(chatId: number): Promise<string | null> {
+    const ForceReplyMessageId = await this.bot.sendMessage(chatId, i18n.t('provide_post_message'), {
+      reply_markup: { force_reply: true },
+    });
+
+    return new Promise((resolve) => {
+      this.bot.onReplyToMessage(chatId, ForceReplyMessageId.message_id, async (replyMsg) => {
+        if (!replyMsg.text) {
+          this.adminPostData.delete(chatId);
+          await this.bot.sendMessage(
+            chatId,
+            'You have provided incorrect reply message for text (string) holder'
+          );
+          await this.userHandler.sendMainMenu(chatId);
+          return;
+        }
+        resolve(replyMsg.text ? replyMsg.text : null);
+      });
+    });
+  }
+
+  // Step 4: Ask for image input
+  private async askForImage(chatId: number): Promise<void> {
+    const reply = await this.bot.sendMessage(chatId, i18n.t('provide_post_image'), {
+      reply_markup: { force_reply: true },
+    });
+
+    await this.bot.onReplyToMessage(chatId, reply.message_id, async (replyMsg) => {
+      // if user has written basic text message reply
+      if (!replyMsg.photo) {
+        this.adminPostData.delete(chatId);
+        await this.bot.sendMessage(chatId, 'you have provided incorrect image format.');
+        await this.userHandler.sendMainMenu(chatId);
+        return;
+      }
+    });
+  }
+
+  // Handle image upload
   public async handleImageUpload(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
+    const currentPostData = this.adminPostData.get(chatId);
+    // Check if there's an ongoing post creation
+    if (!currentPostData || !currentPostData.title || !currentPostData.message) {
+      return;
+    }
     const photo = msg.photo ? msg.photo[msg.photo.length - 1] : null;
+    console.log(photo);
+
     if (photo) {
       const fileId = photo.file_id;
       const tempFilePath = await this.bot.downloadFile(fileId, this.tempDir);
 
-      // Generate a unique ID for the post
+      // Generate unique filename
       const uniqueId = uuidv4();
+      const fileName = `${currentPostData.adminName}_${uniqueId}.png`;
+      const newFilePath = path.join(this.tempDir, fileName);
 
-      // Get admin name from current post data
-      const currentPostData = this.adminPostData.get(chatId);
-      if (currentPostData) {
-        const fileName = `${currentPostData.adminName}_${uniqueId}.png`;
-        const newFilePath = path.join(this.tempDir, fileName);
+      // Rename the file to the desired format
+      fs.rename(tempFilePath, newFilePath, (err) => {
+        if (err) {
+          console.error('Failed to rename temp file:', err);
+        }
+      });
 
-        // Rename the file to the new format
-        fs.rename(tempFilePath, newFilePath, (err) => {
-          if (err) {
-            console.error('Failed to rename temp file:', err);
-          }
-        });
+      // Update post data with image path
+      currentPostData.image = newFilePath;
 
-        currentPostData.image = newFilePath;
-
-        const postSummary = `
+      // Show post summary and confirmation buttons
+      const postSummary = `
 *Title:* ${currentPostData.title}
-
 *Message:* ${currentPostData.message}
-        `;
-        this.bot.sendPhoto(chatId, newFilePath, {
-          caption: postSummary,
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [
-              [
-                {
-                  text: i18n.t('btn_confirm'),
-                  callback_data: 'confirm_post',
-                },
-              ],
-              [
-                {
-                  text: i18n.t('btn_cancel_post_creation'),
-                  callback_data: 'cancel_post',
-                },
-              ],
-            ],
-          },
-        });
-      } // trying to handle when admin doesnt provide photo for post
-    } else {
-      // If the required data is missing, send an error message
-      this.bot.sendMessage(chatId, i18n.t('error_incomplete_post'), {
+      `;
+
+      this.bot.sendPhoto(chatId, newFilePath, {
+        caption: postSummary,
+        parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
-            [
-              {
-                text: i18n.t('btn_try_again'),
-                callback_data: 'restart_post_creation',
-              },
-            ],
+            [{ text: i18n.t('btn_confirm'), callback_data: 'confirm_post' }],
+            [{ text: i18n.t('btn_cancel_post_creation'), callback_data: 'cancel_post' }],
           ],
         },
       });
-    }
-
-    // Clean up temp files if the post is canceled or completed
-    // this.adminPostData.delete(chatId);
+    }     
   }
 
+  // Handle post confirmation
   public async handleConfirmPost(chatId: number) {
     const postData = this.adminPostData.get(chatId);
+
     if (postData && postData.title && postData.message && postData.image) {
-      // Save post data to the database with the full image path
       const creator = await UserService.getUserName(chatId);
       const post = new Post({
         creator,
         title: postData.title,
+        message: postData.message,
         createdAt: new Date(),
-        imagePath: postData.image, // Save the full path here
+        imagePath: postData.image,
       });
       await post.save();
 
-      // Send post to all users
+      // Notify all users
       const users = await UserService.getAllUsers();
       for (const user of users) {
         this.bot.sendPhoto(user.chatId, postData.image, {
@@ -175,124 +190,21 @@ export default class AdminHandler {
       this.bot.sendMessage(chatId, i18n.t('post_sent'));
       this.userHandler.sendMainMenu(chatId);
     }
-    // Clean up temp files if the post is canceled
+
+    // Clean up post data
     this.adminPostData.delete(chatId);
   }
 
+  // Handle post cancellation
   public async handleCancelPost(chatId: number) {
     const currentPostData = this.adminPostData.get(chatId);
-    if (currentPostData && currentPostData.image) {
-      // Remove the image file if the post is canceled
+    if (currentPostData?.image) {
       fs.unlink(currentPostData.image, (err) => {
-        if (err) {
-          console.error('Failed to delete temp file:', err);
-        }
+        if (err) console.error('Failed to delete temp file:', err);
       });
     }
+
     this.adminPostData.delete(chatId);
     this.userHandler.sendMainMenu(chatId);
   }
-
-  // public async sendMainMenu(chatId: number) {
-  //   const user = await UserService.findUserByChatId(chatId);
-  //   const isAdmin = user && (await UserService.isUserAdmin(chatId));
-  //   const isSudo = user && (await user.isSudo);
-  //   const mainMenuKeyboard = [
-  //     [{ text: i18n.t('btn_credit_card') }],
-  //     [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_transactions') }],
-  //     [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_purchase_request') }],
-  //     // [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
-  //   ];
-  //   const sudoAdminMenuKeyboard = [
-  //     [
-  //       {
-  //         text: i18n.t('btn_send_post'),
-  //       },
-  //     ],
-  //     [{ text: i18n.t('btn_add_admin') }, { text: i18n.t('btn_remove_admin') }],
-  //     [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
-  //     [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
-  //   ];
-  //   const adminMenuKeyboard = [
-  //     [
-  //       {
-  //         text: i18n.t('btn_send_post'),
-  //       },
-  //     ],
-  //     [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_requests') }],
-  //     [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_rules') }],
-  //   ];
-  //   if (isSudo) {
-  //     this.bot.sendMessage(chatId, i18n.t('choose_option'), {
-  //       reply_markup: {
-  //         keyboard: sudoAdminMenuKeyboard,
-  //         resize_keyboard: true,
-  //         one_time_keyboard: false,
-  //       },
-  //     });
-  //   }
-  //   if (isAdmin && !isSudo) {
-  //     this.bot.sendMessage(chatId, i18n.t('choose_option'), {
-  //       reply_markup: {
-  //         keyboard: adminMenuKeyboard,
-  //         resize_keyboard: true,
-  //         one_time_keyboard: false,
-  //       },
-  //     });
-  //   } else {
-  //     this.bot.sendMessage(chatId, i18n.t('choose_option'), {
-  //       reply_markup: {
-  //         keyboard: mainMenuKeyboard,
-  //         resize_keyboard: true,
-  //         one_time_keyboard: false,
-  //       },
-  //     });
-  //   }
-  // }
-  // public async handleAddAdmin(msg: TelegramBot.Message) {
-  //   const chatId = msg.chat.id;
-
-  //   this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
-  //     reply_markup: {
-  //       force_reply: true,
-  //     },
-  //   });
-
-  //   this.bot.onReplyToMessage(chatId, msg.message_id, async (replyMsg) => {
-  //     const phoneNumber = replyMsg.text || '';
-  //     const user = await UserService.findUserByphoneNumber(phoneNumber);
-
-  //     if (user) {
-  //       user.isAdmin = true;
-  //       await user.save();
-  //       this.bot.sendMessage(chatId, i18n.t('admin_added_success'));
-  //     } else {
-  //       this.bot.sendMessage(chatId, i18n.t('user_not_found'));
-  //     }
-  //   });
-  // }
-
-  // // Handle Remove Admin button click
-  // public async handleRemoveAdmin(msg: TelegramBot.Message) {
-  //   const chatId = msg.chat.id;
-
-  //   this.bot.sendMessage(chatId, i18n.t('enter_phone_number'), {
-  //     reply_markup: {
-  //       force_reply: true,
-  //     },
-  //   });
-
-  //   this.bot.onReplyToMessage(chatId, msg.message_id, async (replyMsg) => {
-  //     const phoneNumber = replyMsg.text || '';
-  //     const user = await UserService.findUserByphoneNumber(phoneNumber);
-
-  //     if (user) {
-  //       user.isAdmin = false;
-  //       await user.save();
-  //       this.bot.sendMessage(chatId, i18n.t('admin_removed_success'));
-  //     } else {
-  //       this.bot.sendMessage(chatId, i18n.t('user_not_found'));
-  //     }
-  //   });
-  // }
 }

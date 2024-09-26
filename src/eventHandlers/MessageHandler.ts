@@ -103,10 +103,10 @@ export default class MessageController {
           }
           break;
         default:
-          if (isUserAdmin) {
-            // Handle admin-specific messages for post creation
-            await this.adminHandler.handleAdminPostData(chatId, msg.text);
-          }
+          // if (isUserAdmin) {
+          //   // Handle admin-specific messages for post creation
+          //   await this.adminHandler.handleAdminPostData(chatId, msg.text);
+          // }
       }
     } else if (msg.photo) {
       // Handle image uploads

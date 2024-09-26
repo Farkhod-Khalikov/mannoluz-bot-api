@@ -14,9 +14,6 @@ class UserController {
     this.bot = bot;
   }
 
-  // Add Money
-  // RemoveMoney
-  // Remove Money Transactions by documentId and agentId
   async addMoney(req: Request, res: Response) {
     Logger.start('addMoney');
     try {
