@@ -10,6 +10,8 @@ export interface ITransaction extends Document {
   updatedAt?: Date;
   description?: string;
   transactionType?: string;
+  oldBalance?: number;
+  newBalance?: number;
 }
 
 const bonusesTransactionsSchema = new Schema<ITransaction>(
@@ -20,6 +22,8 @@ const bonusesTransactionsSchema = new Schema<ITransaction>(
     sum: { type: Number, required: true },
     description: { type: String, required: false },
     transactionType: {type: String, required:false, default: "bonuses"},
+    oldBalance: {type: Number, required: false, deafult: 0}, // Added in case if bonuses' balance history should be remembered just like money balance
+    newBalance: {type: Number, required: false, deafult: 0},
   },
   { timestamps: true }
 );

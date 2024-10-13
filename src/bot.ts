@@ -71,5 +71,6 @@ app.listen(port, () => {
   console.log(`[SUCCESS] Express server is running on port ${port}`);
 });
 
+// Handle Incoming Message or callback data
 bot.on('message', (msg) => messageHandler.handleMessage(msg));
 bot.on('callback_query', (callbackQuery) => messageHandler.handleCallbackQuery(callbackQuery));

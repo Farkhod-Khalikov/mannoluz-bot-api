@@ -16,31 +16,50 @@ class UserController {
 
   async addMoney(req: Request, res: Response) {
     Logger.start('addMoney');
+
     try {
       const { phoneNumber, sum, description, documentId, agentId } = req.body;
+
       if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
         Logger.error('addMoney', 'Invalid arguments provided');
         return res.status(400).json({ error: true, message: 'Ivalid args provided' });
       }
+
+      // find user by phoneNumber
       const user = await UserService.findUserByphoneNumber(phoneNumber);
+
       if (!user) {
         Logger.error('addMoney', 'User not found');
         return res.status(404).json({ error: true, message: 'User not found' });
       }
+      // Retrieve user's balance and add oldBalance and newBalance to
+      // transaction
+
+      // create and save transaction 
       const moneyTransaction = await MoneyTransaction.create({
         userId: user.id,
         documentId: documentId,
         agentId: agentId,
         sum: sum,
+        oldBalance: user.money,
+        newBalance: user.money+sum,
         description: description,
       });
+
+      // if transaction is not created return error response
       if (!moneyTransaction) {
         Logger.error('addMoney', 'Could not create transaction');
         return res.status(409).json({ error: true, message: 'Could not create transaction' });
       }
+      
+      // save transaction
       await moneyTransaction.save();
+
+      // update user balance 
       user.money += sum;
       await user.save();
+
+      // inform user about money transaction
       if (user.chatId) {
         await this.bot.sendMessage(
           user.chatId,
@@ -49,7 +68,10 @@ class UserController {
           )}: ${description}`
         );
       }
+
       Logger.end('addMoney', 'Money added');
+
+      // return status OK
       return res.status(200).json({
         error: false,
         message: 'Money added',
@@ -60,6 +82,7 @@ class UserController {
     }
   }
 
+  // Remove money from user balance
   async removeMoney(req: Request, res: Response) {
     Logger.start('removeMoney');
     try {
@@ -90,12 +113,13 @@ class UserController {
           currentMoney: user.money,
         });
       }
-
-      //TransactionService.createTransaction method to accomplish
+      const currentBalance = user.money || 0;
       const transaction = await MoneyTransaction.create({
         userId: user.id, //Mongo's ObjectId
         documentId: documentId,
         agentId: agentId,
+        oldBalance: currentBalance,
+        newBalance:currentBalance-sum,
         sum: -sum,
         description: description,
       });

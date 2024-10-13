@@ -1,7 +1,7 @@
 import TelegramBot from 'node-telegram-bot-api';
 import UserService from '../services/user.service';
 import i18n from '../utils/i18n';
-import { generateCreditCard } from '../utils/creditcard.generation';
+import { generateCreditCard } from '../utils/creditcard';
 import { PurchaseRequest } from '../models/purchase-requests.schema';
 
 export default class UserHandler {
@@ -32,64 +32,61 @@ export default class UserHandler {
   }
 
   // Handles the user registration process
-public async handleUserRegistration(chatId: number) {
-  // Step 1: Ask the user to select a language using a custom keyboard
-  const languageKeyboard = [
-    [{ text: '🇷🇺Русский' }, { text: '🇺🇸English' }, { text: '🇺🇿Uzbek' }]
-  ];
+  public async handleUserRegistration(chatId: number) {
+    // Step 1: Ask the user to select a language using a custom keyboard
+    const languageKeyboard = [[{ text: '🇷🇺Русский' }, { text: '🇺🇸English' }, { text: '🇺🇿Uzbek' }]];
 
-  const replyToLanguageMsg = await this.bot.sendMessage(chatId, i18n.t('choose_language'), {
-    reply_markup: {
-      keyboard: languageKeyboard,
-      resize_keyboard: true,
-      one_time_keyboard: true,
-    },
-  });
-
-  // Step 2: Listen for the next message from the user for language selection
-  this.bot.once('message', async (languageResponse: TelegramBot.Message) => {
-    const language = languageResponse.text;
-    if (language){
-
-      // If a valid language was selected, continue the process
-      if (['🇷🇺Русский', '🇺🇸English', '🇺🇿Uzbek'].includes(language)) {
-        await this.handleLanguageSelection(chatId, language, true);
-  
-        // Step 3: Ask the user to share their contact after language selection
-        const replyToContactMsg = await this.bot.sendMessage(chatId, i18n.t('share_contact'), {
-          reply_markup: {
-            keyboard: [[{ text: i18n.t('btn_share_contact'), request_contact: true }]],
-            one_time_keyboard: true,
-            resize_keyboard: true,
-          },
-        });
-  
-        // Step 4: Wait for the user's contact reply
-        this.bot.once('message', async (contactResponse: TelegramBot.Message) => {
-          if (contactResponse.contact) {
-            await this.handleContact(contactResponse);
-          } else {
-            // Handle case where user does not share contact
-            return this.bot.sendMessage(chatId, i18n.t('contact_not_shared'));
-          }
-        });
-      } else {
-        // Handle invalid language selection
-        await this.bot.sendMessage(chatId, i18n.t('invalid_language'));
-        // Re-prompt language selection
-        return this.handleUserRegistration(chatId);
-      }
-    }
-  });
-}
-// Helper function to wait for a reply
-private awaitReply(chatId: number, messageId: number): Promise<TelegramBot.Message> {
-  return new Promise((resolve) => {
-    this.bot.onReplyToMessage(chatId, messageId, (msg) => {
-      resolve(msg);
+    const replyToLanguageMsg = await this.bot.sendMessage(chatId, i18n.t('choose_language'), {
+      reply_markup: {
+        keyboard: languageKeyboard,
+        resize_keyboard: true,
+        one_time_keyboard: true,
+      },
     });
-  });
-} 
+
+    // Step 2: Listen for the next message from the user for language selection
+    this.bot.once('message', async (languageResponse: TelegramBot.Message) => {
+      const language = languageResponse.text;
+      if (language) {
+        // If a valid language was selected, continue the process
+        if (['🇷🇺Русский', '🇺🇸English', '🇺🇿Uzbek'].includes(language)) {
+          await this.handleLanguageSelection(chatId, language, true);
+
+          // Step 3: Ask the user to share their contact after language selection
+          const replyToContactMsg = await this.bot.sendMessage(chatId, i18n.t('share_contact'), {
+            reply_markup: {
+              keyboard: [[{ text: i18n.t('btn_share_contact'), request_contact: true }]],
+              one_time_keyboard: true,
+              resize_keyboard: true,
+            },
+          });
+
+          // Step 4: Wait for the user's contact reply
+          this.bot.once('message', async (contactResponse: TelegramBot.Message) => {
+            if (contactResponse.contact) {
+              await this.handleContact(contactResponse);
+            } else {
+              // Handle case where user does not share contact
+              return this.bot.sendMessage(chatId, i18n.t('contact_not_shared'));
+            }
+          });
+        } else {
+          // Handle invalid language selection
+          await this.bot.sendMessage(chatId, i18n.t('invalid_language'));
+          // Re-prompt language selection
+          return this.handleUserRegistration(chatId);
+        }
+      }
+    });
+  }
+  // Helper function to wait for a reply
+  private awaitReply(chatId: number, messageId: number): Promise<TelegramBot.Message> {
+    return new Promise((resolve) => {
+      this.bot.onReplyToMessage(chatId, messageId, (msg) => {
+        resolve(msg);
+      });
+    });
+  }
 
   // Handles contact sharing during registration
   public async handleContact(msg: TelegramBot.Message) {
@@ -259,7 +256,7 @@ private awaitReply(chatId: number, messageId: number): Promise<TelegramBot.Messa
       const mainMenuKeyboard = [
         [{ text: i18n.t('btn_credit_card') }],
         [{ text: i18n.t('btn_list_products') }, { text: i18n.t('btn_list_transactions') }],
-        [{ text: i18n.t('btn_settings') }],
+        [{ text: i18n.t('btn_settings') }, { text: i18n.t('btn_get_reconciliation_act') }],
         [{ text: i18n.t('btn_rules') }, { text: i18n.t('btn_purchase_request') }],
         [{ text: i18n.t('btn_contact_us') }, { text: i18n.t('btn_about_us') }],
       ];
@@ -477,7 +474,75 @@ private awaitReply(chatId: number, messageId: number): Promise<TelegramBot.Messa
 
     this.bot.on('message', commentListener);
   }
+  public async handleReconciliationAct(msg: TelegramBot.Message) {
+    let startDate: string;
+    let endDate: string;
+    const startDateForceReplyMsg = await this.bot.sendMessage(
+      msg.chat.id,
+      i18n.t('choose_start_date'),
+      {
+        reply_markup: {
+          force_reply: true,
+        },
+      }
+    );
+    this.bot.onReplyToMessage(msg.chat.id, startDateForceReplyMsg.message_id, async (reply) => {
+      startDate = reply.text || '';
+      console.log(
+        `Start Date Validation [${startDate}]: `,
+        (await this.isValidDate(startDate)) ? 'Valid' : 'Invalid'
+      );
+      if (await this.isValidDate(startDate)) {
+        const endDateForceReplyMsg = await this.bot.sendMessage(
+          msg.chat.id,
+          i18n.t('choose_end_date'),
+          {
+            reply_markup: {
+              force_reply: true,
+            },
+          }
+        );
+        this.bot.onReplyToMessage(msg.chat.id, endDateForceReplyMsg.message_id, async (reply) => {
+          endDate = reply.text || '';
+          console.log(
+            `End Date Validation [${endDate}]: `,
+            (await this.isValidDate(endDate)) ? 'Valid' : 'Invalid'
+          );
+          await this.sendMainMenu(msg.chat.id);
+        });
+      } else {
+        await this.bot.sendMessage(msg.chat.id, 'Incorrect date provided');
+        await this.sendMainMenu(msg.chat.id);
+      }
+    });
+  }
+  // date validation
+  private async isValidDate(date: string) {
+    // Regular expression for dd.mm.yyyy format
+    const regex = /^\d{2}\.\d{2}\.\d{4}$/;
 
+    // Check if the date matches the dd.mm.yyyy format
+    if (!regex.test(date)) {
+      return false;
+    }
+
+    // Extract day, month, and year from the date string
+    const [day, month, year] = date.split('.').map(Number);
+
+    // Create a date object with the parsed day, month, and year
+    const parsedDate = new Date(year, month - 1, day);
+
+    // Check if the parsed date is valid by comparing the parts
+    if (
+      parsedDate.getFullYear() === year &&
+      parsedDate.getMonth() === month - 1 && // Months are 0-indexed in JS
+      parsedDate.getDate() === day
+    ) {
+      return true;
+    }
+
+    return false;
+  }
   public async handleCancelPurchaseRequest(chatId: number) {
     this.bot.sendMessage(chatId, i18n.t('btn_purchase_request_cancelled'));
     this.sendMainMenu(chatId);

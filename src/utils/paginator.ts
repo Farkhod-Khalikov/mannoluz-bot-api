@@ -1,3 +1,4 @@
+// this file is not used anywhere at the moment
 import TelegramBot from 'node-telegram-bot-api';
 import i18n from './i18n';
 

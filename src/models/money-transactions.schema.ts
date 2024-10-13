@@ -1,4 +1,4 @@
-import { Document, Model, model, Schema } from 'mongoose';
+import { Model, model, Schema } from 'mongoose';
 import { ITransaction } from './bonuses-transactions.schema';
 
 const moneyTransactionsSchema = new Schema<ITransaction>(
@@ -8,13 +8,15 @@ const moneyTransactionsSchema = new Schema<ITransaction>(
     userId: { type: String, required: true },
     sum: { type: Number, required: true },
     description: { type: String, required: false },
-    transactionType: {type: String, required: false, default: "money"}
+    transactionType: { type: String, required: false, default: 'money' },
+    oldBalance: { type: Number, required: true },
+    newBalance: { type: Number, required: true },
   },
   { timestamps: true }
 );
 
 const MoneyTransaction: Model<ITransaction> = model<ITransaction>(
-  'Transaction',
+  'MoneyTransaction',
   moneyTransactionsSchema
 );
 

@@ -7,7 +7,7 @@ import AdminHandler from './AdminHandler';
 import ProductHandler from './ProductHandler';
 import PurchaseRequestHandler from './PurchaseRequestHandler';
 
-export default class MessageController {
+export default class MessageHandler {
   private bot: TelegramBot;
   private userHandler: UserHandler;
   private adminHandler: AdminHandler;
@@ -23,7 +23,7 @@ export default class MessageController {
     this.productHandler = new ProductHandler(bot);
     this.transactionHandler = new TransactionHandler(bot);
   }
-
+  // Main Message Handler
   public async handleMessage(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
     const user = await UserService.findUserByChatId(chatId);
@@ -40,8 +40,11 @@ export default class MessageController {
         case '/start':
           await this.userHandler.handleStart(msg);
           break;
+        case i18n.t('btn_get_reconciliation_act'):
+          await this.userHandler.handleReconciliationAct(msg);
+          break;
         case i18n.t('btn_add_admin'):
-          if (isUserAdmin || isSudo) {
+          if (isSudo) {
             await this.userHandler.handleAddAdmin(msg);
           } else {
             await this.bot.sendMessage(chatId, i18n.t('not_admin'));
@@ -49,7 +52,7 @@ export default class MessageController {
 
           break;
         case i18n.t('btn_remove_admin'):
-          if (isUserAdmin || isSudo) {
+          if (isSudo) {
             await this.userHandler.handleRemoveAdmin(msg);
           } else {
             await this.bot.sendMessage(chatId, i18n.t('not_admin'));
@@ -103,17 +106,17 @@ export default class MessageController {
           }
           break;
         default:
-          // if (isUserAdmin) {
-          //   // Handle admin-specific messages for post creation
-          //   await this.adminHandler.handleAdminPostData(chatId, msg.text);
-          // }
+        // if (isUserAdmin) {
+        //   // Handle admin-specific messages for post creation
+        //   await this.adminHandler.handleAdminPostData(chatId, msg.text);
+        // }
       }
     } else if (msg.photo) {
       // Handle image uploads
       await this.adminHandler.handleImageUpload(msg);
     }
   }
-
+  // Callback Data handler
   public async handleCallbackQuery(callbackQuery: TelegramBot.CallbackQuery) {
     const chatId = callbackQuery.message?.chat.id;
     const data = callbackQuery.data;
