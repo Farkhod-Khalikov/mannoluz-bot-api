@@ -1130,6 +1130,13 @@
   dependencies:
     undici-types "~6.19.2"
 
+"@types/pdfkit@^0.13.5":
+  version "0.13.5"
+  resolved "https://registry.yarnpkg.com/@types/pdfkit/-/pdfkit-0.13.5.tgz#90c1e03fb137bfc26f60786f1828deb383753f7d"
+  integrity sha512-cR4gZA3xiMVDUf/O/ijVr6aIguvN72ZmCDLcWwM0ycqn5P8XDSjMX9PixzWEoDnlINoofxo2LCdV4KvdD9Waqg==
+  dependencies:
+    "@types/node" "*"
+
 "@types/qrcode@^1.5.5":
   version "1.5.5"
   resolved "https://registry.yarnpkg.com/@types/qrcode/-/qrcode-1.5.5.tgz#993ff7c6b584277eee7aac0a20861eab682f9dac"

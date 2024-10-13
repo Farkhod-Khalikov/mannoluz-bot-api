@@ -1,8 +1,11 @@
+import fs from 'fs';
+import path from 'path';
 import TelegramBot from 'node-telegram-bot-api';
 import UserService from '../services/user.service';
 import i18n from '../utils/i18n';
 import { generateCreditCard } from '../utils/creditcard';
 import { PurchaseRequest } from '../models/purchase-requests.schema';
+import { generateReconciliationPDF } from '../utils/reconciliation-act';
 
 export default class UserHandler {
   private bot: TelegramBot;
@@ -474,49 +477,90 @@ export default class UserHandler {
 
     this.bot.on('message', commentListener);
   }
-  public async handleReconciliationAct(msg: TelegramBot.Message) {
-    let startDate: string;
-    let endDate: string;
-    const startDateForceReplyMsg = await this.bot.sendMessage(
-      msg.chat.id,
-      i18n.t('choose_start_date'),
-      {
-        reply_markup: {
-          force_reply: true,
-        },
-      }
-    );
-    this.bot.onReplyToMessage(msg.chat.id, startDateForceReplyMsg.message_id, async (reply) => {
-      startDate = reply.text || '';
-      console.log(
-        `Start Date Validation [${startDate}]: `,
-        (await this.isValidDate(startDate)) ? 'Valid' : 'Invalid'
-      );
-      if (await this.isValidDate(startDate)) {
-        const endDateForceReplyMsg = await this.bot.sendMessage(
-          msg.chat.id,
-          i18n.t('choose_end_date'),
-          {
-            reply_markup: {
-              force_reply: true,
-            },
-          }
-        );
-        this.bot.onReplyToMessage(msg.chat.id, endDateForceReplyMsg.message_id, async (reply) => {
-          endDate = reply.text || '';
-          console.log(
-            `End Date Validation [${endDate}]: `,
-            (await this.isValidDate(endDate)) ? 'Valid' : 'Invalid'
-          );
-          await this.sendMainMenu(msg.chat.id);
-        });
-      } else {
-        await this.bot.sendMessage(msg.chat.id, 'Incorrect date provided');
-        await this.sendMainMenu(msg.chat.id);
-      }
-    });
-  }
+
   // date validation
+public async handleReconciliationAct(msg: TelegramBot.Message) {
+  let startDate: string;
+  let endDate: string;
+
+  const startDateForceReplyMsg = await this.bot.sendMessage(
+    msg.chat.id,
+    i18n.t('choose_start_date'),
+    {
+      reply_markup: {
+        force_reply: true,
+      },
+    }
+  );
+
+  this.bot.onReplyToMessage(msg.chat.id, startDateForceReplyMsg.message_id, async (reply) => {
+    startDate = reply.text || '';
+    console.log(`Start Date Validation [${startDate}]: `, (await this.isValidDate(startDate)) ? 'Valid' : 'Invalid');
+
+    if (await this.isValidDate(startDate)) {
+      const endDateForceReplyMsg = await this.bot.sendMessage(
+        msg.chat.id,
+        i18n.t('choose_end_date'),
+        {
+          reply_markup: {
+            force_reply: true,
+          },
+        }
+      );
+
+      this.bot.onReplyToMessage(msg.chat.id, endDateForceReplyMsg.message_id, async (reply) => {
+        endDate = reply.text || '';
+        console.log(`End Date Validation [${endDate}]: `, (await this.isValidDate(endDate)) ? 'Valid' : 'Invalid');
+
+        if (await this.isValidDate(endDate)) {
+          // Ensure endDate is after startDate
+          if (new Date(endDate) < new Date(startDate)) {
+            await this.bot.sendMessage(msg.chat.id, 'End date must be after start date.');
+            return await this.sendMainMenu(msg.chat.id);
+          }
+
+          const tempDir = path.resolve(__dirname, '../temp');
+
+          // Ensure the temp directory exists
+          if (!fs.existsSync(tempDir)) {
+            fs.mkdirSync(tempDir, { recursive: true });
+          }
+
+          const pdfPath = path.resolve(tempDir, `reconciliation_${msg.chat.id}.pdf`);
+
+          try {
+            // Generate PDF
+            await generateReconciliationPDF(startDate, endDate, pdfPath);
+
+            // Check if the file exists before sending
+            if (fs.existsSync(pdfPath)) {
+              console.log(`Sending file: ${pdfPath}`);
+              await this.bot.sendDocument(msg.chat.id, pdfPath);
+              
+              // Cleanup the file after sending
+              fs.unlinkSync(pdfPath);
+            } else {
+              console.log(`File does not exist at path: ${pdfPath}`);
+              await this.bot.sendMessage(msg.chat.id, 'Failed to generate reconciliation report.');
+            }
+          } catch (error) {
+            console.error(`Error generating PDF: ${error}`);
+            await this.bot.sendMessage(msg.chat.id, 'An error occurred while generating the report.');
+          }
+
+          await this.sendMainMenu(msg.chat.id);
+        } else {
+          await this.bot.sendMessage(msg.chat.id, 'Incorrect end date provided');
+          await this.sendMainMenu(msg.chat.id);
+        }
+      });
+    } else {
+      await this.bot.sendMessage(msg.chat.id, 'Incorrect start date provided');
+      await this.sendMainMenu(msg.chat.id);
+    }
+  });
+}
+
   private async isValidDate(date: string) {
     // Regular expression for dd.mm.yyyy format
     const regex = /^\d{2}\.\d{2}\.\d{4}$/;
