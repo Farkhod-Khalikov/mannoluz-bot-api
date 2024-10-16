@@ -6,7 +6,7 @@ export interface ITransaction extends Document {
   agentId: string;
   userId: string;
   sum: number;
-  createdAt?: Date;
+  createdAt: Date;
   updatedAt?: Date;
   description?: string;
   transactionType?: string;
