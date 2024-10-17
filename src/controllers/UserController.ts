@@ -76,7 +76,7 @@ class UserController {
       if (user.chatId) {
         await this.bot.sendMessage(
           user.chatId,
-          `${i18n.t('money_addition')}: ${sum} ${i18n.t('$')}\n${i18n.t(
+          `${i18n.t('bonuses_addition')}: ${sum} ${i18n.t('$')}\n${i18n.t(
             'description'
           )}: ${description}`
         );
@@ -159,7 +159,7 @@ class UserController {
           user.chatId,
           // Removal | [sum] Coins
           // Description:
-          `${i18n.t('money_removal')}: -${sum} ${i18n.t('$')}\n${i18n.t(
+          `${i18n.t('bonuses_removal')}: -${sum} ${i18n.t('$')}\n${i18n.t(
             'description'
           )}: ${description}`
         );

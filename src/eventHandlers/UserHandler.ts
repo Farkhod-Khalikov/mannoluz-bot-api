@@ -533,7 +533,7 @@ public async handleReconciliationAct(msg: TelegramBot.Message) {
           const user = await UserService.findUserByChatId(msg.chat.id);
           console.log(user);
 
-          const transactions = await UserService.getAllTransactions(user?.id);
+          const transactions = await MoneyTransaction.find({userId:user?.id});
           console.log(transactions);
 
           // Convert user-provided dates from dd.mm.yyyy to yyyy-mm-dd

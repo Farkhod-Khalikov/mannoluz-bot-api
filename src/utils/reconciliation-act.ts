@@ -29,6 +29,15 @@ export const generateReconciliationPDF = async (
     const cellWidth = 100;
     const textOffset = 6; // Offset to center text vertically inside the row
 
+    // Sort tableRows by dateRange (DD.MM.YYYY format)
+    tableRows.sort((a, b) => {
+      const [dayA, monthA, yearA] = a.dateRange.split('.').map(Number);
+      const [dayB, monthB, yearB] = b.dateRange.split('.').map(Number);
+      const dateA = new Date(yearA, monthA - 1, dayA);
+      const dateB = new Date(yearB, monthB - 1, dayB);
+      return dateA.getTime() - dateB.getTime();
+    });
+
     // Title and Date Range
     doc.fontSize(20).text('Reconciliation Act', { align: 'center' }).moveDown(3);
     doc
@@ -38,8 +47,6 @@ export const generateReconciliationPDF = async (
 
     // Table headers
     const headers = ['Date', 'InitBalance', 'Addition', 'Removal', 'Result'];
-
-    // Table top position
     const tableTop = doc.y + 20;
 
     // Draw table headers
@@ -54,20 +61,25 @@ export const generateReconciliationPDF = async (
 
     doc.moveDown();
 
-    // Table rows data
     let rowY = tableTop + rowHeight;
     doc.font('Helvetica');
 
     let isFirstRow = true;
 
+    const maxY = 700; // Maximum Y position before adding a new page
+
     // Loop through rows and populate the table
     tableRows.forEach((row) => {
+      if (rowY > maxY) {
+        doc.addPage();
+        rowY = 50; // Reset Y for the new page
+      }
+
       const displayInitBalance = isFirstRow ? initBalance : 0;
       isFirstRow = false;
 
       const displayResult = 0;
 
-      // Draw the row and center the text vertically
       doc
         .text(row.dateRange, 50, rowY + textOffset, { width: cellWidth, align: 'left' })
         .text(displayInitBalance.toString(), 150, rowY + textOffset, { width: cellWidth, align: 'center' })
