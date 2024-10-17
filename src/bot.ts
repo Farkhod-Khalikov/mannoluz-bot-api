@@ -43,6 +43,8 @@ app.post('/users/balance/bonuses/remove', (req, res) => userController.removeBon
 // Money
 app.post('/users/balance/money/add', (req, res) => userController.addMoney(req, res));
 app.post('/users/balance/money/remove', (req, res) => userController.removeMoney(req, res));
+app.post('/users/balance/money/refund-product', (req, res) => userController.removeMoney(req, res));
+app.post('/users/balance/money/refund-money', (req, res) => userController.addMoney(req, res));
 
 // Admin privileges routes
 app.post('/users/admin-privileges/add', (req, res) => userController.addAdmin(req, res));

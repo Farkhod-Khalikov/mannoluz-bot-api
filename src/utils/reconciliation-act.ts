@@ -25,75 +25,73 @@ export const generateReconciliationPDF = async (
     stream.on('error', reject);
     doc.pipe(stream);
 
-    // Shifted title and period text lower for better spacing
-    doc.fontSize(20).text('Reconciliation Act', { align: 'center' }).moveDown(3); // Increased space
+    const rowHeight = 20;
+    const cellWidth = 100;
+    const textOffset = 6; // Offset to center text vertically inside the row
+
+    // Title and Date Range
+    doc.fontSize(20).text('Reconciliation Act', { align: 'center' }).moveDown(3);
     doc
       .fontSize(14)
       .text(`For the period: ${startDate} to ${endDate}`, { align: 'center' })
-      .moveDown(4); // Increased space between title and period
+      .moveDown(4);
 
     // Table headers
     const headers = ['Date', 'InitBalance', 'Addition', 'Removal', 'Result'];
-    const cellWidth = 100;
 
-    // Shifted table a bit lower
-    const tableTop = doc.y + 20; // Extra space above the table
+    // Table top position
+    const tableTop = doc.y + 20;
 
     // Draw table headers
     headers.forEach((header, index) => {
       const x = 50 + index * cellWidth;
       doc
         .font('Helvetica-Bold')
-        .text(header, x, tableTop, { width: cellWidth, align: 'center' })
-        .rect(x, tableTop, cellWidth, 20)
+        .text(header, x, tableTop + textOffset, { width: cellWidth, align: 'center' })
+        .rect(x, tableTop, cellWidth, rowHeight)
         .stroke();
     });
 
     doc.moveDown();
 
     // Table rows data
-    let rowY = tableTop + 25;
+    let rowY = tableTop + rowHeight;
     doc.font('Helvetica');
 
-    // Flag to track if it's the first row (where we show the initBalance)
     let isFirstRow = true;
 
     // Loop through rows and populate the table
-    tableRows.forEach((row, index) => {
-      const rowYBefore = rowY;
-
-      // Only display initBalance on the first row, 0 for other dates
+    tableRows.forEach((row) => {
       const displayInitBalance = isFirstRow ? initBalance : 0;
-      isFirstRow = false; // Set the flag to false after the first iteration
+      isFirstRow = false;
 
-      // Result should be 0 for all dates except the total row
       const displayResult = 0;
 
-      // Draw the row
+      // Draw the row and center the text vertically
       doc
-        .text(row.dateRange, 50, rowY, { width: cellWidth, align: 'left' })
-        .text(displayInitBalance.toString(), 150, rowY, { width: cellWidth, align: 'center' })
-        .text(row.addition.toString(), 250, rowY, { width: cellWidth, align: 'center' })
-        .text(row.removal.toString(), 350, rowY, { width: cellWidth, align: 'center' })
-        .text(displayResult.toString(), 450, rowY, { width: cellWidth, align: 'center' });
+        .text(row.dateRange, 50, rowY + textOffset, { width: cellWidth, align: 'left' })
+        .text(displayInitBalance.toString(), 150, rowY + textOffset, { width: cellWidth, align: 'center' })
+        .text(row.addition.toString(), 250, rowY + textOffset, { width: cellWidth, align: 'center' })
+        .text(row.removal.toString(), 350, rowY + textOffset, { width: cellWidth, align: 'center' })
+        .text(displayResult.toString(), 450, rowY + textOffset, { width: cellWidth, align: 'center' });
 
-      doc.rect(50, rowYBefore, cellWidth * headers.length, 20).stroke();
-      rowY += 20;
+      doc.rect(50, rowY, cellWidth * headers.length, rowHeight).stroke();
+      rowY += rowHeight;
     });
 
-    // Add the "Total" row
+    // Add the "Total" row and center the text
     doc
       .font('Helvetica-Bold')
-      .text('Total', 50, rowY, { width: cellWidth, align: 'left' })
-      .text(initBalance.toString(), 150, rowY, { width: cellWidth, align: 'center' })
-      .text(sumOfAllPositives.toString(), 250, rowY, { width: cellWidth, align: 'center' })
-      .text(sumOfAllNegatives.toString(), 350, rowY, { width: cellWidth, align: 'center' })
-      .text((initBalance + sumOfAllPositives - sumOfAllNegatives).toString(), 450, rowY, {
+      .text('Total', 50, rowY + textOffset, { width: cellWidth, align: 'left' })
+      .text(initBalance.toString(), 150, rowY + textOffset, { width: cellWidth, align: 'center' })
+      .text(sumOfAllPositives.toString(), 250, rowY + textOffset, { width: cellWidth, align: 'center' })
+      .text(sumOfAllNegatives.toString(), 350, rowY + textOffset, { width: cellWidth, align: 'center' })
+      .text((initBalance + sumOfAllPositives - sumOfAllNegatives).toString(), 450, rowY + textOffset, {
         width: cellWidth,
         align: 'center',
       });
 
-    doc.rect(50, rowY, cellWidth * headers.length, 20).stroke();
+    doc.rect(50, rowY, cellWidth * headers.length, rowHeight).stroke();
 
     // End and finalize the PDF document
     doc.end();

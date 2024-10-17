@@ -32,17 +32,30 @@ class UserController {
         Logger.error('addMoney', 'User not found');
         return res.status(404).json({ error: true, message: 'User not found' });
       }
-      // Retrieve user's balance and add oldBalance and newBalance to
-      // transaction
 
-      // create and save transaction 
+      // check if transction with the same ids already exists, if so, compare sums
+      // if sums are different update the transaction, inform the user about transactioin correction
+      const existingTransaction = await MoneyTransaction.findOne({
+        documentId: documentId,
+        agentId: agentId,
+        userId: user.id,
+      });
+      if (existingTransaction && existingTransaction.sum == sum) {
+        // give a response if the sum is the same and transaction with such ids already exist
+      } else if (existingTransaction && existingTransaction.sum != sum) {
+        // update the existing transaction with specified sum & inform user about the changes
+      } else {
+        // create a new transaction
+      }
+      console.log(existingTransaction);
+      // create and save transaction
       const moneyTransaction = await MoneyTransaction.create({
         userId: user.id,
         documentId: documentId,
         agentId: agentId,
         sum: sum,
         oldBalance: user.money,
-        newBalance: user.money+sum,
+        newBalance: user.money + sum,
         description: description,
       });
 
@@ -51,11 +64,11 @@ class UserController {
         Logger.error('addMoney', 'Could not create transaction');
         return res.status(409).json({ error: true, message: 'Could not create transaction' });
       }
-      
+
       // save transaction
       await moneyTransaction.save();
 
-      // update user balance 
+      // update user balance
       user.money += sum;
       await user.save();
 
@@ -119,7 +132,7 @@ class UserController {
         documentId: documentId,
         agentId: agentId,
         oldBalance: currentBalance,
-        newBalance:currentBalance-sum,
+        newBalance: currentBalance - sum,
         sum: -sum,
         description: description,
       });

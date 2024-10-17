@@ -3,6 +3,7 @@ import UserService from '../services/user.service';
 import i18n from '../utils/i18n';
 
 export default class TransactionHandler {
+  
   private bot: TelegramBot;
   private userTransactionPages: Map<number, number> = new Map();
 
