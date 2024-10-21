@@ -12,13 +12,9 @@ import MoneyTransaction from '../models/money-transactions.schema';
 export default class UserHandler {
   private bot: TelegramBot;
   public newUserLanguages: Map<number, string>;
-  private languageListeners: Map<number, (msg: TelegramBot.Message) => void>;
-  private contactListeners: Map<number, (msg: TelegramBot.Message) => void>;
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.newUserLanguages = new Map<number, string>();
-    this.languageListeners = new Map<number, (msg: TelegramBot.Message) => void>();
-    this.contactListeners = new Map<number, (msg: TelegramBot.Message) => void>();
   }
 
   public async handleStart(msg: TelegramBot.Message) {
@@ -328,7 +324,6 @@ export default class UserHandler {
       this.bot.onReplyToMessage(chatId, replyMessage.message_id, async (replyMsg) => {
         const phoneNumber = replyMsg.text?.trim() || '';
 
-        // Validate phone number
         if (!/^998\d{9}$/.test(phoneNumber)) {
           await this.bot.sendMessage(chatId, i18n.t('invalid_phone_number'));
           return this.sendMainMenu(chatId);
@@ -479,176 +474,176 @@ export default class UserHandler {
 
     this.bot.on('message', commentListener);
   }
-public async handleReconciliationAct(msg: TelegramBot.Message) {
-  let startDate: string;
-  let endDate: string;
+  public async handleReconciliationAct(msg: TelegramBot.Message) {
+    let startDate: string;
+    let endDate: string;
 
-  const startDateForceReplyMsg = await this.bot.sendMessage(
-    msg.chat.id,
-    i18n.t('choose_start_date'),
-    {
-      reply_markup: {
-        force_reply: true,
-      },
-    }
-  );
-
-  this.bot.onReplyToMessage(msg.chat.id, startDateForceReplyMsg.message_id, async (reply) => {
-    startDate = reply.text || '';
-    console.log(
-      `Start Date Validation [${startDate}]: `,
-      (await this.isValidDate(startDate)) ? 'Valid' : 'Invalid'
+    const startDateForceReplyMsg = await this.bot.sendMessage(
+      msg.chat.id,
+      i18n.t('choose_start_date'),
+      {
+        reply_markup: {
+          force_reply: true,
+        },
+      }
     );
 
-    if (await this.isValidDate(startDate)) {
-      const endDateForceReplyMsg = await this.bot.sendMessage(
-        msg.chat.id,
-        i18n.t('choose_end_date'),
-        {
-          reply_markup: {
-            force_reply: true,
-          },
-        }
+    this.bot.onReplyToMessage(msg.chat.id, startDateForceReplyMsg.message_id, async (reply) => {
+      startDate = reply.text || '';
+      console.log(
+        `Start Date Validation [${startDate}]: `,
+        (await this.isValidDate(startDate)) ? 'Valid' : 'Invalid'
       );
 
-      this.bot.onReplyToMessage(msg.chat.id, endDateForceReplyMsg.message_id, async (reply) => {
-        endDate = reply.text || '';
-        console.log(
-          `End Date Validation [${endDate}]: `,
-          (await this.isValidDate(endDate)) ? 'Valid' : 'Invalid'
+      if (await this.isValidDate(startDate)) {
+        const endDateForceReplyMsg = await this.bot.sendMessage(
+          msg.chat.id,
+          i18n.t('choose_end_date'),
+          {
+            reply_markup: {
+              force_reply: true,
+            },
+          }
         );
 
-        if (await this.isValidDate(endDate)) {
-          const tempDir = path.resolve(__dirname, '../temp');
-
-          // Ensure the temp directory exists
-          if (!fs.existsSync(tempDir)) {
-            fs.mkdirSync(tempDir, { recursive: true });
-          }
-
-          // Change the name HERE
-          const pdfPath = path.resolve(tempDir, `reconciliation_${msg.chat.id}.pdf`);
-
-          // Fetch transactions from the database
-          const user = await UserService.findUserByChatId(msg.chat.id);
-          console.log(user);
-
-          const transactions = await MoneyTransaction.find({userId:user?.id});
-          console.log(transactions);
-
-          // Convert user-provided dates from dd.mm.yyyy to yyyy-mm-dd
-          const startDateISO = moment(startDate, 'DD.MM.YYYY').format('YYYY-MM-DD');
-          const endDateISO = moment(endDate, 'DD.MM.YYYY').format('YYYY-MM-DD');
-
-          // Calculate the initial balance and daily summaries
-          const dailySummary: { [key: string]: { addition: number; removal: number } } = {};
-          let initBalance = null; // Initialize initBalance to null
-
-          for (const transaction of transactions) {
-            if (!transaction.createdAt) {
-              console.warn('Transaction createdAt is undefined for transaction:', transaction);
-              continue; // skip if createdAt is undefined
-            }
-
-            const transactionDate = moment(transaction.createdAt).format('YYYY-MM-DD'); // Get date in YYYY-MM-DD format
-
-            // Check if the transaction date is within the provided range
-            if (transactionDate >= startDateISO && transactionDate <= endDateISO) {
-              // Initialize daily summary if it doesn't exist
-              if (!dailySummary[transactionDate]) {
-                dailySummary[transactionDate] = { addition: 0, removal: 0 };
-              }
-
-              // Sum additions and removals
-              if (transaction.sum > 0) {
-                dailySummary[transactionDate].addition += transaction.sum;
-              } else {
-                dailySummary[transactionDate].removal += Math.abs(transaction.sum);
-              }
-
-              // Set initBalance from the first transaction's oldBalance after startDate
-              if (initBalance === null) {
-                initBalance = transaction.oldBalance || 0; // Get the oldBalance of the first transaction found
-              }
-            }
-          }
-
-          // Ensure that initBalance has been set
-          if (initBalance === null) {
-            // If no transactions were found, handle this case
-            console.warn('No transactions found within the specified date range.');
-            initBalance = 0; // Set to 0 or handle as needed
-          }
-
-          // Prepare table rows
-          const tableRows: {
-            dateRange: string;
-            initBalance: number;
-            addition: number;
-            removal: number;
-            result: number;
-          }[] = [];
-          let sumOfAllPositives = 0;
-          let sumOfAllNegatives = 0;
-
-          for (const date in dailySummary) {
-            const dailyData = dailySummary[date];
-            sumOfAllPositives += dailyData.addition;
-            sumOfAllNegatives += dailyData.removal;
-
-            // Prepare row for each date
-            tableRows.push({
-              dateRange: date,
-              initBalance: initBalance, // Use the initialized balance
-              addition: dailyData.addition,
-              removal: dailyData.removal,
-              result: 0, // Placeholder for now
-            });
-          }
-
-          // Calculate total result
-          const totalResult = initBalance + sumOfAllPositives - sumOfAllNegatives;
-
-          // Fill the result in the last row
-          if (tableRows.length > 0) {
-            tableRows[tableRows.length - 1].result = totalResult;
-          }
-
-          // Generate PDF
-          await generateReconciliationPDF(
-            startDate,
-            endDate,
-            pdfPath,
-            tableRows,
-            initBalance,
-            sumOfAllPositives,
-            sumOfAllNegatives
+        this.bot.onReplyToMessage(msg.chat.id, endDateForceReplyMsg.message_id, async (reply) => {
+          endDate = reply.text || '';
+          console.log(
+            `End Date Validation [${endDate}]: `,
+            (await this.isValidDate(endDate)) ? 'Valid' : 'Invalid'
           );
 
-          // Check if the file exists before sending
-          if (fs.existsSync(pdfPath)) {
-            console.log(`Sending file: ${pdfPath}`);
-            await this.bot.sendDocument(msg.chat.id, pdfPath);
+          if (await this.isValidDate(endDate)) {
+            const tempDir = path.resolve(__dirname, '../temp');
 
-            // Cleanup the file after sending
-            fs.unlinkSync(pdfPath);
+            // Ensure the temp directory exists
+            if (!fs.existsSync(tempDir)) {
+              fs.mkdirSync(tempDir, { recursive: true });
+            }
+
+            // Change the name HERE
+            const pdfPath = path.resolve(tempDir, `reconciliation_${msg.chat.id}.pdf`);
+
+            // Fetch transactions from the database
+            const user = await UserService.findUserByChatId(msg.chat.id);
+            console.log(user);
+
+            const transactions = await MoneyTransaction.find({ userId: user?.id });
+            console.log(transactions);
+
+            // Convert user-provided dates from dd.mm.yyyy to yyyy-mm-dd
+            const startDateISO = moment(startDate, 'DD.MM.YYYY').format('YYYY-MM-DD');
+            const endDateISO = moment(endDate, 'DD.MM.YYYY').format('YYYY-MM-DD');
+
+            // Calculate the initial balance and daily summaries
+            const dailySummary: { [key: string]: { addition: number; removal: number } } = {};
+            let initBalance = null; // Initialize initBalance to null
+
+            for (const transaction of transactions) {
+              if (!transaction.createdAt) {
+                console.warn('Transaction createdAt is undefined for transaction:', transaction);
+                continue; // skip if createdAt is undefined
+              }
+
+              const transactionDate = moment(transaction.createdAt).format('YYYY-MM-DD'); // Get date in YYYY-MM-DD format
+
+              // Check if the transaction date is within the provided range
+              if (transactionDate >= startDateISO && transactionDate <= endDateISO) {
+                // Initialize daily summary if it doesn't exist
+                if (!dailySummary[transactionDate]) {
+                  dailySummary[transactionDate] = { addition: 0, removal: 0 };
+                }
+
+                // Sum additions and removals
+                if (transaction.sum > 0) {
+                  dailySummary[transactionDate].addition += transaction.sum;
+                } else {
+                  dailySummary[transactionDate].removal += Math.abs(transaction.sum);
+                }
+
+                // Set initBalance from the first transaction's oldBalance after startDate
+                if (initBalance === null) {
+                  initBalance = transaction.oldBalance || 0; // Get the oldBalance of the first transaction found
+                }
+              }
+            }
+
+            // Ensure that initBalance has been set
+            if (initBalance === null) {
+              // If no transactions were found, handle this case
+              console.warn('No transactions found within the specified date range.');
+              initBalance = 0; // Set to 0 or handle as needed
+            }
+
+            // Prepare table rows
+            const tableRows: {
+              dateRange: string;
+              initBalance: number;
+              addition: number;
+              removal: number;
+              result: number;
+            }[] = [];
+            let sumOfAllPositives = 0;
+            let sumOfAllNegatives = 0;
+
+            for (const date in dailySummary) {
+              const dailyData = dailySummary[date];
+              sumOfAllPositives += dailyData.addition;
+              sumOfAllNegatives += dailyData.removal;
+
+              // Prepare row for each date
+              tableRows.push({
+                dateRange: date,
+                initBalance: initBalance, // Use the initialized balance
+                addition: dailyData.addition,
+                removal: dailyData.removal,
+                result: 0, // Placeholder for now
+              });
+            }
+
+            // Calculate total result
+            const totalResult = initBalance + sumOfAllPositives - sumOfAllNegatives;
+
+            // Fill the result in the last row
+            if (tableRows.length > 0) {
+              tableRows[tableRows.length - 1].result = totalResult;
+            }
+
+            // Generate PDF
+            await generateReconciliationPDF(
+              startDate,
+              endDate,
+              pdfPath,
+              tableRows,
+              initBalance,
+              sumOfAllPositives,
+              sumOfAllNegatives
+            );
+
+            // Check if the file exists before sending
+            if (fs.existsSync(pdfPath)) {
+              console.log(`Sending file: ${pdfPath}`);
+              await this.bot.sendDocument(msg.chat.id, pdfPath);
+
+              // Cleanup the file after sending
+              fs.unlinkSync(pdfPath);
+            } else {
+              console.log(`File does not exist at path: ${pdfPath}`);
+              await this.bot.sendMessage(msg.chat.id, 'Failed to generate reconciliation report.');
+            }
+
+            await this.sendMainMenu(msg.chat.id);
           } else {
-            console.log(`File does not exist at path: ${pdfPath}`);
-            await this.bot.sendMessage(msg.chat.id, 'Failed to generate reconciliation report.');
+            await this.bot.sendMessage(msg.chat.id, 'Incorrect end date provided');
+            await this.sendMainMenu(msg.chat.id);
           }
-
-          await this.sendMainMenu(msg.chat.id);
-        } else {
-          await this.bot.sendMessage(msg.chat.id, 'Incorrect end date provided');
-          await this.sendMainMenu(msg.chat.id);
-        }
-      });
-    } else {
-      await this.bot.sendMessage(msg.chat.id, 'Incorrect start date provided');
-      await this.sendMainMenu(msg.chat.id);
-    }
-  });
-}
+        });
+      } else {
+        await this.bot.sendMessage(msg.chat.id, 'Incorrect start date provided');
+        await this.sendMainMenu(msg.chat.id);
+      }
+    });
+  }
 
   // date validation
 

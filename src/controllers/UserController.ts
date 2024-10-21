@@ -35,19 +35,21 @@ class UserController {
 
       // check if transction with the same ids already exists, if so, compare sums
       // if sums are different update the transaction, inform the user about transactioin correction
-      const existingTransaction = await MoneyTransaction.findOne({
-        documentId: documentId,
-        agentId: agentId,
-        userId: user.id,
-      });
-      if (existingTransaction && existingTransaction.sum == sum) {
-        // give a response if the sum is the same and transaction with such ids already exist
-      } else if (existingTransaction && existingTransaction.sum != sum) {
-        // update the existing transaction with specified sum & inform user about the changes
-      } else {
-        // create a new transaction
-      }
-      console.log(existingTransaction);
+      // const existingTransaction = await MoneyTransaction.findOne({
+      //   documentId: documentId,
+      //   agentId: agentId,
+      //   userId: user.id,
+      // });
+      // if (existingTransaction && existingTransaction.sum == sum) {
+      //   // give a response if the sum is the same and transaction with such ids already exist
+      // } else if (existingTransaction && existingTransaction.sum != sum) {
+      //   // update the existing transaction with specified sum & inform user about the changes
+      // } else {
+      //   // create a new transaction
+      // }
+
+      // console.log(existingTransaction);
+
       // create and save transaction
       const moneyTransaction = await MoneyTransaction.create({
         userId: user.id,

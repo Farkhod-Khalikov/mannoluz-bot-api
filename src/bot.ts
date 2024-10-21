@@ -35,7 +35,8 @@ if (!bot) console.log('[FAILED] Bot is not initialized.');
 // SUCCESS if BOT is created
 console.log('[SUCCESS] Bot is started.');
 
-// routes
+// ROUTES
+
 // Bonuses
 app.post('/users/balance/bonuses/add', (req, res) => userController.addBonuses(req, res));
 app.post('/users/balance/bonuses/remove', (req, res) => userController.removeBonuses(req, res));
@@ -69,6 +70,7 @@ app.post('/users/purchase-requests/update', (req, res) =>
 app.post('/products/add', (req, res) => productController.addProduct(req, res));
 app.post('/products/remove', (req, res) => productController.removeProduct(req, res));
 
+// start listening on port
 app.listen(port, () => {
   console.log(`[SUCCESS] Express server is running on port ${port}`);
 });

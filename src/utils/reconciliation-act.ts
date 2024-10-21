@@ -82,10 +82,19 @@ export const generateReconciliationPDF = async (
 
       doc
         .text(row.dateRange, 50, rowY + textOffset, { width: cellWidth, align: 'left' })
-        .text(displayInitBalance.toString(), 150, rowY + textOffset, { width: cellWidth, align: 'center' })
-        .text(row.addition.toString(), 250, rowY + textOffset, { width: cellWidth, align: 'center' })
+        .text(displayInitBalance.toString(), 150, rowY + textOffset, {
+          width: cellWidth,
+          align: 'center',
+        })
+        .text(row.addition.toString(), 250, rowY + textOffset, {
+          width: cellWidth,
+          align: 'center',
+        })
         .text(row.removal.toString(), 350, rowY + textOffset, { width: cellWidth, align: 'center' })
-        .text(displayResult.toString(), 450, rowY + textOffset, { width: cellWidth, align: 'center' });
+        .text(displayResult.toString(), 450, rowY + textOffset, {
+          width: cellWidth,
+          align: 'center',
+        });
 
       doc.rect(50, rowY, cellWidth * headers.length, rowHeight).stroke();
       rowY += rowHeight;
@@ -96,12 +105,23 @@ export const generateReconciliationPDF = async (
       .font('Helvetica-Bold')
       .text('Total', 50, rowY + textOffset, { width: cellWidth, align: 'left' })
       .text(initBalance.toString(), 150, rowY + textOffset, { width: cellWidth, align: 'center' })
-      .text(sumOfAllPositives.toString(), 250, rowY + textOffset, { width: cellWidth, align: 'center' })
-      .text(sumOfAllNegatives.toString(), 350, rowY + textOffset, { width: cellWidth, align: 'center' })
-      .text((initBalance + sumOfAllPositives - sumOfAllNegatives).toString(), 450, rowY + textOffset, {
+      .text(sumOfAllPositives.toString(), 250, rowY + textOffset, {
         width: cellWidth,
         align: 'center',
-      });
+      })
+      .text(sumOfAllNegatives.toString(), 350, rowY + textOffset, {
+        width: cellWidth,
+        align: 'center',
+      })
+      .text(
+        (initBalance + sumOfAllPositives - sumOfAllNegatives).toString(),
+        450,
+        rowY + textOffset,
+        {
+          width: cellWidth,
+          align: 'center',
+        }
+      );
 
     doc.rect(50, rowY, cellWidth * headers.length, rowHeight).stroke();
 
