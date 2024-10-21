@@ -13,44 +13,80 @@ class UserController {
   constructor(bot: TelegramBot) {
     this.bot = bot;
   }
+  private async updateSubsequentBalances(
+    userId: string,
+    adjustment: number,
+    correctedTransaction: any
+  ) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
 
-  async addMoney(req: Request, res: Response) {
-    Logger.start('addMoney');
+    let currentBalance = correctedTransaction.newBalance; // Start from the corrected transaction's new balance
+    const transactions = await MoneyTransaction.find({
+      userId: userId,
+      createdAt: { $gt: correctedTransaction.createdAt },
+    }); // Get subsequent transactions
 
-    try {
-      const { phoneNumber, sum, description, documentId, agentId } = req.body;
+    for (const transaction of transactions) {
+      // Update oldBalance to the current balance
+      transaction.oldBalance = currentBalance;
 
-      if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
-        Logger.error('addMoney', 'Invalid arguments provided');
-        return res.status(400).json({ error: true, message: 'Ivalid args provided' });
+      // Apply the adjustment to currentBalance
+      currentBalance += adjustment; // Adjust the balance by the difference
+
+      // Update newBalance to reflect the adjusted balance
+      transaction.newBalance = currentBalance;
+
+      // Save the updated transaction
+      await transaction.save();
+    }
+    if (user.money) {
+      user.money += adjustment; // Adjust the user's balance based on the correction
+      await user.save();
+    }
+  }
+async addMoney(req: Request, res: Response) {
+  Logger.start('addMoney');
+
+  try {
+    const { phoneNumber, sum, description, documentId, agentId } = req.body;
+
+    if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
+      Logger.error('addMoney', 'Invalid arguments provided');
+      return res.status(400).json({ error: true, message: 'Invalid args provided' });
+    }
+
+    const user = await UserService.findUserByphoneNumber(phoneNumber);
+    if (!user) {
+      Logger.error('addMoney', 'User not found');
+      return res.status(404).json({ error: true, message: 'User not found' });
+    }
+
+    const existingTransaction = await MoneyTransaction.findOne({
+      documentId: documentId,
+      agentId: agentId,
+      userId: user.id,
+    });
+
+    if (existingTransaction) {
+      if (existingTransaction.sum === sum) {
+        Logger.error('addMoney', 'Transaction already exists with the same sum');
+        return res.status(409).json({ error: true, message: 'Transaction already exists' });
+      } else {
+        const adjustment = sum - existingTransaction.sum; // Calculate the adjustment
+        if (existingTransaction.newBalance){
+          existingTransaction.sum = sum; // Update the transaction sum
+          // Update newBalance for the corrected transaction
+          existingTransaction.newBalance += adjustment; // Update newBalance by the adjustment
+        }
+
+        // Update subsequent transactions
+        await this.updateSubsequentBalances(user.id, adjustment, existingTransaction);
+        await existingTransaction.save();
       }
-
-      // find user by phoneNumber
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
-
-      if (!user) {
-        Logger.error('addMoney', 'User not found');
-        return res.status(404).json({ error: true, message: 'User not found' });
-      }
-
-      // check if transction with the same ids already exists, if so, compare sums
-      // if sums are different update the transaction, inform the user about transactioin correction
-      // const existingTransaction = await MoneyTransaction.findOne({
-      //   documentId: documentId,
-      //   agentId: agentId,
-      //   userId: user.id,
-      // });
-      // if (existingTransaction && existingTransaction.sum == sum) {
-      //   // give a response if the sum is the same and transaction with such ids already exist
-      // } else if (existingTransaction && existingTransaction.sum != sum) {
-      //   // update the existing transaction with specified sum & inform user about the changes
-      // } else {
-      //   // create a new transaction
-      // }
-
-      // console.log(existingTransaction);
-
-      // create and save transaction
+    } else {
       const moneyTransaction = await MoneyTransaction.create({
         userId: user.id,
         documentId: documentId,
@@ -61,142 +97,111 @@ class UserController {
         description: description,
       });
 
-      // if transaction is not created return error response
-      if (!moneyTransaction) {
-        Logger.error('addMoney', 'Could not create transaction');
-        return res.status(409).json({ error: true, message: 'Could not create transaction' });
-      }
-
-      // save transaction
       await moneyTransaction.save();
-
-      // update user balance
-      user.money += sum;
+      user.money += sum; // Update user's balance
       await user.save();
-
-      // inform user about money transaction
-      if (user.chatId) {
-        await this.bot.sendMessage(
-          user.chatId,
-          `${i18n.t('bonuses_addition')}: ${sum} ${i18n.t('$')}\n${i18n.t(
-            'description'
-          )}: ${description}`
-        );
-      }
-
-      Logger.end('addMoney', 'Money added');
-
-      // return status OK
-      return res.status(200).json({
-        error: false,
-        message: 'Money added',
-        agentId: agentId,
-      });
-    } catch (error) {
-      Logger.error('addMoney', '');
     }
-  }
 
-  // Remove money from user balance
+    if (user.chatId) {
+      await this.bot.sendMessage(
+        user.chatId,
+        `${i18n.t('bonuses_addition')}: ${sum} ${i18n.t('$')}\n${i18n.t('description')}: ${description}`
+      );
+    }
+
+    Logger.end('addMoney', 'Money added');
+    return res.status(200).json({ error: false, message: 'Money added', agentId: agentId });
+  } catch (error) {
+    Logger.error('addMoney', "internal server error");
+    return res.status(500).json({ error: true, message: 'Internal server error' });
+  }
+}
+
   async removeMoney(req: Request, res: Response) {
     Logger.start('removeMoney');
+
     try {
       const { phoneNumber, sum, description, documentId, agentId } = req.body;
 
       if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
-        return res.status(400).json({
-          error: true,
-          message: 'Invalid args provided',
-        });
+        return res.status(400).json({ error: true, message: 'Invalid args provided' });
       }
 
-      // Find user by phoneNumber
       const user = await UserService.findUserByphoneNumber(phoneNumber);
-
-      // If user not found return error
       if (!user) {
         Logger.error('removeMoney', 'User not found');
         return res.status(404).json({ error: true, message: 'User not found' });
       }
 
-      // If user doesnt have enough sum return error
       if ((user.money || 0) < sum) {
-        Logger.error('removeBonuses', 'User has less sum than it is required to remove');
-        return res.status(400).json({
-          error: true,
-          message: 'Not enough sum',
-          currentMoney: user.money,
-        });
+        Logger.error('removeMoney', 'Not enough sum');
+        return res
+          .status(400)
+          .json({ error: true, message: 'Not enough sum', currentMoney: user.money });
       }
-      const currentBalance = user.money || 0;
-      const transaction = await MoneyTransaction.create({
-        userId: user.id, //Mongo's ObjectId
+
+      const existingTransaction = await MoneyTransaction.findOne({
         documentId: documentId,
         agentId: agentId,
-        oldBalance: currentBalance,
-        newBalance: currentBalance - sum,
-        sum: -sum,
-        description: description,
+        userId: user.id,
       });
 
-      // If transaction was not created return error
-      if (!transaction) {
-        Logger.error('removeMoney', 'Could not create transaction');
-        return res.status(500).json({ error: true, message: 'Could not create transaction' });
+      if (existingTransaction) {
+        if (existingTransaction.sum === -sum) {
+          Logger.error('removeMoney', 'Transaction already exists with the same negative sum');
+          return res.status(409).json({ error: true, message: 'Transaction already exists' });
+        } else {
+          const adjustment = -sum - existingTransaction.sum; // Calculate the adjustment
+          existingTransaction.sum = -sum; // Update the transaction sum
+          await existingTransaction.save();
+          await this.updateSubsequentBalances(user.id, adjustment, [existingTransaction]);
+        }
+      } else {
+        const currentBalance = user.money || 0;
+        const transaction = await MoneyTransaction.create({
+          userId: user.id,
+          documentId: documentId,
+          agentId: agentId,
+          oldBalance: currentBalance,
+          newBalance: currentBalance - sum,
+          sum: -sum,
+          description: description,
+        });
+
+        if (!transaction) {
+          Logger.error('removeMoney', 'Could not create transaction');
+          return res.status(500).json({ error: true, message: 'Could not create transaction' });
+        }
+        if (user.money) {
+          await transaction.save();
+          user.money -= sum; // Update user's balance
+          await user.save();
+        }
       }
 
-      //Save transaction document
-      await transaction.save();
-
-      // Update user balance
-      if (user.money && user.money > 0) {
-        user.money -= sum;
-        // Save user with updated balance
-        await user.save();
-      }
-
-      // Send a message to the User that their balance is updated
       if (user.chatId) {
         await this.bot.sendMessage(
           user.chatId,
-          // Removal | [sum] Coins
-          // Description:
           `${i18n.t('bonuses_removal')}: -${sum} ${i18n.t('$')}\n${i18n.t(
             'description'
           )}: ${description}`
         );
       }
-      const newBalance = user.money;
-      Logger.end('removeMoney');
 
-      // response OK with updated user's balanace
-      return res.status(200).json({
-        error: false,
-        message: 'Money removed',
-        newMoneyBalance: newBalance,
-        agentId,
-      });
-      // Catch any unhandled error
+      Logger.end('removeMoney');
+      return res
+        .status(200)
+        .json({ error: false, message: 'Money removed', newMoneyBalance: user.money, agentId });
     } catch (error) {
-      Logger.error('removeMoney', 'Unhandled Error occured while removing sum');
-      // If error of type "ERROR" then return error itself
-      if (error instanceof Error) {
-        res.status(500).json({
-          error: true,
-          message: error.message,
-        });
-        // Otherwise return Unknown Error
-      } else {
-        res.status(500).json({
-          error: true,
-          message: 'Internal server error. Unknow error occured',
-        });
-      }
+      Logger.error('removeMoney', 'Unhandled Error occurred');
+      return res.status(500).json({ error: true, message: 'Internal server error' });
     }
   }
 
+  // Remove money from user balance
   async removeMoneyTransaction(req: Request, res: Response) {
     Logger.start('removeMoneyTransaction');
+
     try {
       const { documentId, agentId } = req.body;
 
@@ -205,22 +210,17 @@ class UserController {
         return res.status(400).json({ error: true, message: 'documentId is required' });
       }
 
-      // Find all transactions with the provided documentId (and agentId if available)
       const query = { documentId: documentId } as any;
       if (agentId) query.agentId = agentId;
 
       const transactions = await MoneyTransaction.find(query);
-
       if (transactions.length === 0) {
         Logger.error('removeMoneyTransaction', 'No transactions found');
         return res.status(404).json({ error: true, message: 'No transactions found' });
       }
 
-      // Track user balances that need to be updated
       const userBalances = new Map<string, number>();
-
       for (const transaction of transactions) {
-        // Accumulate the total sum adjustment for each user
         if (!userBalances.has(transaction.userId.toString())) {
           userBalances.set(transaction.userId.toString(), 0);
         }
@@ -229,12 +229,8 @@ class UserController {
         userBalances.set(transaction.userId.toString(), currentAdjustment + transaction.sum);
       }
 
-      // Update each user's balance based on accumulated adjustments
       for (const [userId, adjustment] of userBalances.entries()) {
         const user = await User.findById(userId);
-
-        // Update this to simly save the transaction those could not be deleted
-        // instead of just dropping the response User Not Found
         if (!user) {
           Logger.error('removeMoneyTransaction', 'User not found');
           return res.status(404).json({ error: true, message: 'User not found' });
@@ -243,31 +239,16 @@ class UserController {
         user.money = (user.money || 0) - adjustment;
         await user.save();
 
-        // Notify the user
-        if (user.chatId) {
-          const adjustmentMessage =
-            adjustment < 0
-              ? `${i18n.t('money_balance_positive_update')} ${Math.abs(adjustment)}`
-              : `${i18n.t('money_balance_negative_update')} ${adjustment}`;
-
-          await this.bot.sendMessage(user.chatId, adjustmentMessage);
-        }
+        await this.updateSubsequentBalances(userId, -adjustment, transactions);
       }
 
-      // Delete all found transactions
       await MoneyTransaction.deleteMany(query);
       Logger.end('removeMoneyTransaction');
-      return res.status(200).json({
-        error: false,
-        message: "Transactions deleted and users' balances updated",
-      });
+      return res
+        .status(200)
+        .json({ error: false, message: "Transactions deleted and users' balances updated" });
     } catch (error) {
-      if (error instanceof Error) {
-        const msg = error.message.toString();
-        Logger.error('removeMoneyTransacton', msg);
-        return res.status(500).json({ error: true, message: msg });
-      }
-      Logger.error('removeMoneyTransaction', 'Unhandled Error occured');
+      Logger.error('removeMoneyTransaction', 'Unhandled Error occurred: ' + error);
       return res.status(500).json({ error: true, message: 'Internal server error' });
     }
   }
