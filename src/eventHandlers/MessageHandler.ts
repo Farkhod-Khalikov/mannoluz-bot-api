@@ -65,7 +65,7 @@ export default class MessageHandler {
           await this.purchaseRequestHandler.handleListRequests(msg);
           break;
         case i18n.t('btn_rules'):
-          await this.bot.sendMessage(chatId, 'Rules for using sum');
+          await this.bot.sendMessage(chatId, i18n.t('bonuses_rules'));
           break;
         case '🇷🇺Русский':
         case '🇺🇸English':
