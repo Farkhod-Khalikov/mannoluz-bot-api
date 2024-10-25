@@ -7,11 +7,12 @@ export interface ITransaction extends Document {
   userId: string;
   sum: number;
   createdAt: Date;
-  updatedAt?: Date;
+  updatedAt: Date;
   description?: string;
-  transactionType?: string;
-  oldBalance?: number;
-  newBalance?: number;
+  transactionType: string;
+  date?: string;
+  oldBalance: number;
+  newBalance: number;
 }
 
 const bonusesTransactionsSchema = new Schema<ITransaction>(
@@ -21,13 +22,17 @@ const bonusesTransactionsSchema = new Schema<ITransaction>(
     userId: { type: String, required: true },
     sum: { type: Number, required: true },
     description: { type: String, required: false },
-    transactionType: {type: String, required:false, default: "bonuses"},
-    oldBalance: {type: Number, required: false, deafult: 0}, // Added in case if bonuses' balance history should be remembered just like money balance
-    newBalance: {type: Number, required: false, deafult: 0},
+    transactionType: { type: String, required: false, default: 'bonuses' },
+    oldBalance: { type: Number, required: false, deafult: 0 }, // Added in case if bonuses' balance history should be remembered just like money balance
+    newBalance: { type: Number, required: false, deafult: 0 },
+    date: { type: String, required: false },
   },
   { timestamps: true }
 );
 
-const BonusesTransaction: Model<ITransaction> = model<ITransaction>('BonusesTransaction', bonusesTransactionsSchema);
+const BonusesTransaction: Model<ITransaction> = model<ITransaction>(
+  'BonusesTransaction',
+  bonusesTransactionsSchema
+);
 
 export default BonusesTransaction;

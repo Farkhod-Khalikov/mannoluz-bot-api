@@ -1,9 +1,87 @@
 import { PurchaseRequest } from '../models/purchase-requests.schema';
-import BonusesTransaction from '../models/bonuses-transactions.schema';
+import BonusesTransaction, { ITransaction } from '../models/bonuses-transactions.schema';
 import User, { IUser } from '../models/users.schema';
 import MoneyTransaction from '../models/money-transactions.schema';
 
 export default class UserService {
+  // Correct all the transactions by corrected transactions
+  public static async updateBalanceHistoryByCorrection(
+    userId: string,
+    existingTransaction: ITransaction,
+    correctedSum: number
+  ) {
+    // Calculate the difference between the existing sum and the corrected sum
+    const adjustment = correctedSum - existingTransaction.sum;
+
+    // newSum - currentSum = result is negative is newSum is less the currentSum which means that 
+    // balance history should be decreased by adjustment same as user's balance
+    if (adjustment < 0) {
+      // removal
+      console.log('Adjustment < 0 is started:');
+      existingTransaction.sum = correctedSum;
+      existingTransaction.newBalance = existingTransaction.oldBalance + correctedSum;
+      await existingTransaction.save();
+
+      const subsequentTransactions = await MoneyTransaction.find({
+        userId,
+        createdAt: { $gt: existingTransaction.createdAt },
+      });
+
+      for (const transaction of subsequentTransactions) {
+        // console.log(`oldBalance: ${transaction.oldBalance} - adjustment: ${Math.abs(adjustment)}`);
+        transaction.oldBalance -= Math.abs(adjustment);
+        // console.log(`Result: ${transaction.oldBalance}`);
+        transaction.newBalance -= Math.abs(adjustment);
+
+        await transaction.save();
+      }
+      // find user to update user balance
+      const user = await User.findById(userId);
+
+      if (user) {
+        // create a function updateUserBalance
+        user.money += adjustment;
+        await user.save();
+      }
+    } else if (adjustment > 0) {
+
+      existingTransaction.sum = correctedSum;
+      existingTransaction.newBalance = existingTransaction.oldBalance + correctedSum; // Adjust the newBalance
+
+      // Save the corrected transaction
+      await existingTransaction.save();
+
+      // Adjust all subsequent transactions by the difference
+      const subsequentTransactions = await MoneyTransaction.find({
+        userId,
+        createdAt: { $gt: existingTransaction.createdAt },
+      });
+      // if (adjustment > 0) addition
+      for (const transaction of subsequentTransactions) {
+        transaction.oldBalance += Math.abs(adjustment);
+        transaction.newBalance += Math.abs(adjustment);
+        await transaction.save();
+      }
+
+      // if (adjustment < 0) removal
+      // for (const transaction of subsequentTransactions) {
+      //   transaction.oldBalance += adjustment;
+      //   transaction.newBalance += adjustment;
+      //   await transaction.save();
+      // }
+
+      // Update the user's total balance if necessary
+      const user = await User.findById(userId);
+      if (user) {
+        // update this one for addition is removal as well so far only working
+        // if correction add new money
+
+        user.money += adjustment;
+        await user.save();
+      }
+    }
+  }
+
   public static async findUserByChatId(chatId: number): Promise<IUser | null> {
     return User.findOne({ chatId });
   }
@@ -86,8 +164,8 @@ export default class UserService {
 
   //by userId which is saved in transaction schema
   public static async getAllTransactions(userId: string) {
-    const bonusesTransactions =  await BonusesTransaction.find({userId: userId});
-    const moneyTransactions = await MoneyTransaction.find({userId: userId});
+    const bonusesTransactions = await BonusesTransaction.find({ userId: userId });
+    const moneyTransactions = await MoneyTransaction.find({ userId: userId });
     return [...bonusesTransactions, ...moneyTransactions];
   }
 

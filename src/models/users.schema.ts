@@ -6,8 +6,8 @@ export interface IUser extends Document {
   name: string;
   phone: string;
   language: string;
-  bonuses?: number;
-  money?: number;
+  bonuses: number;
+  money: number;
   isAdmin?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
