@@ -43,11 +43,7 @@ class UserController {
       if (existingTransaction) {
         // Handle correction scenario
         if (existingTransaction.sum !== sum) {
-          await UserService.updateBalanceHistoryByPositiveCorrection(
-            user.id,
-            existingTransaction,
-            sum
-          );
+          await UserService.applyBalanceAdjustment(user.id, existingTransaction, sum, true);
         } else {
           Logger.error('addMoney', 'Transaction already exists with the same sum');
           return res.status(409).json({ error: true, message: 'Transaction already exists' });
@@ -60,6 +56,7 @@ class UserController {
           sum: sum,
           oldBalance: user.money,
           newBalance: user.money + sum,
+          transactionType: 'money',
           date: date || '',
           description: description,
         });
@@ -102,20 +99,25 @@ class UserController {
       }
 
       const user = await UserService.findUserByphoneNumber(phoneNumber);
-
       if (!user) {
         Logger.error('removeMoney', 'User not found');
         return res.status(404).json({ error: true, message: 'User not found' });
       }
 
-      if ((user.money || 0) < sum) {
-        Logger.error('removeMoney', 'Not enough sum to remove');
-        return res.status(400).json({
-          error: true,
-          message: 'Not enough sum',
-          currentMoney: user.money,
-        });
-      }
+      // const transaction = await MoneyTransaction.findOne({
+      //   documentId: documentId,
+      //   agentId: agentId,
+      //   userId: user.id,
+      // });
+
+      // if (transaction?.oldBalance || 0 < sum) {
+      //   Logger.error('removeMoney', 'Not enough sum to remove');
+      //   return res.status(400).json({
+      //     error: true,
+      //     message: 'Not enough sum',
+      //     currentMoney: user.money,
+      //   });
+      // }
 
       const existingTransaction = await MoneyTransaction.findOne({
         documentId: documentId,
@@ -126,7 +128,7 @@ class UserController {
       if (existingTransaction) {
         // Handle correction scenario
         if (existingTransaction.sum !== -sum) {
-          await UserService.updateBalanceHistoryByNegativeCorrection(user.id, existingTransaction, sum);
+          await UserService.applyBalanceAdjustment(user.id, existingTransaction, sum, false);
         } else {
           Logger.error('removeMoney', 'Transaction already exists with the same sum');
           return res.status(409).json({ error: true, message: 'Transaction already exists' });
@@ -139,6 +141,7 @@ class UserController {
           agentId: agentId,
           oldBalance: currentBalance,
           newBalance: currentBalance - sum,
+          transactionType: 'money',
           date: date || '',
           sum: -sum,
           description: description,
@@ -178,60 +181,6 @@ class UserController {
     }
   }
 
-  // Remove money from user balance
-  // async removeMoneyTransaction(req: Request, res: Response) {
-  //   Logger.start('removeMoneyTransaction');
-
-  //   try {
-  //     const { documentId, agentId } = req.body;
-
-  //     if (!documentId) {
-  //       Logger.error('removeMoneyTransaction', 'documentId is required');
-  //       return res.status(400).json({ error: true, message: 'documentId is required' });
-  //     }
-
-  //     const query = { documentId: documentId } as any;
-  //     if (agentId) query.agentId = agentId;
-
-  //     const transactions = await MoneyTransaction.find(query);
-  //     if (transactions.length === 0) {
-  //       Logger.error('removeMoneyTransaction', 'No transactions found');
-  //       return res.status(404).json({ error: true, message: 'No transactions found' });
-  //     }
-
-  //     const userBalances = new Map<string, number>();
-  //     for (const transaction of transactions) {
-  //       if (!userBalances.has(transaction.userId.toString())) {
-  //         userBalances.set(transaction.userId.toString(), 0);
-  //       }
-
-  //       const currentAdjustment = userBalances.get(transaction.userId.toString()) || 0;
-  //       userBalances.set(transaction.userId.toString(), currentAdjustment + transaction.sum);
-  //     }
-
-  //     for (const [userId, adjustment] of userBalances.entries()) {
-  //       const user = await User.findById(userId);
-  //       if (!user) {
-  //         Logger.error('removeMoneyTransaction', 'User not found');
-  //         return res.status(404).json({ error: true, message: 'User not found' });
-  //       }
-
-  //       user.money = (user.money || 0) - adjustment;
-  //       await user.save();
-
-  //       await this.updateBalanceHistoryByCorrection(userId, transactions);
-  //     }
-
-  //     await MoneyTransaction.deleteMany(query);
-  //     Logger.end('removeMoneyTransaction');
-  //     return res
-  //       .status(200)
-  //       .json({ error: false, message: "Transactions deleted and users' balances updated" });
-  //   } catch (error) {
-  //     Logger.error('removeMoneyTransaction', 'Unhandled Error occurred: ' + error);
-  //     return res.status(500).json({ error: true, message: 'Internal server error' });
-  //   }
-  // }
   async addBonuses(req: Request, res: Response) {
     Logger.start('addBonuses');
     try {
@@ -239,39 +188,50 @@ class UserController {
 
       if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
         Logger.error('addBonuses', 'Invalid arguments provided');
-
         return res.status(400).json({ error: true, message: 'Invalid args provided' });
       }
 
       // Find user by phoneNumber
       const user = await UserService.findUserByphoneNumber(phoneNumber);
 
-      // if user not found return error
+      // If user not found return error
       if (!user) {
         Logger.error('addBonuses', 'User not found');
         return res.status(404).json({ error: true, message: 'User not found' });
       }
 
-      // Create TransactionSevice.createTransaction
-      const transaction = await BonusesTransaction.create({
+      // Check if a transaction with the same documentId and agentId already exists
+      let transaction = await BonusesTransaction.findOne({
         userId: user.id,
         documentId: documentId,
         agentId: agentId,
-        sum: sum,
-        description: description,
+        transactionType: 'bonuses',
       });
 
-      if (!transaction) {
-        Logger.error('addBonuses', 'Could not create transaction');
-        return res.status(409).json({ error: true, message: 'Could not create transaction' });
+      if (transaction) {
+        // Update existing transaction
+        transaction.sum += sum; // Increment the sum
+        transaction.description = description; // Update description
+        await transaction.save();
+        Logger.warn('addBonuses', 'Existing transaction updated');
+      } else {
+        // Create a new transaction for adding bonuses
+        transaction = new BonusesTransaction({
+          userId: user.id,
+          documentId: documentId,
+          agentId: agentId,
+          sum: sum,
+          description: description,
+          transactionType: 'bonuses', // Differentiating as bonuses transaction
+        });
+        await transaction.save();
+        Logger.warn('addBonuses', 'New transaction created');
       }
 
-      await transaction.save();
+      // Update user's bonuses balance based only on bonuses transactions
+      await UserService.updateBonusesBalance(user.id);
 
-      user.bonuses += sum;
-      await user.save();
-
-      // Send a message to the User that their balance is updated
+      // Notify user of balance update
       if (user.chatId) {
         await this.bot.sendMessage(
           user.chatId,
@@ -280,27 +240,120 @@ class UserController {
           )}: ${description}`
         );
       }
-      Logger.end('addBonuses', 'Bonuses are added');
+
+      Logger.end('addBonuses', 'Bonuses are added or updated');
       return res.status(200).json({
         error: false,
-        message: 'Bonuses added',
-        agentId: agentId,
+        message: transaction.isNew ? 'Bonuses added' : 'Bonuses updated',
+        agentId,
       });
     } catch (error) {
-      Logger.error('addBonuses', 'Could not add sum due to unhanlded error');
+      Logger.error('addBonuses', 'Unhandled error occurred while adding bonuses');
       if (error instanceof Error) {
-        return res.json({ error: true, message: error.message });
+        return res.status(500).json({ error: true, message: error.message });
       } else {
         return res.status(500).json({
           error: true,
-          message: 'Internal Server Error. Error is unkown',
+          message: 'Internal Server Error. Unknown error occurred',
         });
       }
     }
   }
 
+  public async removeMoneyTransaction(req: Request, res: Response) {
+    Logger.start('removeMoneyTransaction');
+
+    try {
+      const { documentId, agentId } = req.body;
+
+      if (!documentId) {
+        Logger.error('removeMoneyTransaction', 'documentId is required');
+        return res.status(400).json({ error: true, message: 'documentId is required' });
+      }
+
+      // Define query for finding transactions
+      const query: any = { documentId };
+      if (agentId) query.agentId = agentId;
+
+      // Retrieve transactions based on the query
+      const transactions = await MoneyTransaction.find(query);
+      if (transactions.length === 0) {
+        Logger.error('removeMoneyTransaction', 'No transactions found');
+        return res.status(404).json({ error: true, message: 'No transactions found' });
+      }
+
+      // Handling single transaction deletion if both agentId and documentId are provided
+      if (agentId && transactions.length === 1) {
+        const transaction = transactions[0];
+        const userId = transaction.userId.toString();
+
+        // Apply balance adjustment for the single transaction deletion
+        const adjustment = await UserService.applyDeletionBalanceAdjustment(userId, [transaction]);
+
+        // Notify the user of the balance adjustment
+        const user = await User.findById(userId);
+        if (user && user.chatId) {
+          await this.bot.sendMessage(
+            user.chatId,
+            `A transaction was deleted by your agent. Your balance has been updated accordingly.`
+          );
+        } else {
+          Logger.error(
+            'removeMoneyTransaction',
+            `User with ID ${userId} not found or missing chatId`
+          );
+        }
+
+        // Delete the specific transaction
+        await MoneyTransaction.deleteOne({ _id: transaction._id });
+      } else {
+        // Handle multiple transactions deletion if only documentId is provided
+        const userTransactions = new Map<string, ITransaction[]>();
+        for (const transaction of transactions) {
+          if (!userTransactions.has(transaction.userId.toString())) {
+            userTransactions.set(transaction.userId.toString(), []);
+          }
+          userTransactions.get(transaction.userId.toString())!.push(transaction);
+        }
+
+        // Apply balance adjustments for each user
+        for (const [userId, userTransactionList] of userTransactions.entries()) {
+          const adjustment = await UserService.applyDeletionBalanceAdjustment(
+            userId,
+            userTransactionList
+          );
+
+          const user = await User.findById(userId);
+          if (user && user.chatId) {
+            await this.bot.sendMessage(
+              user.chatId,
+              `Your transactions have been deleted. Your balance has been updated. If you need more information, please contact us.`
+            );
+          } else {
+            Logger.error(
+              'removeMoneyTransaction',
+              `User with ID ${userId} not found or missing chatId`
+            );
+          }
+        }
+
+        // Delete all transactions with the specified documentId
+        await MoneyTransaction.deleteMany({ documentId });
+      }
+
+      Logger.end('removeMoneyTransaction');
+      return res.status(200).json({
+        error: false,
+        message: "Transactions deleted, and users' balances updated.",
+      });
+    } catch (error) {
+      Logger.error('removeMoneyTransaction', 'Unhandled Error occurred: ' + error);
+      return res.status(500).json({ error: true, message: 'Internal server error' });
+    }
+  }
+
   // Remove Bonuses
-  async removeBonuses(req: Request, res: Response) {
+  public async removeBonuses(req: Request, res: Response) {
     Logger.start('removeBonuses');
     try {
       const { phoneNumber, sum, description, documentId, agentId } = req.body;
@@ -314,16 +367,14 @@ class UserController {
 
       // Find user by phoneNumber
       const user = await UserService.findUserByphoneNumber(phoneNumber);
-
-      // If user not found return error
       if (!user) {
         Logger.error('removeBonuses', 'User not found');
         return res.status(404).json({ error: true, message: 'User not found' });
       }
 
-      // If user doesnt have enough sum return error
+      // If the user's bonuses balance is insufficient, return an error
       if ((user.bonuses || 0) < sum) {
-        Logger.error('removeBonuses', 'User has less sum than it is required to remove');
+        Logger.error('removeBonuses', 'User has insufficient bonuses');
         return res.status(400).json({
           error: true,
           message: 'Not enough sum',
@@ -331,67 +382,61 @@ class UserController {
         });
       }
 
-      //TransactionService.createTransaction method to accomplish
-      const transaction = await BonusesTransaction.create({
-        userId: user.id, //Mongo's ObjectId
+      // Check if a transaction with the same documentId and agentId already exists
+      let transaction = await BonusesTransaction.findOne({
+        userId: user.id,
         documentId: documentId,
         agentId: agentId,
-        sum: -sum,
-        description: description,
+        transactionType: 'bonuses',
       });
 
-      // If transaction was not created return error
-      if (!transaction) {
-        Logger.error('removeBonuses', 'Could not create transaction document');
-        return res.status(500).json({ error: true, message: 'Could not create transaction' });
+      if (transaction) {
+        // Update existing transaction
+        transaction.sum = -sum;
+        transaction.description = description;
+        await transaction.save();
+        Logger.warn('removeBonuses', 'Existing transaction updated');
+      } else {
+        // Create a new transaction with a negative sum for removing bonuses
+        transaction = new BonusesTransaction({
+          userId: user.id,
+          documentId: documentId,
+          agentId: agentId,
+          sum: -sum,
+          description: description,
+          transactionType: 'bonuses', // Differentiating as bonuses transaction
+        });
+        await transaction.save();
       }
 
-      //Save transaction document
-      await transaction.save();
+      // Update bonuses balance based only on bonuses transactions
+      const updatedBonuses = await UserService.updateBonusesBalance(user.id);
 
-      // Update user balance
-      if (user.bonuses && user.bonuses > 0) {
-        user.bonuses -= sum;
-        // Save user with updated balance
-        await user.save();
-      }
-
-      // Send a message to the User that their balance is updated
+      // Notify user of balance deduction
       if (user.chatId) {
         await this.bot.sendMessage(
           user.chatId,
-          // Removal | [sum] Coins
-          // Description:
           `${i18n.t('bonuses_removal')}: ${sum} ${i18n.t('coins')}\n${i18n.t(
             'description'
-          )}: ${description}`
+          )}: ${description}\n${i18n.t('updated_balance')}: ${updatedBonuses}`
         );
       }
 
-      Logger.end('removeBonuses');
-      const newBalance = user.bonuses;
-
-      // response OK with updated user's balanace
+      Logger.end('removeBonuses', 'Bonuses removed or updated');
       return res.status(200).json({
         error: false,
-        message: 'Bonuses removed',
-        newBalance,
+        message: transaction.isNew ? 'Bonuses removed' : 'Bonuses updated',
+        newBalance: updatedBonuses,
         agentId,
       });
-      // Catch any unhandled error
     } catch (error) {
-      Logger.error('removeBonuses', 'Unhandled Error occured while removing bonuses');
-      // If error of type "ERROR" then return error itself
+      Logger.error('removeBonuses', 'Unhandled error occurred while removing bonuses');
       if (error instanceof Error) {
-        res.status(500).json({
-          error: true,
-          message: error.message,
-        });
-        // Otherwise return Unknown Error
+        return res.status(500).json({ error: true, message: error.message });
       } else {
-        res.status(500).json({
+        return res.status(500).json({
           error: true,
-          message: 'Internal server error. Unknow error occured',
+          message: 'Internal server error. Unknown error occurred',
         });
       }
     }

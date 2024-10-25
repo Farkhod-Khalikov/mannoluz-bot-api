@@ -5,13 +5,31 @@ import MoneyTransaction from '../models/money-transactions.schema';
 
 export default class UserService {
   // update user's balance history by deleted transaction
-  private async updateBalanceHistoryByDeletion(
-    userId: string,
-    adjustment: number,
-    deletedTransaction: any
-  ) {}
+  public static async updateBonusesBalance(userId: string): Promise<number> {
+    // Fetch the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
 
-  public static async updateBalance(userId: string) {
+    // Fetch all transactions for the user with type "bonuses"
+    const bonusTransactions = await BonusesTransaction.find({
+      userId: userId,
+      transactionType: 'bonuses',
+    });
+
+    // Calculate the total bonuses from transactions
+    let countedBonuses = 0;
+    for (const transaction of bonusTransactions) {
+      countedBonuses += transaction.sum; // Add sum directly; negative sums will subtract
+    }
+
+    // Update user's bonuses balance in the database
+    user.bonuses = countedBonuses;
+    await user.save();
+    return user.bonuses;
+  }
+  public static async updateMoneyBalance(userId: string) {
     // Fetch the user by ID
     const user = await User.findById(userId);
     if (!user) {
@@ -21,123 +39,82 @@ export default class UserService {
     // Fetch all transactions for the user
     const transactions = await this.getAllTransactions(userId);
 
-    // Calculate the new balance based on transactions
+    // Calculate the new balance based on money transactions only
     let countedSum = 0;
     for (const transaction of transactions) {
-      countedSum += transaction.sum; // Add sum directly; negative sums will subtract
+      if (transaction.transactionType === 'money') {
+        // Check for money transaction type
+        countedSum += transaction.sum; // Add sum directly; negative sums will subtract
+      }
     }
-
-    // Update user's balance in the database
+    // Update user's money balance in the database
     user.money = countedSum;
     await user.save();
     return user.money;
   }
 
-  public static async updateBalanceHistoryByNegativeCorrection(
+  public static async applyDeletionBalanceAdjustment(userId: string, transactions: ITransaction[]) {
+    // Calculate the total adjustment for the user
+    const totalAdjustment = transactions.reduce((sum, transaction) => sum + transaction.sum, 0);
+
+    // Update each transaction's subsequent records based on the deleted sum
+    const lastTransactionTime = transactions[transactions.length - 1].createdAt;
+    const subsequentTransactions = await MoneyTransaction.find({
+      userId,
+      createdAt: { $gt: lastTransactionTime },
+    });
+
+    for (const transaction of subsequentTransactions) {
+      transaction.oldBalance -= totalAdjustment;
+      transaction.newBalance -= totalAdjustment;
+      await transaction.save();
+    }
+
+    // Adjust user balance
+    const user = await User.findById(userId);
+    if (user) {
+      user.money = (user.money || 0) - totalAdjustment;
+      await user.save();
+    }
+
+    // Return total adjustment for logging or further processing if needed
+    return totalAdjustment;
+  }
+  public static async applyBalanceAdjustment(
     userId: string,
     existingTransaction: ITransaction,
-    correctedSum: number
+    correctedSum: number,
+    isPositiveCorrection: boolean
   ) {
-    // correctedSum = 100, abs(currentSum) = 50,
-    // adjustment = currectedSum - currentSum = 50 (removal)
-    const adjustment = correctedSum - Math.abs(existingTransaction.sum);
+    // Calculate the adjustment amount
+    const adjustment = isPositiveCorrection
+      ? correctedSum - existingTransaction.sum
+      : correctedSum - Math.abs(existingTransaction.sum);
 
-    if (adjustment > 0) {
-      // removal
-      existingTransaction.sum = -correctedSum;
-      existingTransaction.newBalance = existingTransaction.oldBalance - correctedSum;
-      await existingTransaction.save();
+    // Determine new balance based on the correction type
+    existingTransaction.sum = isPositiveCorrection ? correctedSum : -correctedSum;
+    existingTransaction.newBalance = isPositiveCorrection
+      ? existingTransaction.oldBalance + correctedSum
+      : existingTransaction.oldBalance - correctedSum;
 
-      const subsequentTransactions = await MoneyTransaction.find({
-        userId,
-        createdAt: { $gt: existingTransaction.createdAt },
-      });
+    // Save the corrected transaction
+    await existingTransaction.save();
 
-      for (const transaction of subsequentTransactions) {
-        // console.log(`oldBalance: ${transaction.oldBalance} - adjustment: ${Math.abs(adjustment)}`);
-        transaction.oldBalance -= adjustment;
-        // console.log(`Result: ${transaction.oldBalance}`);
-        transaction.newBalance -= adjustment;
+    // Adjust all subsequent transactions by the adjustment amount
+    const subsequentTransactions = await MoneyTransaction.find({
+      userId,
+      createdAt: { $gt: existingTransaction.createdAt },
+    });
 
-        await transaction.save();
-      }
-      // find user to update user balance
-      await UserService.updateBalance(userId);
-    } else if (adjustment < 0) {
-      existingTransaction.sum = -correctedSum;
-      existingTransaction.newBalance = existingTransaction.oldBalance - correctedSum; // Adjust the newBalance
-
-      // Save the corrected transaction
-      await existingTransaction.save();
-
-      // Adjust all subsequent transactions by the difference
-      const subsequentTransactions = await MoneyTransaction.find({
-        userId,
-        createdAt: { $gt: existingTransaction.createdAt },
-      });
-      // if (adjustment > 0) addition
-      for (const transaction of subsequentTransactions) {
-        transaction.oldBalance += Math.abs(adjustment);
-        transaction.newBalance += Math.abs(adjustment);
-        await transaction.save();
-      }
-      await UserService.updateBalance(userId);
+    for (const transaction of subsequentTransactions) {
+      transaction.oldBalance += isPositiveCorrection ? adjustment : -adjustment;
+      transaction.newBalance += isPositiveCorrection ? adjustment : -adjustment;
+      await transaction.save();
     }
+
+    // Update the user balance
+    await UserService.updateMoneyBalance(userId);
   }
-
-  // Correct all the transactions by corrected transactions
-  public static async updateBalanceHistoryByPositiveCorrection(
-    userId: string,
-    existingTransaction: ITransaction,
-    correctedSum: number
-  ) {
-    // Calculate the difference between the existing sum and the corrected sum
-    const adjustment = correctedSum - existingTransaction.sum;
-
-    // newSum - currentSum = result is negative is newSum is less the currentSum which means that
-    // balance history should be decreased by adjustment same as user's balance
-    if (adjustment < 0) {
-      existingTransaction.sum = correctedSum;
-      existingTransaction.newBalance = existingTransaction.oldBalance + correctedSum;
-      await existingTransaction.save();
-
-      const subsequentTransactions = await MoneyTransaction.find({
-        userId,
-        createdAt: { $gt: existingTransaction.createdAt },
-      });
-
-      for (const transaction of subsequentTransactions) {
-        // console.log(`oldBalance: ${transaction.oldBalance} - adjustment: ${Math.abs(adjustment)}`);
-        transaction.oldBalance -= Math.abs(adjustment);
-        // console.log(`Result: ${transaction.oldBalance}`);
-        transaction.newBalance -= Math.abs(adjustment);
-
-        await transaction.save();
-      }
-      await UserService.updateBalance(userId);
-    } else if (adjustment > 0) {
-      existingTransaction.sum = correctedSum;
-      existingTransaction.newBalance = existingTransaction.oldBalance + correctedSum; // Adjust the newBalance
-
-      // Save the corrected transaction
-      await existingTransaction.save();
-
-      // Adjust all subsequent transactions by the difference
-      const subsequentTransactions = await MoneyTransaction.find({
-        userId,
-        createdAt: { $gt: existingTransaction.createdAt },
-      });
-      // if (adjustment > 0) addition
-      for (const transaction of subsequentTransactions) {
-        transaction.oldBalance += Math.abs(adjustment);
-        transaction.newBalance += Math.abs(adjustment);
-        await transaction.save();
-      }
-
-      await UserService.updateBalance(userId);
-    }
-  }
-
   public static async findUserByChatId(chatId: number): Promise<IUser | null> {
     return User.findOne({ chatId });
   }

@@ -57,9 +57,9 @@ app.post('/users/sudo-privileges/remove', (req, res) => userController.removeSud
 app.post('/users/transactions/bonuses/remove', (req, res) =>
   userController.removeBonusesTransaction(req, res)
 );
-// app.post('/users/transactions/money/remove', (req, res) =>
-//   userController.removeMoneyTransaction(req, res)
-// );
+app.post('/users/transactions/money/remove', (req, res) =>
+  userController.removeMoneyTransaction(req, res)
+);
 
 // Purchase requests routes
 app.post('/users/purchase-requests/update', (req, res) =>

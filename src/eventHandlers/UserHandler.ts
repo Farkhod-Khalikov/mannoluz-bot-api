@@ -197,8 +197,8 @@ export default class UserHandler {
     const user = await UserService.findUserByChatId(chatId);
 
     if (user) {
-      const bonuses = user.bonuses;
-      const money = await UserService.updateBalance(user.id);
+      const bonuses = await UserService.updateBonusesBalance(user.id);
+      const money = await UserService.updateMoneyBalance(user.id);
       const filePath = await generateCreditCard(user.phone, user.id);
 
       const transactions = await UserService.getAllTransactions(user.id);
