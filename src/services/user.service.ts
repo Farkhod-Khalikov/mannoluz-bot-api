@@ -11,12 +11,34 @@ export default class UserService {
     deletedTransaction: any
   ) {}
 
+  public static async updateBalance(userId: string) {
+    // Fetch the user by ID
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Fetch all transactions for the user
+    const transactions = await this.getAllTransactions(userId);
+
+    // Calculate the new balance based on transactions
+    let countedSum = 0;
+    for (const transaction of transactions) {
+      countedSum += transaction.sum; // Add sum directly; negative sums will subtract
+    }
+
+    // Update user's balance in the database
+    user.money = countedSum;
+    await user.save();
+    return user.money;
+  }
+
   public static async updateBalanceHistoryByNegativeCorrection(
     userId: string,
     existingTransaction: ITransaction,
     correctedSum: number
   ) {
-    // correctedSum = 100, abs(currentSum) = 50, 
+    // correctedSum = 100, abs(currentSum) = 50,
     // adjustment = currectedSum - currentSum = 50 (removal)
     const adjustment = correctedSum - Math.abs(existingTransaction.sum);
 
@@ -40,13 +62,7 @@ export default class UserService {
         await transaction.save();
       }
       // find user to update user balance
-      const user = await User.findById(userId);
-
-      if (user) {
-        // create a function updateUserBalance
-        user.money -= adjustment;
-        await user.save();
-      }
+      await UserService.updateBalance(userId);
     } else if (adjustment < 0) {
       existingTransaction.sum = -correctedSum;
       existingTransaction.newBalance = existingTransaction.oldBalance - correctedSum; // Adjust the newBalance
@@ -65,23 +81,7 @@ export default class UserService {
         transaction.newBalance += Math.abs(adjustment);
         await transaction.save();
       }
-
-      // if (adjustment < 0) removal
-      // for (const transaction of subsequentTransactions) {
-      //   transaction.oldBalance += adjustment;
-      //   transaction.newBalance += adjustment;
-      //   await transaction.save();
-      // }
-
-      // Update the user's total balance if necessary
-      const user = await User.findById(userId);
-      if (user) {
-        // update this one for addition is removal as well so far only working
-        // if correction add new money
-
-        user.money += adjustment;
-        await user.save();
-      }
+      await UserService.updateBalance(userId);
     }
   }
 
@@ -97,8 +97,6 @@ export default class UserService {
     // newSum - currentSum = result is negative is newSum is less the currentSum which means that
     // balance history should be decreased by adjustment same as user's balance
     if (adjustment < 0) {
-      // removal
-      console.log('Adjustment < 0 is started:');
       existingTransaction.sum = correctedSum;
       existingTransaction.newBalance = existingTransaction.oldBalance + correctedSum;
       await existingTransaction.save();
@@ -116,14 +114,7 @@ export default class UserService {
 
         await transaction.save();
       }
-      // find user to update user balance
-      const user = await User.findById(userId);
-
-      if (user) {
-        // create a function updateUserBalance
-        user.money += adjustment;
-        await user.save();
-      }
+      await UserService.updateBalance(userId);
     } else if (adjustment > 0) {
       existingTransaction.sum = correctedSum;
       existingTransaction.newBalance = existingTransaction.oldBalance + correctedSum; // Adjust the newBalance
@@ -143,22 +134,7 @@ export default class UserService {
         await transaction.save();
       }
 
-      // if (adjustment < 0) removal
-      // for (const transaction of subsequentTransactions) {
-      //   transaction.oldBalance += adjustment;
-      //   transaction.newBalance += adjustment;
-      //   await transaction.save();
-      // }
-
-      // Update the user's total balance if necessary
-      const user = await User.findById(userId);
-      if (user) {
-        // update this one for addition is removal as well so far only working
-        // if correction add new money
-
-        user.money += adjustment;
-        await user.save();
-      }
+      await UserService.updateBalance(userId);
     }
   }
 

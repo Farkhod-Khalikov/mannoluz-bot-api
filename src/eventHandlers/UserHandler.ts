@@ -198,7 +198,7 @@ export default class UserHandler {
 
     if (user) {
       const bonuses = user.bonuses;
-      const money = user.money;
+      const money = await UserService.updateBalance(user.id);
       const filePath = await generateCreditCard(user.phone, user.id);
 
       const transactions = await UserService.getAllTransactions(user.id);
