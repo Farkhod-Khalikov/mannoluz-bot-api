@@ -14,13 +14,6 @@ class UserController {
     this.bot = bot;
   }
 
-  // update user's balance history by deleted transaction
-  private async updateBalanceHistoryByDeletion(
-    userId: string,
-    adjustment: number,
-    deletedTransaction: any
-  ) {}
-
   // update user's balance history by corrected transaction
   async addMoney(req: Request, res: Response) {
     Logger.start('addMoney');
@@ -50,7 +43,11 @@ class UserController {
       if (existingTransaction) {
         // Handle correction scenario
         if (existingTransaction.sum !== sum) {
-          await UserService.updateBalanceHistoryByCorrection(user.id, existingTransaction, sum);
+          await UserService.updateBalanceHistoryByPositiveCorrection(
+            user.id,
+            existingTransaction,
+            sum
+          );
         } else {
           Logger.error('addMoney', 'Transaction already exists with the same sum');
           return res.status(409).json({ error: true, message: 'Transaction already exists' });
@@ -129,7 +126,7 @@ class UserController {
       if (existingTransaction) {
         // Handle correction scenario
         if (existingTransaction.sum !== -sum) {
-          await UserService.updateBalanceHistoryByCorrection(user.id, existingTransaction, -sum);
+          await UserService.updateBalanceHistoryByNegativeCorrection(user.id, existingTransaction, sum);
         } else {
           Logger.error('removeMoney', 'Transaction already exists with the same sum');
           return res.status(409).json({ error: true, message: 'Transaction already exists' });

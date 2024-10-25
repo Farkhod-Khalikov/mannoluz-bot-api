@@ -4,8 +4,89 @@ import User, { IUser } from '../models/users.schema';
 import MoneyTransaction from '../models/money-transactions.schema';
 
 export default class UserService {
+  // update user's balance history by deleted transaction
+  private async updateBalanceHistoryByDeletion(
+    userId: string,
+    adjustment: number,
+    deletedTransaction: any
+  ) {}
+
+  public static async updateBalanceHistoryByNegativeCorrection(
+    userId: string,
+    existingTransaction: ITransaction,
+    correctedSum: number
+  ) {
+    // correctedSum = 100, abs(currentSum) = 50, 
+    // adjustment = currectedSum - currentSum = 50 (removal)
+    const adjustment = correctedSum - Math.abs(existingTransaction.sum);
+
+    if (adjustment > 0) {
+      // removal
+      existingTransaction.sum = -correctedSum;
+      existingTransaction.newBalance = existingTransaction.oldBalance - correctedSum;
+      await existingTransaction.save();
+
+      const subsequentTransactions = await MoneyTransaction.find({
+        userId,
+        createdAt: { $gt: existingTransaction.createdAt },
+      });
+
+      for (const transaction of subsequentTransactions) {
+        // console.log(`oldBalance: ${transaction.oldBalance} - adjustment: ${Math.abs(adjustment)}`);
+        transaction.oldBalance -= adjustment;
+        // console.log(`Result: ${transaction.oldBalance}`);
+        transaction.newBalance -= adjustment;
+
+        await transaction.save();
+      }
+      // find user to update user balance
+      const user = await User.findById(userId);
+
+      if (user) {
+        // create a function updateUserBalance
+        user.money -= adjustment;
+        await user.save();
+      }
+    } else if (adjustment < 0) {
+      existingTransaction.sum = -correctedSum;
+      existingTransaction.newBalance = existingTransaction.oldBalance - correctedSum; // Adjust the newBalance
+
+      // Save the corrected transaction
+      await existingTransaction.save();
+
+      // Adjust all subsequent transactions by the difference
+      const subsequentTransactions = await MoneyTransaction.find({
+        userId,
+        createdAt: { $gt: existingTransaction.createdAt },
+      });
+      // if (adjustment > 0) addition
+      for (const transaction of subsequentTransactions) {
+        transaction.oldBalance += Math.abs(adjustment);
+        transaction.newBalance += Math.abs(adjustment);
+        await transaction.save();
+      }
+
+      // if (adjustment < 0) removal
+      // for (const transaction of subsequentTransactions) {
+      //   transaction.oldBalance += adjustment;
+      //   transaction.newBalance += adjustment;
+      //   await transaction.save();
+      // }
+
+      // Update the user's total balance if necessary
+      const user = await User.findById(userId);
+      if (user) {
+        // update this one for addition is removal as well so far only working
+        // if correction add new money
+
+        user.money += adjustment;
+        await user.save();
+      }
+    }
+  }
+
   // Correct all the transactions by corrected transactions
-  public static async updateBalanceHistoryByCorrection(
+  public static async updateBalanceHistoryByPositiveCorrection(
     userId: string,
     existingTransaction: ITransaction,
     correctedSum: number
@@ -13,7 +94,7 @@ export default class UserService {
     // Calculate the difference between the existing sum and the corrected sum
     const adjustment = correctedSum - existingTransaction.sum;
 
-    // newSum - currentSum = result is negative is newSum is less the currentSum which means that 
+    // newSum - currentSum = result is negative is newSum is less the currentSum which means that
     // balance history should be decreased by adjustment same as user's balance
     if (adjustment < 0) {
       // removal
@@ -44,7 +125,6 @@ export default class UserService {
         await user.save();
       }
     } else if (adjustment > 0) {
-
       existingTransaction.sum = correctedSum;
       existingTransaction.newBalance = existingTransaction.oldBalance + correctedSum; // Adjust the newBalance
 
