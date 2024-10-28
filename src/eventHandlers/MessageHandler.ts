@@ -106,8 +106,7 @@ export default class MessageHandler {
           }
           break;
         default:
-          // handleOtherMessages ()
-        
+        // handleOtherMessages ()
       }
     } else if (msg.photo) {
       // Handle image uploads

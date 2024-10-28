@@ -398,6 +398,7 @@ export default class UserHandler {
       return this.sendMainMenu(chatId);
     }
   }
+
   public async handleContactUs(msg: TelegramBot.Message) {
     this.bot.sendMessage(msg.chat.id, i18n.t('contact_us_information'));
   }
@@ -435,6 +436,7 @@ export default class UserHandler {
 
   public async handleConfirmPurchaseRequest(chatId: number) {
     const user = await UserService.findUserByChatId(chatId);
+
     const activeRequest = await PurchaseRequest.findOne({
       phoneNumber: user?.phone,
       isActive: true,
@@ -474,6 +476,7 @@ export default class UserHandler {
 
     this.bot.on('message', commentListener);
   }
+
   public async handleReconciliationAct(msg: TelegramBot.Message) {
     let startDate: string;
     let endDate: string;
@@ -522,7 +525,7 @@ export default class UserHandler {
             }
 
             // Change the name HERE
-            const pdfPath = path.resolve(tempDir, `reconciliation_${msg.chat.id}.pdf`);
+            const pdfPath = path.resolve(tempDir, `reconciliationAct_${startDate}_${endDate}.pdf`);
 
             // Fetch transactions from the database
             const user = await UserService.findUserByChatId(msg.chat.id);

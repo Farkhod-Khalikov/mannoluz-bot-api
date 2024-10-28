@@ -1,7 +1,7 @@
 import fs from 'fs';
-import path from 'path';
 import PDFDocument from 'pdfkit';
-
+import i18n from './i18n';
+import path from 'path'; 
 export const generateReconciliationPDF = async (
   startDate: string,
   endDate: string,
@@ -24,7 +24,8 @@ export const generateReconciliationPDF = async (
     stream.on('finish', resolve);
     stream.on('error', reject);
     doc.pipe(stream);
-
+    const fontPath = path.join(__dirname, '../../fonts/Times-Roman.ttf')
+    doc.font(fontPath);
     const rowHeight = 20;
     const cellWidth = 100;
     const textOffset = 6; // Offset to center text vertically inside the row
@@ -39,21 +40,29 @@ export const generateReconciliationPDF = async (
     });
 
     // Title and Date Range
-    doc.fontSize(20).text('Reconciliation Act', { align: 'center' }).moveDown(3);
+    doc
+      .fontSize(20)
+      .text(i18n.t('reconciliation_act'), { align: 'center' })
+      .moveDown(3);
     doc
       .fontSize(14)
-      .text(`For the period: ${startDate} to ${endDate}`, { align: 'center' })
+      .text(`${i18n.t('for_period')} ${startDate} - ${endDate}`, { align: 'center' })
       .moveDown(4);
 
     // Table headers
-    const headers = ['Date', 'InitBalance', 'Addition', 'Removal', 'Result'];
+    const headers = [
+      `${i18n.t('reconciliation_act_dates')}`,
+      `${i18n.t('init_balance')}`,
+      `${i18n.t('reconciliation_addition')}`,
+      `${i18n.t('reconciliation_removal')}`,
+      `${i18n.t('reconciliation_result')}`,
+    ];
     const tableTop = doc.y + 20;
 
     // Draw table headers
     headers.forEach((header, index) => {
       const x = 50 + index * cellWidth;
       doc
-        .font('Helvetica-Bold')
         .text(header, x, tableTop + textOffset, { width: cellWidth, align: 'center' })
         .rect(x, tableTop, cellWidth, rowHeight)
         .stroke();
@@ -62,7 +71,6 @@ export const generateReconciliationPDF = async (
     doc.moveDown();
 
     let rowY = tableTop + rowHeight;
-    doc.font('Helvetica');
 
     let isFirstRow = true;
 
@@ -102,8 +110,7 @@ export const generateReconciliationPDF = async (
 
     // Add the "Total" row and center the text
     doc
-      .font('Helvetica-Bold')
-      .text('Total', 50, rowY + textOffset, { width: cellWidth, align: 'left' })
+      .text(`${i18n.t('total')}`, 50, rowY + textOffset, { width: cellWidth, align: 'left' })
       .text(initBalance.toString(), 150, rowY + textOffset, { width: cellWidth, align: 'center' })
       .text(sumOfAllPositives.toString(), 250, rowY + textOffset, {
         width: cellWidth,
