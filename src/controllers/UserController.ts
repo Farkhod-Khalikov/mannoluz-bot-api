@@ -10,6 +10,7 @@ import User from '../models/users.schema';
 
 class UserController {
   private bot: TelegramBot;
+
   constructor(bot: TelegramBot) {
     this.bot = bot;
   }
@@ -26,7 +27,15 @@ class UserController {
         return res.status(400).json({ error: true, message: 'Invalid args provided' });
       }
 
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      if (sum < 0) {
+        Logger.error('addMoney', 'sum cannot be negative');
+        return res.status(400).json({
+          error: true,
+          message: 'Invalid args provided. Sum cannot be negative',
+        });
+      }
+
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
 
       if (!user) {
         Logger.error('addMoney', 'User not found');
@@ -40,14 +49,22 @@ class UserController {
       });
 
       // if transaction exists then invoke correction
-      if (existingTransaction) {
+      if (existingTransaction && existingTransaction.sum !== sum && existingTransaction.sum >= 0) {
         // Handle correction scenario
-        if (existingTransaction.sum !== sum) {
-          await UserService.applyBalanceAdjustment(user.id, existingTransaction, sum, true);
-        } else {
-          Logger.error('addMoney', 'Transaction already exists with the same sum');
-          return res.status(409).json({ error: true, message: 'Transaction already exists' });
-        } // Otherwise create a new transction and update user's balance
+        const correctedSum = existingTransaction.sum;
+        await UserService.applyBalanceAdjustment(user.id, existingTransaction, sum, true);
+        await this.bot.sendMessage(
+          user.chatId,
+          `${i18n.t('correction')}:${correctedSum} 🔄 ${sum} ${i18n.t('$')}\n${i18n.t(
+            'description'
+          )}: ${description}`
+        );
+        return res
+          .status(200)
+          .json({ error: false, message: 'Transaction Corrected Successfully' });
+      } else if (existingTransaction && existingTransaction.sum === sum) {
+        Logger.error('addMoney', 'Transaction already exists with the same sum');
+        return res.status(409).json({ error: true, message: 'Transaction already exists' });
       } else {
         const moneyTransaction = await MoneyTransaction.create({
           userId: user.id,
@@ -67,14 +84,12 @@ class UserController {
       }
 
       // inform user about balance update
-      if (user.chatId) {
-        await this.bot.sendMessage(
-          user.chatId,
-          `${i18n.t('bonuses_addition')}: ${sum} ${i18n.t('$')}\n${i18n.t(
-            'description'
-          )}: ${description}`
-        );
-      }
+      await this.bot.sendMessage(
+        user.chatId,
+        `${i18n.t('bonuses_addition')}: ${sum} ${i18n.t('$')}\n${i18n.t(
+          'description'
+        )}: ${description}`
+      );
 
       Logger.end('addMoney', 'Money added');
       return res.status(200).json({ error: false, message: 'Money added', agentId: agentId });
@@ -89,6 +104,7 @@ class UserController {
   async removeMoney(req: Request, res: Response) {
     Logger.start('removeMoney');
     try {
+      // request body arguments
       const { phoneNumber, sum, description, documentId, agentId, date } = req.body;
 
       if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
@@ -98,26 +114,21 @@ class UserController {
         });
       }
 
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      if (sum < 0) {
+        Logger.error('removeMoney', 'sum cannot be negative');
+        return res.status(400).json({
+          error: true,
+          message: 'Invalid args provided. Sum cannot be negative',
+        });
+      }
+
+      // find user by phonenumber
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
+
       if (!user) {
         Logger.error('removeMoney', 'User not found');
         return res.status(404).json({ error: true, message: 'User not found' });
       }
-
-      // const transaction = await MoneyTransaction.findOne({
-      //   documentId: documentId,
-      //   agentId: agentId,
-      //   userId: user.id,
-      // });
-
-      // if (transaction?.oldBalance || 0 < sum) {
-      //   Logger.error('removeMoney', 'Not enough sum to remove');
-      //   return res.status(400).json({
-      //     error: true,
-      //     message: 'Not enough sum',
-      //     currentMoney: user.money,
-      //   });
-      // }
 
       const existingTransaction = await MoneyTransaction.findOne({
         documentId: documentId,
@@ -125,16 +136,29 @@ class UserController {
         userId: user.id,
       });
 
-      if (existingTransaction) {
+      // if transaction exists and different sum => correct transaction
+      // else if transaction exists and sum is equal => return transactoin already exists
+      // else create new transaction document
+      if (existingTransaction && existingTransaction.sum !== -sum && existingTransaction.sum < 0) {
         // Handle correction scenario
-        if (existingTransaction.sum !== -sum) {
-          await UserService.applyBalanceAdjustment(user.id, existingTransaction, sum, false);
-        } else {
-          Logger.error('removeMoney', 'Transaction already exists with the same sum');
-          return res.status(409).json({ error: true, message: 'Transaction already exists' });
-        }
+        const correctedSum = existingTransaction.sum;
+        await UserService.applyBalanceAdjustment(user.id, existingTransaction, sum, false);
+        await this.bot.sendMessage(
+          user.chatId,
+          `${i18n.t('correction')}: ${correctedSum} 🔄 -${sum} ${i18n.t('$')}\n${i18n.t(
+            'description'
+          )}: ${description}`
+        );
+        return res
+          .status(200)
+          .json({ error: false, message: 'Transaction Corrected Successfully' });
+      } else if (existingTransaction && existingTransaction.sum === -sum) {
+        Logger.error('removeMoney', 'Transaction already exists with the same sum');
+        return res.status(409).json({ error: true, message: 'Transaction already exists' });
       } else {
         const currentBalance = user.money || 0;
+
+        // if transaction with specified IDs not found then create new one
         const transaction = await MoneyTransaction.create({
           userId: user.id,
           documentId: documentId,
@@ -172,9 +196,11 @@ class UserController {
       });
     } catch (error) {
       Logger.error('removeMoney', 'Unhandled error occurred while removing sum');
+
       if (error instanceof Error) {
         return res.status(500).json({ error: true, message: error.message });
       }
+
       return res
         .status(500)
         .json({ error: true, message: 'Internal server error. Unknown error occurred' });
@@ -183,6 +209,7 @@ class UserController {
 
   async addBonuses(req: Request, res: Response) {
     Logger.start('addBonuses');
+
     try {
       const { phoneNumber, sum, description, documentId, agentId } = req.body;
 
@@ -191,8 +218,13 @@ class UserController {
         return res.status(400).json({ error: true, message: 'Invalid args provided' });
       }
 
+      if (sum < 0) {
+        Logger.error('addBonuses', 'Sum cannot be negative');
+        return res.status(400).json({ error: true, message: 'Sum cannot be negative' });
+      }
+
       // Find user by phoneNumber
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
 
       // If user not found return error
       if (!user) {
@@ -295,7 +327,7 @@ class UserController {
         if (user && user.chatId) {
           await this.bot.sendMessage(
             user.chatId,
-            `A transaction was deleted by your agent. Your balance has been updated accordingly.`
+            `The transaction was deleted by your agent. Your balance has been updated accordingly.`
           );
         } else {
           Logger.error(
@@ -359,14 +391,23 @@ class UserController {
       const { phoneNumber, sum, description, documentId, agentId } = req.body;
 
       if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
+        Logger.error('removeBonuses', 'Invalid Arguments provided in request');
         return res.status(400).json({
           error: true,
           message: 'Invalid args provided. phoneNumber, sum, documentId, and agentId are required.',
         });
       }
 
+      if (sum < 0) {
+        Logger.error('removeBonuses', 'sum cannot be negative');
+        return res.status(400).json({
+          error: true,
+          message: 'Invalid args provided. Sum cannot be negative',
+        });
+      }
+
       // Find user by phoneNumber
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
       if (!user) {
         Logger.error('removeBonuses', 'User not found');
         return res.status(404).json({ error: true, message: 'User not found' });
@@ -456,7 +497,7 @@ class UserController {
       }
 
       // Find user via phoneNumber
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
 
       //If user not found return error
       if (!user) {
@@ -517,7 +558,7 @@ class UserController {
       }
 
       // Find user via phoneNumber
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
 
       //If user not found return error
       if (!user) {
@@ -578,7 +619,7 @@ class UserController {
         return res.status(400).json({ error: true, message: 'Phone number is required' });
       }
       // find user
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
 
       // if user not found return status 404
       if (!user) {
@@ -645,7 +686,7 @@ class UserController {
         return res.status(400).json({ error: true, message: 'Phone number is required' });
       }
       // find user
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
 
       // if user not found return status 404
       if (!user) {
@@ -703,7 +744,7 @@ class UserController {
     Logger.start('updateRequestStatus');
     try {
       const { phoneNumber } = req.body;
-      const user = await UserService.findUserByphoneNumber(phoneNumber);
+      const user = await UserService.findUserByPhoneNumber(phoneNumber);
       if (!phoneNumber) {
         Logger.error('updateRequestStatus', 'phonenumbe is required to update request status');
         return res.status(400).json({ error: true, message: 'Phone number is required' });

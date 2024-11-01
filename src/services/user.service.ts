@@ -80,6 +80,7 @@ export default class UserService {
     // Return total adjustment for logging or further processing if needed
     return totalAdjustment;
   }
+
   public static async applyBalanceAdjustment(
     userId: string,
     existingTransaction: ITransaction,
@@ -119,7 +120,7 @@ export default class UserService {
     return User.findOne({ chatId });
   }
 
-  public static async findUserByphoneNumber(phoneNumber: string): Promise<IUser | null> {
+  public static async findUserByPhoneNumber(phoneNumber: string): Promise<IUser | null> {
     return User.findOne({ phone: phoneNumber });
   }
 
@@ -207,14 +208,17 @@ export default class UserService {
   }
 
   // use it to check before sending a new request
-  public static async hasActiveRequests(phoneNumber: string) {
+  public static async hasActiveRequests(phoneNumber: string): Promise<boolean> {
     return (await BonusesTransaction.find({ isActive: true, phone: phoneNumber })) ? true : false;
   }
 
   // user could not creat /
-  static async updateUserSudoStatus(phoneNumber: string, isSudo: boolean) {
+  static async updateUserSudoStatus(
+    phoneNumber: string,
+    isSudo: boolean
+  ): Promise<boolean | void | null> {
     try {
-      const user = await this.findUserByphoneNumber(phoneNumber);
+      const user = await this.findUserByPhoneNumber(phoneNumber);
       if (!user) {
         throw new Error('User not found');
       }
@@ -227,7 +231,7 @@ export default class UserService {
 
   static async updateUserAdminStatus(phoneNumber: string, isAdmin: boolean) {
     try {
-      const user = await this.findUserByphoneNumber(phoneNumber);
+      const user = await this.findUserByPhoneNumber(phoneNumber);
       if (!user) {
         throw new Error('User not found');
       }

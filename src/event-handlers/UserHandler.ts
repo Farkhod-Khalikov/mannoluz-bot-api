@@ -94,8 +94,9 @@ export default class UserHandler {
     const chatId = msg.chat.id;
     const phoneNumber = msg.contact?.phone_number.replace('+', '');
     const name = msg.contact?.first_name;
+
     if (phoneNumber && name) {
-      const existingUser = await UserService.findUserByphoneNumber(phoneNumber);
+      const existingUser = await UserService.findUserByPhoneNumber(phoneNumber);
       if (existingUser) {
         this.bot.sendMessage(chatId, i18n.t('user_already_exists'));
       } else {
@@ -332,7 +333,7 @@ export default class UserHandler {
         console.log(`Phone number received: ${phoneNumber}`);
 
         // Check if user exists
-        const user = await UserService.findUserByphoneNumber(phoneNumber);
+        const user = await UserService.findUserByPhoneNumber(phoneNumber);
         if (user) {
           user.isAdmin = true;
           await user.save();
@@ -378,7 +379,7 @@ export default class UserHandler {
         console.log(`Phone number received: ${phoneNumber}`);
 
         // Check if user exists
-        const user = await UserService.findUserByphoneNumber(phoneNumber);
+        const user = await UserService.findUserByPhoneNumber(phoneNumber);
         if (user) {
           user.isAdmin = false;
           await user.save();
@@ -414,6 +415,7 @@ export default class UserHandler {
       this.bot.sendMessage(chatId, i18n.t('user_not_found'));
       return;
     }
+
     const confirmKeyboard = {
       inline_keyboard: [
         [
@@ -529,10 +531,8 @@ export default class UserHandler {
 
             // Fetch transactions from the database
             const user = await UserService.findUserByChatId(msg.chat.id);
-            console.log(user);
 
             const transactions = await MoneyTransaction.find({ userId: user?.id });
-            console.log(transactions);
 
             // Convert user-provided dates from dd.mm.yyyy to yyyy-mm-dd
             const startDateISO = moment(startDate, 'DD.MM.YYYY').format('YYYY-MM-DD');

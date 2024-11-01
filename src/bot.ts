@@ -6,7 +6,7 @@ dotenv.config({ path: __dirname + '/../.env' });
 import TelegramBot from 'node-telegram-bot-api';
 import { initDB } from './db';
 import express from 'express';
-import MessageHandler from './eventHandlers/MessageHandler';
+import MessageHandler from './event-handlers/MessageHandler';
 import UserController from './controllers/UserController';
 import ProductController from './controllers/ProductController';
 
@@ -17,6 +17,9 @@ const token = process.env.TOKEN || '';
 
 // BOT initialization
 const bot = new TelegramBot(token, { polling: true });
+if (!bot) console.log('[FAILED] Bot is not initialized.');
+// SUCCESS if BOT is created
+console.log('[SUCCESS] Bot is started.');
 
 // Database initialization
 initDB(MONGO);
@@ -30,10 +33,6 @@ const messageHandler = new MessageHandler(bot);
 const app = express();
 app.use(express.json());
 
-// if bot not initialized log the error
-if (!bot) console.log('[FAILED] Bot is not initialized.');
-// SUCCESS if BOT is created
-console.log('[SUCCESS] Bot is started.');
 
 // ROUTES
 

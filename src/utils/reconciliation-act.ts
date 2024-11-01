@@ -1,7 +1,8 @@
 import fs from 'fs';
 import PDFDocument from 'pdfkit';
 import i18n from './i18n';
-import path from 'path'; 
+import path from 'path';
+
 export const generateReconciliationPDF = async (
   startDate: string,
   endDate: string,
@@ -24,8 +25,10 @@ export const generateReconciliationPDF = async (
     stream.on('finish', resolve);
     stream.on('error', reject);
     doc.pipe(stream);
-    const fontPath = path.join(__dirname, '../../fonts/Times-Roman.ttf')
+
+    const fontPath = path.join(__dirname, '../../fonts/Times-Roman.ttf');
     doc.font(fontPath);
+
     const rowHeight = 20;
     const cellWidth = 100;
     const textOffset = 6; // Offset to center text vertically inside the row
@@ -40,10 +43,7 @@ export const generateReconciliationPDF = async (
     });
 
     // Title and Date Range
-    doc
-      .fontSize(20)
-      .text(i18n.t('reconciliation_act'), { align: 'center' })
-      .moveDown(3);
+    doc.fontSize(20).text(i18n.t('reconciliation_act'), { align: 'center' }).moveDown(3);
     doc
       .fontSize(14)
       .text(`${i18n.t('for_period')} ${startDate} - ${endDate}`, { align: 'center' })
@@ -57,23 +57,25 @@ export const generateReconciliationPDF = async (
       `${i18n.t('reconciliation_removal')}`,
       `${i18n.t('reconciliation_result')}`,
     ];
+
     const tableTop = doc.y + 20;
+    const headerRowHeight = rowHeight * 2; // Double height for headers
+    const headerY = tableTop; // Use original table top position for headers
 
     // Draw table headers
     headers.forEach((header, index) => {
       const x = 50 + index * cellWidth;
       doc
-        .text(header, x, tableTop + textOffset, { width: cellWidth, align: 'center' })
-        .rect(x, tableTop, cellWidth, rowHeight)
+        .fontSize(10)
+        .text(header, x, headerY + textOffset, { width: cellWidth, align: 'center' })
+        .rect(x, headerY, cellWidth, headerRowHeight) // Adjust height for header cell
         .stroke();
     });
 
-    doc.moveDown();
-
-    let rowY = tableTop + rowHeight;
+    // Move the rowY position down to account for the header height
+    let rowY = headerY + headerRowHeight; // Start below the headers
 
     let isFirstRow = true;
-
     const maxY = 700; // Maximum Y position before adding a new page
 
     // Loop through rows and populate the table
@@ -105,7 +107,7 @@ export const generateReconciliationPDF = async (
         });
 
       doc.rect(50, rowY, cellWidth * headers.length, rowHeight).stroke();
-      rowY += rowHeight;
+      rowY += rowHeight; // Increment for the next row
     });
 
     // Add the "Total" row and center the text
