@@ -10,9 +10,9 @@ export interface ITransaction extends Document {
   updatedAt: Date;
   description?: string;
   transactionType: string;
-  date?: string;
-  oldBalance: number;
-  newBalance: number;
+  date: string;
+  oldBalance?: number;
+  newBalance?: number;
 }
 
 const bonusesTransactionsSchema = new Schema<ITransaction>(

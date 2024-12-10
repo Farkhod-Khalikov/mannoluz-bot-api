@@ -10,8 +10,8 @@ const moneyTransactionsSchema = new Schema<ITransaction>(
     description: { type: String, required: false },
     transactionType: { type: String, required: false, default: 'money' },
     date: {type: String, required: false},
-    oldBalance: { type: Number, required: true },
-    newBalance: { type: Number, required: true },
+    oldBalance: { type: Number, required: true, default: 0},
+    newBalance: { type: Number, required: true, default: 0},
   },
   { timestamps: true }
 );

@@ -2,7 +2,6 @@ import fs from 'fs';
 import PDFDocument from 'pdfkit';
 import i18n from './i18n';
 import path from 'path';
-
 export const generateReconciliationPDF = async (
   startDate: string,
   endDate: string,
@@ -31,7 +30,7 @@ export const generateReconciliationPDF = async (
 
     const rowHeight = 20;
     const cellWidth = 100;
-    const textOffset = 6; // Offset to center text vertically inside the row
+    const textOffset = 6;
 
     // Sort tableRows by dateRange (DD.MM.YYYY format)
     tableRows.sort((a, b) => {
@@ -59,8 +58,8 @@ export const generateReconciliationPDF = async (
     ];
 
     const tableTop = doc.y + 20;
-    const headerRowHeight = rowHeight * 2; // Double height for headers
-    const headerY = tableTop; // Use original table top position for headers
+    const headerRowHeight = rowHeight * 2;
+    const headerY = tableTop;
 
     // Draw table headers
     headers.forEach((header, index) => {
@@ -68,15 +67,13 @@ export const generateReconciliationPDF = async (
       doc
         .fontSize(10)
         .text(header, x, headerY + textOffset, { width: cellWidth, align: 'center' })
-        .rect(x, headerY, cellWidth, headerRowHeight) // Adjust height for header cell
+        .rect(x, headerY, cellWidth, headerRowHeight)
         .stroke();
     });
 
-    // Move the rowY position down to account for the header height
-    let rowY = headerY + headerRowHeight; // Start below the headers
-
-    let isFirstRow = true;
+    let rowY = headerY + headerRowHeight;
     const maxY = 700; // Maximum Y position before adding a new page
+    let isFirstRow = true;
 
     // Loop through rows and populate the table
     tableRows.forEach((row) => {
@@ -85,52 +82,33 @@ export const generateReconciliationPDF = async (
         rowY = 50; // Reset Y for the new page
       }
 
+      // Display initBalance only for the first row
       const displayInitBalance = isFirstRow ? initBalance : 0;
       isFirstRow = false;
 
+      // Set result column to 0 for all rows except the total row
       const displayResult = 0;
 
       doc
         .text(row.dateRange, 50, rowY + textOffset, { width: cellWidth, align: 'left' })
-        .text(displayInitBalance.toString(), 150, rowY + textOffset, {
-          width: cellWidth,
-          align: 'center',
-        })
-        .text(row.addition.toString(), 250, rowY + textOffset, {
-          width: cellWidth,
-          align: 'center',
-        })
+        .text(displayInitBalance.toString(), 150, rowY + textOffset, { width: cellWidth, align: 'center' })
+        .text(row.addition.toString(), 250, rowY + textOffset, { width: cellWidth, align: 'center' })
         .text(row.removal.toString(), 350, rowY + textOffset, { width: cellWidth, align: 'center' })
-        .text(displayResult.toString(), 450, rowY + textOffset, {
-          width: cellWidth,
-          align: 'center',
-        });
+        .text(displayResult.toString(), 450, rowY + textOffset, { width: cellWidth, align: 'center' });
 
       doc.rect(50, rowY, cellWidth * headers.length, rowHeight).stroke();
-      rowY += rowHeight; // Increment for the next row
+      rowY += rowHeight;
     });
 
-    // Add the "Total" row and center the text
+    // Add the "Total" row and include the actual result
+    const totalResult = initBalance + sumOfAllPositives - sumOfAllNegatives;
+
     doc
       .text(`${i18n.t('total')}`, 50, rowY + textOffset, { width: cellWidth, align: 'left' })
       .text(initBalance.toString(), 150, rowY + textOffset, { width: cellWidth, align: 'center' })
-      .text(sumOfAllPositives.toString(), 250, rowY + textOffset, {
-        width: cellWidth,
-        align: 'center',
-      })
-      .text(sumOfAllNegatives.toString(), 350, rowY + textOffset, {
-        width: cellWidth,
-        align: 'center',
-      })
-      .text(
-        (initBalance + sumOfAllPositives - sumOfAllNegatives).toString(),
-        450,
-        rowY + textOffset,
-        {
-          width: cellWidth,
-          align: 'center',
-        }
-      );
+      .text(sumOfAllPositives.toString(), 250, rowY + textOffset, { width: cellWidth, align: 'center' })
+      .text(sumOfAllNegatives.toString(), 350, rowY + textOffset, { width: cellWidth, align: 'center' })
+      .text(totalResult.toString(), 450, rowY + textOffset, { width: cellWidth, align: 'center' });
 
     doc.rect(50, rowY, cellWidth * headers.length, rowHeight).stroke();
 

@@ -62,7 +62,6 @@ export default class ProductService {
 
   static async deleteProduct(documentId: string, agentId?: string) {
     try {
-      //NOTE: firs check if agentId and do something else
       // Deleting document when no agentId provided
       if (agentId) {
         const deletedProduct = await Product.findOneAndDelete({

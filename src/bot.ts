@@ -17,6 +17,7 @@ const token = process.env.TOKEN || '';
 
 // BOT initialization
 const bot = new TelegramBot(token, { polling: true });
+
 if (!bot) console.log('[FAILED] Bot is not initialized.');
 // SUCCESS if BOT is created
 console.log('[SUCCESS] Bot is started.');
@@ -26,7 +27,7 @@ initDB(MONGO);
 
 //Controllers and Handlers
 const userController = new UserController(bot);
-const productController = new ProductController(bot);
+const productController = new ProductController();
 const messageHandler = new MessageHandler(bot);
 
 // Express initialization

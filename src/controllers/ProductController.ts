@@ -1,13 +1,8 @@
 import { Request, Response } from 'express';
 import ProductService from '../services/product.service';
 import Logger from '../utils/logger';
-import TelegramBot from 'node-telegram-bot-api';
 
 export default class ProductController {
-  private bot: TelegramBot;
-  constructor(bot: TelegramBot) {
-    this.bot = bot;
-  }
   // Add Product or Update  Product by documentId and agentId
   async addProduct(req: Request, res: Response) {
     Logger.start('addProduct', 'Adding product...');

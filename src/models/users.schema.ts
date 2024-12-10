@@ -17,6 +17,7 @@ export interface IUser extends Document {
 // Define the schema for the User model
 const userSchema = new Schema<IUser>(
   {
+
     chatId: { type: Number, required: true },
     name: { type: String, required: true },
     phone: { type: String, required: true },

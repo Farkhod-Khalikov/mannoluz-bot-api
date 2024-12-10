@@ -1,9 +1,9 @@
-import TelegramBot from 'node-telegram-bot-api';
-import UserService from '../services/user.service';
-import i18n from '../utils/i18n';
+import TelegramBot from "node-telegram-bot-api";
+import UserService from "../services/user.service";
+import i18n from "../utils/i18n";
+import MoneyTransaction from "../models/money-transactions.schema";
 
 export default class TransactionHandler {
-  
   private bot: TelegramBot;
   private userTransactionPages: Map<number, number> = new Map();
 
@@ -16,17 +16,17 @@ export default class TransactionHandler {
     try {
       const chatId = msg.chat.id;
       const user = await UserService.findUserByChatId(chatId);
-      if (!user){
-        this.bot.sendMessage(chatId, i18n.t('user_not_found'));
-        return
+      if (!user) {
+        this.bot.sendMessage(chatId, i18n.t("user_not_found"));
+        return;
       }
       this.resetTransactionPage(chatId); // Reset the current page to 1
       await this.showTransactions(chatId);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error("Error fetching transactions:", error);
       this.bot.sendMessage(
         msg.chat.id,
-        'There was an error fetching the transaction list. Please try again later.'
+        "There was an error fetching the transaction list. Please try again later."
       );
     }
   }
@@ -35,18 +35,28 @@ export default class TransactionHandler {
     const user = await UserService.findUserByChatId(chatId);
 
     if (!user) {
-      throw new Error('Could not retrieve user');
+      throw new Error("Could not retrieve user");
     }
+
+    let moneyTransactions = await MoneyTransaction.find();
+
+    let sortedMoneyTransactions = await UserService.sortTransactionsByDate(
+      moneyTransactions
+    );
+
+    await UserService.updateTransactionsBalances(sortedMoneyTransactions);
+    console.log(sortedMoneyTransactions);
 
     let transactions = await UserService.getAllTransactions(user.id);
 
     if (transactions.length === 0) {
-      this.bot.sendMessage(chatId, i18n.t('no_transactions'));
+      this.bot.sendMessage(chatId, i18n.t("no_transactions"));
       return;
     }
 
     transactions = transactions.sort(
-      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: any, b: any) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
 
     const currentPage = this.userTransactionPages.get(chatId) || 1;
@@ -59,17 +69,20 @@ export default class TransactionHandler {
       .slice(startIndex, endIndex)
       .map((transaction: any) => {
         const date = new Date(transaction.createdAt);
-        const symbol = transaction.transactionType === 'money' ? '$' : i18n.t('coins');
-        const formattedDate = `${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1)
+        const symbol =
+          transaction.transactionType === "money" ? "$" : i18n.t("coins");
+        const formattedDate = `${date.getDate().toString().padStart(2, "0")}.${(
+          date.getMonth() + 1
+        )
           .toString()
-          .padStart(2, '0')}.${date.getFullYear()}`;
+          .padStart(2, "0")}.${date.getFullYear()}`;
         return `${
           transaction.sum > 0
-            ? i18n.t('bonuses_addition') /*.padEnd(10, ' ')*/
-            : i18n.t('bonuses_removal') /*.padEnd(10, ' ')*/
+            ? i18n.t("bonuses_addition") /*.padEnd(10, ' ')*/
+            : i18n.t("bonuses_removal") /*.padEnd(10, ' ')*/
         } | ${formattedDate} | ${transaction.sum} ${symbol}\n`;
       })
-      .join('\n');
+      .join("\n");
 
     const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
     const numPagesToShow = 3; // Number of page buttons to display in each division
@@ -78,15 +91,18 @@ export default class TransactionHandler {
       1,
       Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
     );
-    const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
+    const endDivision = Math.min(
+      totalPages,
+      startDivision + numPagesToShow - 1
+    );
 
     const showPrev = currentPage > 1;
     const showNext = currentPage < totalPages;
 
     if (startDivision > 1) {
       paginationButtons.push({
-        text: '...',
-        callback_data: 'transaction_ellipsis_prev',
+        text: "...",
+        callback_data: "transaction_ellipsis_prev",
       });
     }
 
@@ -99,8 +115,8 @@ export default class TransactionHandler {
 
     if (endDivision < totalPages) {
       paginationButtons.push({
-        text: '...',
-        callback_data: 'transaction_ellipsis_next',
+        text: "...",
+        callback_data: "transaction_ellipsis_next",
       });
     }
 
@@ -116,15 +132,15 @@ export default class TransactionHandler {
     const navButtons: TelegramBot.InlineKeyboardButton[] = [];
     if (showPrev) {
       navButtons.push({
-        text: i18n.t('prev'),
-        callback_data: 'transaction_previous_page',
+        text: i18n.t("prev"),
+        callback_data: "transaction_previous_page",
       });
     }
 
     if (showNext) {
       navButtons.push({
-        text: i18n.t('next'),
-        callback_data: 'transaction_next_page',
+        text: i18n.t("next"),
+        callback_data: "transaction_next_page",
       });
     }
 
@@ -134,9 +150,11 @@ export default class TransactionHandler {
 
     await this.bot.sendMessage(
       chatId,
-      `💸*${i18n.t('transactions')} (${currentPage} ${i18n.t("of")} ${totalPages})*\n\n${transactionPage}`,
+      `💸*${i18n.t("transactions")} (${currentPage} ${i18n.t(
+        "of"
+      )} ${totalPages})*\n\n${transactionPage}`,
       {
-        parse_mode: 'Markdown',
+        parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: keyboard,
         },
@@ -152,7 +170,7 @@ export default class TransactionHandler {
     const user = await UserService.findUserByChatId(chatId);
 
     if (!user) {
-      throw new Error('Could not retrieve user');
+      throw new Error("Could not retrieve user");
     }
 
     const transactions = await UserService.getAllTransactions(user.id);
@@ -160,27 +178,30 @@ export default class TransactionHandler {
     const currentPage = this.userTransactionPages.get(chatId) || 1;
     const numPagesToShow = 3;
 
-    if (action === 'transaction_previous_page') {
+    if (action === "transaction_previous_page") {
       this.userTransactionPages.set(
         chatId,
         Math.max((this.userTransactionPages.get(chatId) || 1) - 1, 1)
       );
-    } else if (action === 'transaction_next_page') {
+    } else if (action === "transaction_next_page") {
       this.userTransactionPages.set(
         chatId,
         Math.min((this.userTransactionPages.get(chatId) || 1) + 1, totalPages)
       );
-    } else if (action.startsWith('transaction_page_')) {
-      const page = parseInt(action.split('_')[2], 10);
-      this.userTransactionPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
-    } else if (action === 'transaction_ellipsis_prev') {
+    } else if (action.startsWith("transaction_page_")) {
+      const page = parseInt(action.split("_")[2], 10);
+      this.userTransactionPages.set(
+        chatId,
+        Math.max(1, Math.min(page, totalPages))
+      );
+    } else if (action === "transaction_ellipsis_prev") {
       const startDivision = Math.max(
         1,
         Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
       );
       const newStartPage = Math.min(totalPages, startDivision - numPagesToShow);
       this.userTransactionPages.set(chatId, newStartPage);
-    } else if (action === 'transaction_ellipsis_next') {
+    } else if (action === "transaction_ellipsis_next") {
       const newStartPage = Math.min(totalPages, currentPage + numPagesToShow);
       this.userTransactionPages.set(chatId, newStartPage);
     }

@@ -10,6 +10,7 @@ i18next.init({
         request_saved: '✅Your request is saved!',
         btn_get_reconciliation_act: '🧾Get Reconciliation Act',
         btn_list_requests: '📭Requests',
+        new_balance:"Updated Balance",
         money_balance_positive_update:
           'Due to transaction deletion your money balance has been INCREASED by',
         money_balance_negative_update:
@@ -66,6 +67,7 @@ i18next.init({
         provide_post_title: 'Post Title:',
         price: 'Price',
         provide_post_message: 'Post Message:',
+        provide_post_image: 'Post Image:',
         btn_confirm: '✅Confirm',
         post_sent: '✅Succesfully send',
         registration_on_start: 'Register ME',
@@ -130,8 +132,6 @@ Thank you for choosing MANNOL!`,
         btn_remove_admin: '➖Удалить Админа',
         choose_start_date: 'Укажите начальную дату в формате (дд.мм.гггг):',
         choose_end_date: 'Укажите конечную дату в формате (дд.мм.гггг):',
-        money_balance_positive_update:
-          'Благодаря удалению транзакций ваш денежный баланс увеличился на',
         enter_phone_number:
           'Пожалуйста напишите номер админа без пробелов в предоставленом формате (998 xx xxx xx xx):',
         active_request_exist:
@@ -142,6 +142,7 @@ Thank you for choosing MANNOL!`,
         next: 'след➡️',
         yes_sure: '✅Да, конечно',
         no_thanks: '❌Нет, спасибо',
+        provide_post_image: 'Отправьте фотку поста:',
         price: 'Цена',
         sudo_granted_notification:
           '⚠️Вам предаставили привилегии sudo админа. Пожалуйста перезапустите бота коммандой /start.',
@@ -191,11 +192,17 @@ Thank you for choosing MANNOL!`,
         contact_saved: '✅Контакт успешно сохранен.',
         btn_credit_card: '💳Моя Кредитная карта',
         btn_settings: '⚙️Настройки',
+        money_balance_positive_update: 
+  'Из-за удаления транзакции ваш баланс был УВЕЛИЧЕН',
+money_balance_negative_update: 
+  'Из-за удаления транзакции ваш баланс был УМЕНЬШЕН',
+
         btn_list_products: '🛒Товары',
         settings_menu_prompt: '⚙️Выберите настройки которые хотите изменить',
         btn_go_back: '🔙Назад',
         btn_change_language: '🌐Изменить язык',
         btn_contact_us: '📞Связаться с нами',
+        new_balance: "Обновленный Баланс",
         btn_about_us: '📃О нас',
         language_changed: '✅Язык изменен.',
         post_creation_cancelled: '❌Пост НЕ отправлен.',
@@ -222,9 +229,14 @@ Thank you for choosing MANNOL!`,
         correction: "⚠️To'g'irlash",
         btn_list_requests: "📭So'rovlar",
         reconciliation_act: 'Hisoblash Akti',
+        new_balance: "Yangilangan Balans",
         reconciliation_act_dates: 'Sana',
         for_period: 'Davr uchun:',
         init_balance: "boshlang'ich qoldiq",
+        money_balance_positive_update: 
+  'Tranzaksiya o‘chirilgani sababli sizning mablag‘ingiz ORTGAN',
+money_balance_negative_update: 
+  'Tranzaksiya o‘chirilgani sababli sizning mablag‘ingiz KAMAYGAN',
         reconciliation_addition: "tovar xaridi/qaytarish to'lovlari",
         reconciliation_removal: "to'lovlar/qaytarish tovarlari",
         reconciliation_result: 'yakuniy qoldiq',
@@ -242,6 +254,8 @@ Thank you for choosing MANNOL!`,
           "⚠️Sizga adminlik huquqlari berildi. Iltimos, botni /start buyrug'i bilan qayta ishga tushiring.",
         btn_add_admin: "➕Adminni qo'shish",
         btn_remove_admin: '➖Adminni olib tashlash',
+        provide_post_image: 'Iltimos, postning fotosini yuboring:',
+
         choose_start_date: 'Boshlanish sanasini (kun.oy.yil) formatida kiriting:',
         bonuses_rules:
           'Mannoluz Bot Bonuses Usage Rules:\n\n1. Eligibility: Bonuses are available to registered users aged 18 and older\n2.Accrual: Bonuses are earned through specific actions and promotional activities.\n3. Transferability: Bonuses are non-transferable and cannot be shared.\n4. Limitations: Bonuses cannot be exchanged for cash or combined with other offers.\n5. Account Status: Bonuses may be forfeited if the account is suspended or terminated ',
