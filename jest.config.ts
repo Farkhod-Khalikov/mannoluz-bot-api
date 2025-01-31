@@ -1,4 +1,4 @@
-import type { Config } from 'jest';
+import type { Config } from "jest";
 
 const config: Config = {
   // Automatically clear mock calls and instances between every test
@@ -17,7 +17,7 @@ const config: Config = {
   testMatch: ["**/tests/**/*.[jt]s?(x)", "**/?(*.)+(spec|test).[tj]s?(x)"],
 
   // Transform TypeScript files using ts-jest
-  preset: 'ts-jest',
+  preset: "ts-jest",
 
   // Transform configuration
   transform: {

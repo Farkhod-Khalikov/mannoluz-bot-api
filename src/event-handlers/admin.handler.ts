@@ -1,11 +1,11 @@
-import TelegramBot from 'node-telegram-bot-api';
-import UserService from '../services/user.service';
-import i18n from '../utils/i18n';
-import fs from 'fs';
-import path from 'path';
-import Post from '../models/posts.schema';
-import { v4 as uuidv4 } from 'uuid';
-import UserHandler from './UserHandler';
+import TelegramBot from "node-telegram-bot-api";
+import UserService from "../services/user.service";
+import i18n from "../utils/i18n";
+import fs from "fs";
+import path from "path";
+import Post from "../models/posts.schema";
+import { v4 as uuidv4 } from "uuid";
+import UserHandler from "./user.handler";
 export default class AdminHandler {
   private userHandler: UserHandler;
   private bot: TelegramBot;
@@ -24,7 +24,7 @@ export default class AdminHandler {
   constructor(bot: TelegramBot) {
     this.bot = bot;
     this.userHandler = new UserHandler(bot);
-    this.tempDir = path.join(__dirname, '..', 'temp/admin-posts');
+    this.tempDir = path.join(__dirname, "..", "temp/admin-posts");
     if (!fs.existsSync(this.tempDir)) {
       fs.mkdirSync(this.tempDir);
     }
@@ -44,7 +44,7 @@ export default class AdminHandler {
 
     // Store title and message
     this.adminPostData.set(chatId, {
-      adminName: 'adminName', // Replace with logic to get the admin's name
+      adminName: "adminName", // Replace with logic to get the admin's name
       title: title,
       message: body,
       image: null,
@@ -56,7 +56,7 @@ export default class AdminHandler {
 
   // Step 2: Handle title reply
   private async handlePostTitleReply(chatId: number): Promise<string | null> {
-    const forceReplyMessageId = await this.bot.sendMessage(chatId, i18n.t('provide_post_title'), {
+    const forceReplyMessageId = await this.bot.sendMessage(chatId, i18n.t("provide_post_title"), {
       reply_markup: { force_reply: true },
     });
 
@@ -66,7 +66,7 @@ export default class AdminHandler {
           this.adminPostData.delete(chatId);
           await this.bot.sendMessage(
             chatId,
-            'You have provided incorrect reply message for text (string) holder'
+            "You have provided incorrect reply message for text (string) holder",
           );
           await this.userHandler.sendMainMenu(chatId);
           return;
@@ -78,7 +78,7 @@ export default class AdminHandler {
 
   // Step 3: Handle message reply
   private async handlePostBodyReply(chatId: number): Promise<string | null> {
-    const ForceReplyMessageId = await this.bot.sendMessage(chatId, i18n.t('provide_post_message'), {
+    const ForceReplyMessageId = await this.bot.sendMessage(chatId, i18n.t("provide_post_message"), {
       reply_markup: { force_reply: true },
     });
 
@@ -88,7 +88,7 @@ export default class AdminHandler {
           this.adminPostData.delete(chatId);
           await this.bot.sendMessage(
             chatId,
-            'You have provided incorrect reply message for text (string) holder'
+            "You have provided incorrect reply message for text (string) holder",
           );
           await this.userHandler.sendMainMenu(chatId);
           return;
@@ -100,7 +100,7 @@ export default class AdminHandler {
 
   // Step 4: Ask for image input
   private async askForImage(chatId: number): Promise<void> {
-    const reply = await this.bot.sendMessage(chatId, i18n.t('provide_post_image'), {
+    const reply = await this.bot.sendMessage(chatId, i18n.t("provide_post_image"), {
       reply_markup: { force_reply: true },
     });
 
@@ -108,7 +108,7 @@ export default class AdminHandler {
       // if user has written basic text message reply
       if (!replyMsg.photo) {
         this.adminPostData.delete(chatId);
-        await this.bot.sendMessage(chatId, 'you have provided incorrect image format.');
+        await this.bot.sendMessage(chatId, "you have provided incorrect image format.");
         await this.userHandler.sendMainMenu(chatId);
         return;
       }
@@ -138,7 +138,7 @@ export default class AdminHandler {
       // Rename the file to the desired format
       fs.rename(tempFilePath, newFilePath, (err) => {
         if (err) {
-          console.error('Failed to rename temp file:', err);
+          console.error("Failed to rename temp file:", err);
         }
       });
 
@@ -153,15 +153,15 @@ export default class AdminHandler {
 
       this.bot.sendPhoto(chatId, newFilePath, {
         caption: postSummary,
-        parse_mode: 'Markdown',
+        parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: [
-            [{ text: i18n.t('btn_confirm'), callback_data: 'confirm_post' }],
-            [{ text: i18n.t('btn_cancel_post_creation'), callback_data: 'cancel_post' }],
+            [{ text: i18n.t("btn_confirm"), callback_data: "confirm_post" }],
+            [{ text: i18n.t("btn_cancel_post_creation"), callback_data: "cancel_post" }],
           ],
         },
       });
-    }     
+    }
   }
 
   // Handle post confirmation
@@ -184,10 +184,10 @@ export default class AdminHandler {
       for (const user of users) {
         this.bot.sendPhoto(user.chatId, postData.image, {
           caption: `*${postData.title}*\n\n${postData.message}`,
-          parse_mode: 'Markdown',
+          parse_mode: "Markdown",
         });
       }
-      this.bot.sendMessage(chatId, i18n.t('post_sent'));
+      this.bot.sendMessage(chatId, i18n.t("post_sent"));
       this.userHandler.sendMainMenu(chatId);
     }
 
@@ -200,7 +200,7 @@ export default class AdminHandler {
     const currentPostData = this.adminPostData.get(chatId);
     if (currentPostData?.image) {
       fs.unlink(currentPostData.image, (err) => {
-        if (err) console.error('Failed to delete temp file:', err);
+        if (err) console.error("Failed to delete temp file:", err);
       });
     }
 

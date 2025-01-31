@@ -1,4 +1,4 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 // Interface for the Post document
 export interface IPost extends Document {
@@ -15,5 +15,5 @@ const PostSchema: Schema = new Schema({
   imagepath: { type: String, required: false },
 });
 
-const Post = mongoose.model<IPost>('Post', PostSchema);
+const Post = mongoose.model<IPost>("Post", PostSchema);
 export default Post;

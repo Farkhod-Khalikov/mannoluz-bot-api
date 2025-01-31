@@ -5,11 +5,12 @@
   "scripts": {
     "start": "ts-node ./src/bot.ts",
     "start:dev": "nodemon ./src/bot.ts",
-    "test": "jest"
+    "test": "jest",
+    "format": "prettier --write ."
   },
   "keywords": [],
   "author": "Farhod Legend",
-  "license": "",
+  "license": "MIT",
   "description": "",
   "dependencies": {
     "@types/express": "^4.17.21",
@@ -39,6 +40,7 @@
     "eslint": "^9.10.0",
     "globals": "^15.9.0",
     "jest": "^29.7.0",
+    "prettier": "^3.4.2",
     "ts-jest": "^29.2.4",
     "typescript-eslint": "^8.6.0"
   }

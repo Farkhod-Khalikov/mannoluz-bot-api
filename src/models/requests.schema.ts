@@ -1,10 +1,10 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, Schema } from "mongoose";
 
 export interface IPurchaseRequest extends Document {
   username: string;
   phoneNumber: number;
   comment: string;
-  createdAt: Date; // update using timestampts P.S: updatedAt required if you are goint to update isActive
+  createdAt: Date;
   updatedAt: Date;
   isActive: boolean;
 }
@@ -18,10 +18,10 @@ const PurchaseRequestSchema: Schema = new Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 export const PurchaseRequest = mongoose.model<IPurchaseRequest>(
-  'PurchaseRequest',
-  PurchaseRequestSchema
+  "PurchaseRequest",
+  PurchaseRequestSchema,
 );

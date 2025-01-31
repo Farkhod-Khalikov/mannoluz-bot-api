@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from "fs";
 
 export default class FileManager {
   public static renameFile(oldPath: string, newPath: string): string {

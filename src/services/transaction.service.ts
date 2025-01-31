@@ -1,4 +1,4 @@
-import BonusesTransaction from '../models/bonuses-transactions.schema';
+import BonusesTransaction from "../models/bonuses.schema";
 
 export default class TransactionService {
   public static async findTransactionByUniqueId(uniqueId: string) {

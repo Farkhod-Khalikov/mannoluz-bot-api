@@ -1,9 +1,7 @@
-import { PurchaseRequest } from "../models/purchase-requests.schema";
-import BonusesTransaction, {
-  ITransaction,
-} from "../models/bonuses-transactions.schema";
+import { PurchaseRequest } from "../models/requests.schema";
+import BonusesTransaction, { ITransaction } from "../models/bonuses.schema";
 import User, { IUser } from "../models/users.schema";
-import MoneyTransaction from "../models/money-transactions.schema";
+import MoneyTransaction from "../models/money.schema";
 
 export default class UserService {
   // update user's balance history by deleted transaction
@@ -130,13 +128,9 @@ export default class UserService {
     });
   }
 
-  public static async updateTransactionsBalances(
-    transactions: ITransaction[]
-  ): Promise<void> {
+  public static async updateTransactionsBalances(transactions: ITransaction[]): Promise<void> {
     // Step 1: Sort the transactions by date using the sorting function
-    const sortedTransactions = await UserService.sortTransactionsByDate(
-      transactions
-    );
+    const sortedTransactions = await UserService.sortTransactionsByDate(transactions);
 
     // Step 2: Initialize the balance tracker
     let currentBalance = 0;
@@ -159,9 +153,7 @@ export default class UserService {
     return User.findOne({ chatId });
   }
 
-  public static async findUserByPhoneNumber(
-    phoneNumber: string
-  ): Promise<IUser | null> {
+  public static async findUserByPhoneNumber(phoneNumber: string): Promise<IUser | null> {
     return User.findOne({ phone: phoneNumber });
   }
 
@@ -196,7 +188,7 @@ export default class UserService {
     name: string,
     phone: string,
     comment: string,
-    isActive: boolean
+    isActive: boolean,
   ) {
     const purchaseRequest = new PurchaseRequest({
       chatId,
@@ -213,7 +205,7 @@ export default class UserService {
     chatId: number,
     name: string,
     phone: string,
-    language: string
+    language: string,
   ): Promise<void> {
     const user = new User({
       chatId,
@@ -264,7 +256,7 @@ export default class UserService {
   // user could not creat /
   static async updateUserSudoStatus(
     phoneNumber: string,
-    isSudo: boolean
+    isSudo: boolean,
   ): Promise<boolean | void | null> {
     try {
       const user = await this.findUserByPhoneNumber(phoneNumber);

@@ -1,6 +1,5 @@
-import { Document, Model, model, Schema } from 'mongoose';
+import { Document, Model, model, Schema } from "mongoose";
 
-// Define a TypeScript interface for the User document
 export interface IUser extends Document {
   chatId: number;
   name: string;
@@ -11,29 +10,25 @@ export interface IUser extends Document {
   isAdmin?: boolean;
   createdAt?: Date;
   updatedAt?: Date;
-  isSudo?: boolean; 
+  isSudo?: boolean;
 }
 
-// Define the schema for the User model
 const userSchema = new Schema<IUser>(
   {
-
     chatId: { type: Number, required: true },
     name: { type: String, required: true },
     phone: { type: String, required: true },
     language: { type: String, required: true },
-    bonuses: { type: Number, default: 0 }, // split the balance: sum, money
-    money: {type: Number, default: 0},
+    bonuses: { type: Number, default: 0 },
+    money: { type: Number, default: 0 },
     isAdmin: { type: Boolean, default: false },
-    // Add isSudo
-    isSudo: {type: Boolean, default: false},
+    isSudo: { type: Boolean, default: false },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
-// Create the User model
-const User: Model<IUser> = model<IUser>('User', userSchema);
+const User: Model<IUser> = model<IUser>("User", userSchema);
 
 export default User;

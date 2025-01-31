@@ -1,6 +1,6 @@
-import TelegramBot from 'node-telegram-bot-api';
-import ProductService from '../services/product.service';
-import i18n from '../utils/i18n';
+import TelegramBot from "node-telegram-bot-api";
+import ProductService from "../services/product.service";
+import i18n from "../utils/i18n";
 
 class ProductHandler {
   private bot: TelegramBot;
@@ -16,8 +16,8 @@ class ProductHandler {
       this.resetProductPage(chatId);
       await this.showProducts(chatId);
     } catch (error) {
-      console.error('Error fetching products:', error);
-      this.bot.sendMessage(msg.chat.id, i18n.t('error_fetching_products'));
+      console.error("Error fetching products:", error);
+      this.bot.sendMessage(msg.chat.id, i18n.t("error_fetching_products"));
     }
   }
 
@@ -30,13 +30,13 @@ class ProductHandler {
     let products = await ProductService.getAllProducts();
 
     if (products.length === 0) {
-      this.bot.sendMessage(chatId,i18n.t('products_not_found'));
+      this.bot.sendMessage(chatId, i18n.t("products_not_found"));
       return;
     }
 
     // sort by date added (created)
     products = products.sort(
-      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
 
     const currentPage = this.userProductPages.get(chatId) || 1;
@@ -48,16 +48,19 @@ class ProductHandler {
     const productPage = products
       .slice(startIndex, endIndex)
       .map(
-        (product: any) => `*${i18n.t('product')}:* ${product.name}\n*${i18n.t('price')}:* ${product.price} ${i18n.t('coins')}`
+        (product: any) =>
+          `*${i18n.t("product")}:* ${product.name}\n*${i18n.t("price")}:* ${product.price} ${i18n.t(
+            "coins",
+          )}`,
       )
-      .join('\n\n');
+      .join("\n\n");
 
     const paginationButtons: TelegramBot.InlineKeyboardButton[] = [];
     const numPagesToShow = 3; // Number of page buttons to display in each division
 
     const startDivision = Math.max(
       1,
-      Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
+      Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1,
     );
     const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
 
@@ -67,8 +70,8 @@ class ProductHandler {
     // Add ellipsis before page numbers if applicable
     if (startDivision > 1) {
       paginationButtons.push({
-        text: '...',
-        callback_data: 'product_ellipsis_prev',
+        text: "...",
+        callback_data: "product_ellipsis_prev",
       });
     }
 
@@ -83,8 +86,8 @@ class ProductHandler {
     // Add ellipsis after page numbers if applicable
     if (endDivision < totalPages) {
       paginationButtons.push({
-        text: '...',
-        callback_data: 'product_ellipsis_next',
+        text: "...",
+        callback_data: "product_ellipsis_next",
       });
     }
 
@@ -99,14 +102,14 @@ class ProductHandler {
     const navigationButtons: TelegramBot.InlineKeyboardButton[] = [];
     if (showPrev) {
       navigationButtons.push({
-        text: i18n.t('prev'),
-        callback_data: 'product_previous_page',
+        text: i18n.t("prev"),
+        callback_data: "product_previous_page",
       });
     }
     if (showNext) {
       navigationButtons.push({
-        text: i18n.t('next'),
-        callback_data: 'product_next_page',
+        text: i18n.t("next"),
+        callback_data: "product_next_page",
       });
     }
     if (navigationButtons.length > 0) {
@@ -115,13 +118,13 @@ class ProductHandler {
 
     await this.bot.sendMessage(
       chatId,
-      `🛒*${i18n.t('products')} (${currentPage} ${i18n.t('of')} ${totalPages})*\n\n${productPage}`,
+      `🛒*${i18n.t("products")} (${currentPage} ${i18n.t("of")} ${totalPages})*\n\n${productPage}`,
       {
-        parse_mode: 'Markdown',
+        parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: keyboard,
         },
-      }
+      },
     );
   }
 
@@ -131,24 +134,24 @@ class ProductHandler {
     const currentPage = this.userProductPages.get(chatId) || 1;
     const numPagesToShow = 3;
 
-    if (action.startsWith('product_page_')) {
-      const page = parseInt(action.split('_')[2], 10);
+    if (action.startsWith("product_page_")) {
+      const page = parseInt(action.split("_")[2], 10);
       this.userProductPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
-    } else if (action === 'product_previous_page') {
+    } else if (action === "product_previous_page") {
       this.userProductPages.set(chatId, Math.max((this.userProductPages.get(chatId) || 1) - 1, 1));
-    } else if (action === 'product_next_page') {
+    } else if (action === "product_next_page") {
       this.userProductPages.set(
         chatId,
-        Math.min((this.userProductPages.get(chatId) || 1) + 1, totalPages)
+        Math.min((this.userProductPages.get(chatId) || 1) + 1, totalPages),
       );
-    } else if (action === 'product_ellipsis_prev') {
+    } else if (action === "product_ellipsis_prev") {
       const startDivision = Math.max(
         1,
-        Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
+        Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1,
       );
       const newStartPage = Math.min(totalPages, startDivision - numPagesToShow);
       this.userProductPages.set(chatId, newStartPage);
-    } else if (action === 'product_ellipsis_next') {
+    } else if (action === "product_ellipsis_next") {
       const newStartPage = Math.min(totalPages, currentPage + numPagesToShow);
       this.userProductPages.set(chatId, newStartPage);
     }

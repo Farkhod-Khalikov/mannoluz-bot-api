@@ -1,4 +1,3 @@
 // getAdminName
 // getPosts
 // getAllAdmins
-

@@ -1,5 +1,5 @@
-import Product, { IProduct } from '../models/products.schema';
-import Logger from '../utils/logger';
+import Product, { IProduct } from "../models/products.schema";
+import Logger from "../utils/logger";
 
 export default class ProductService {
   private static itemsPerPage = 5;
@@ -19,7 +19,7 @@ export default class ProductService {
     agentId: string,
     name?: string,
     price?: number,
-    date?: string
+    date?: string,
   ) {
     try {
       // Check if the product already exists
@@ -45,8 +45,8 @@ export default class ProductService {
       }).save();
 
       if (!newProduct) {
-        Logger.error('addOrUpdateProduct', 'Could not Create Product Document');
-        throw new Error('Could not create new product document');
+        Logger.error("addOrUpdateProduct", "Could not Create Product Document");
+        throw new Error("Could not create new product document");
       }
 
       return { isNewProduct: true, newProduct };
@@ -54,7 +54,7 @@ export default class ProductService {
       // Catch any unhandled error
     } catch (error) {
       if (error instanceof Error) {
-        Logger.error('addOrUpdateProduct', error.message);
+        Logger.error("addOrUpdateProduct", error.message);
         throw new Error(error.message);
       }
     }
@@ -70,7 +70,7 @@ export default class ProductService {
         });
 
         if (!deletedProduct) {
-          throw new Error('Product Not Found.');
+          throw new Error("Product Not Found.");
         }
         return deletedProduct;
       }
@@ -80,7 +80,7 @@ export default class ProductService {
 
       // if no products found return error
       if (products.deletedCount === 0) {
-        throw new Error('Products with specified document ID NOT found');
+        throw new Error("Products with specified document ID NOT found");
       }
 
       // when products are deleted return counter
@@ -88,7 +88,7 @@ export default class ProductService {
       // Catch any unhandled error
     } catch (error) {
       if (error instanceof Error) {
-        console.error('Error in removeProduct:', error);
+        console.error("Error in removeProduct:", error);
         throw new Error(error.message);
       }
     }

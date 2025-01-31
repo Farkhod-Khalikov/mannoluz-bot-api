@@ -1,5 +1,5 @@
 //./models/transactions.ts
-import { Document, Model, model, Schema } from 'mongoose';
+import { Document, Model, model, Schema } from "mongoose";
 
 export interface ITransaction extends Document {
   documentId: string;
@@ -22,17 +22,17 @@ const bonusesTransactionsSchema = new Schema<ITransaction>(
     userId: { type: String, required: true },
     sum: { type: Number, required: true },
     description: { type: String, required: false },
-    transactionType: { type: String, required: false, default: 'bonuses' },
+    transactionType: { type: String, required: false, default: "bonuses" },
     oldBalance: { type: Number, required: false, deafult: 0 }, // Added in case if bonuses' balance history should be remembered just like money balance
     newBalance: { type: Number, required: false, deafult: 0 },
     date: { type: String, required: false },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const BonusesTransaction: Model<ITransaction> = model<ITransaction>(
-  'BonusesTransaction',
-  bonusesTransactionsSchema
+  "BonusesTransaction",
+  bonusesTransactionsSchema,
 );
 
 export default BonusesTransaction;

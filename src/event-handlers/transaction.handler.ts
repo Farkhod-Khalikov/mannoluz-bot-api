@@ -1,7 +1,7 @@
 import TelegramBot from "node-telegram-bot-api";
 import UserService from "../services/user.service";
 import i18n from "../utils/i18n";
-import MoneyTransaction from "../models/money-transactions.schema";
+import MoneyTransaction from "../models/money.schema";
 
 export default class TransactionHandler {
   private bot: TelegramBot;
@@ -26,7 +26,7 @@ export default class TransactionHandler {
       console.error("Error fetching transactions:", error);
       this.bot.sendMessage(
         msg.chat.id,
-        "There was an error fetching the transaction list. Please try again later."
+        "There was an error fetching the transaction list. Please try again later.",
       );
     }
   }
@@ -40,9 +40,7 @@ export default class TransactionHandler {
 
     let moneyTransactions = await MoneyTransaction.find();
 
-    let sortedMoneyTransactions = await UserService.sortTransactionsByDate(
-      moneyTransactions
-    );
+    let sortedMoneyTransactions = await UserService.sortTransactionsByDate(moneyTransactions);
 
     await UserService.updateTransactionsBalances(sortedMoneyTransactions);
     console.log(sortedMoneyTransactions);
@@ -55,8 +53,7 @@ export default class TransactionHandler {
     }
 
     transactions = transactions.sort(
-      (a: any, b: any) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      (a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
 
     const currentPage = this.userTransactionPages.get(chatId) || 1;
@@ -69,11 +66,8 @@ export default class TransactionHandler {
       .slice(startIndex, endIndex)
       .map((transaction: any) => {
         const date = new Date(transaction.createdAt);
-        const symbol =
-          transaction.transactionType === "money" ? "$" : i18n.t("coins");
-        const formattedDate = `${date.getDate().toString().padStart(2, "0")}.${(
-          date.getMonth() + 1
-        )
+        const symbol = transaction.transactionType === "money" ? "$" : i18n.t("coins");
+        const formattedDate = `${date.getDate().toString().padStart(2, "0")}.${(date.getMonth() + 1)
           .toString()
           .padStart(2, "0")}.${date.getFullYear()}`;
         return `${
@@ -89,12 +83,9 @@ export default class TransactionHandler {
 
     const startDivision = Math.max(
       1,
-      Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
+      Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1,
     );
-    const endDivision = Math.min(
-      totalPages,
-      startDivision + numPagesToShow - 1
-    );
+    const endDivision = Math.min(totalPages, startDivision + numPagesToShow - 1);
 
     const showPrev = currentPage > 1;
     const showNext = currentPage < totalPages;
@@ -151,14 +142,14 @@ export default class TransactionHandler {
     await this.bot.sendMessage(
       chatId,
       `💸*${i18n.t("transactions")} (${currentPage} ${i18n.t(
-        "of"
+        "of",
       )} ${totalPages})*\n\n${transactionPage}`,
       {
         parse_mode: "Markdown",
         reply_markup: {
           inline_keyboard: keyboard,
         },
-      }
+      },
     );
   }
 
@@ -181,23 +172,20 @@ export default class TransactionHandler {
     if (action === "transaction_previous_page") {
       this.userTransactionPages.set(
         chatId,
-        Math.max((this.userTransactionPages.get(chatId) || 1) - 1, 1)
+        Math.max((this.userTransactionPages.get(chatId) || 1) - 1, 1),
       );
     } else if (action === "transaction_next_page") {
       this.userTransactionPages.set(
         chatId,
-        Math.min((this.userTransactionPages.get(chatId) || 1) + 1, totalPages)
+        Math.min((this.userTransactionPages.get(chatId) || 1) + 1, totalPages),
       );
     } else if (action.startsWith("transaction_page_")) {
       const page = parseInt(action.split("_")[2], 10);
-      this.userTransactionPages.set(
-        chatId,
-        Math.max(1, Math.min(page, totalPages))
-      );
+      this.userTransactionPages.set(chatId, Math.max(1, Math.min(page, totalPages)));
     } else if (action === "transaction_ellipsis_prev") {
       const startDivision = Math.max(
         1,
-        Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1
+        Math.floor((currentPage - 1) / numPagesToShow) * numPagesToShow + 1,
       );
       const newStartPage = Math.min(totalPages, startDivision - numPagesToShow);
       this.userTransactionPages.set(chatId, newStartPage);
