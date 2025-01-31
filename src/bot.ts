@@ -27,8 +27,8 @@ console.log("[SUCCESS] Bot is started.");
 initDB(MONGO);
 
 //Controllers and Handlers
-const userController = new UserController(bot);
-const productController = new ProductController();
+// const userController = new UserController(bot);
+// const productController = new ProductController();
 const messageHandler = new MessageHandler(bot);
 
 // Express initialization
@@ -37,38 +37,38 @@ app.use(express.json());
 
 // -- ROUTES --
 // Bonuses
-app.post("/users/balance/bonuses/add", (req, res) => userController.addBonuses(req, res));
-app.post("/users/balance/bonuses/remove", (req, res) => userController.removeBonuses(req, res));
+app.post("/users/balance/bonuses/add", (req, res) => UserController.addBonuses(req, res, bot));
+app.post("/users/balance/bonuses/remove", (req, res) => UserController.removeBonuses(req, res, bot));
 
 // Money
-app.post("/users/balance/money/add", (req, res) => userController.addMoney(req, res));
-app.post("/users/balance/money/remove", (req, res) => userController.removeMoney(req, res));
-app.post("/users/balance/money/refund-product", (req, res) => userController.removeMoney(req, res));
-app.post("/users/balance/money/refund-payment", (req, res) => userController.removeMoney(req, res));
+app.post("/users/balance/money/add", (req, res) => UserController.addMoney(req, res,bot));
+app.post("/users/balance/money/remove", (req, res) => UserController.removeMoney(req, res,bot));
+app.post("/users/balance/money/refund-product", (req, res) => UserController.removeMoney(req, res,bot));
+app.post("/users/balance/money/refund-payment", (req, res) => UserController.removeMoney(req, res,bot));
 
 // Admin privileges routes
-app.post("/users/admin-privileges/add", (req, res) => userController.addAdmin(req, res));
-app.post("/users/admin-privileges/remove", (req, res) => userController.removeAdmin(req, res));
-app.post("/users/sudo-privileges/add", (req, res) => userController.addSudo(req, res));
-app.post("/users/sudo-privileges/remove", (req, res) => userController.removeSudo(req, res));
+app.post("/users/admin-privileges/add", (req, res) => UserController.addAdmin(req, res,bot));
+app.post("/users/admin-privileges/remove", (req, res) => UserController.removeAdmin(req, res,bot));
+app.post("/users/sudo-privileges/add", (req, res) => UserController.addSudo(req, res,bot));
+app.post("/users/sudo-privileges/remove", (req, res) => UserController.removeSudo(req, res,bot));
 
 // Transactions routes
 app.post("/users/transactions/bonuses/remove", (req, res) =>
-  userController.removeBonusesTransaction(req, res),
+  UserController.removeBonusesTransaction(req, res,bot),
 );
 
 app.post("/users/transactions/money/remove", (req, res) =>
-  userController.removeMoneyTransaction(req, res),
+  UserController.removeMoneyTransaction(req, res, bot),
 );
 
 // Purchase requests routes
 app.post("/users/purchase-requests/update", (req, res) =>
-  userController.updateRequestStatus(req, res),
+  UserController.updateRequestStatus(req, res,bot),
 );
 
 // Products routes
-app.post("/products/add", (req, res) => productController.addProduct(req, res));
-app.post("/products/remove", (req, res) => productController.removeProduct(req, res));
+app.post("/products/add", (req, res) => ProductController.addProduct(req, res));
+app.post("/products/remove", (req, res) => ProductController.removeProduct(req, res));
 
 // start listening on port
 app.listen(port, () => {

@@ -9,14 +9,13 @@ import MoneyTransaction from "../models/money.schema";
 import User from "../models/users.schema";
 
 class UserController {
-  private bot: TelegramBot;
-
-  constructor(bot: TelegramBot) {
-    this.bot = bot;
-  }
+  // private bot: TelegramBot;
+  // constructor(bot: TelegramBot) {
+  //   this.bot = bot;
+  // }
 
   // Adding money controller
-  async addMoney(req: Request, res: Response) {
+  static async addMoney(req: Request, res: Response, bot: TelegramBot): Promise<void> {
     Logger.start("addMoney");
 
     try {
@@ -24,7 +23,8 @@ class UserController {
 
       if (!phoneNumber || isNaN(sum) || !documentId || !agentId || !date) {
         Logger.error("addMoney", "Invalid arguments provided");
-        return res.status(400).json({ error: true, message: "Invalid args provided" });
+        res.status(400).json({ error: true, message: "Invalid args provided" });
+        return;
       }
 
       // Validate date format (dd.mm.yyyy)
@@ -32,10 +32,11 @@ class UserController {
 
       if (!dateRegex.test(date)) {
         Logger.error("addMoney", "Invalid date format");
-        return res.status(400).json({
+        res.status(400).json({
           error: true,
           message: "Invalid date format. Expected format: dd.mm.yyyy",
         });
+        return;
       }
 
       // Check if the date is valid
@@ -48,19 +49,21 @@ class UserController {
         parsedDate.getDate() !== day
       ) {
         Logger.error("addMoney", "Invalid date value");
-        return res.status(400).json({
+        res.status(400).json({
           error: true,
           message: "Invalid date value. Please provide a valid date.",
         });
+        return;
       }
 
       // Sum cannot be negative
       if (sum < 0) {
         Logger.error("addMoney", "sum cannot be negative");
-        return res.status(400).json({
+        res.status(400).json({
           error: true,
           message: "Invalid args provided. Sum cannot be negative",
         });
+        return;
       }
 
       // Find user by phone number
@@ -68,7 +71,8 @@ class UserController {
 
       if (!user) {
         Logger.error("addMoney", "User not found");
-        return res.status(404).json({ error: true, message: "User not found" });
+        res.status(404).json({ error: true, message: "User not found" });
+        return;
       }
 
       const existingTransaction = await MoneyTransaction.findOne({
@@ -81,7 +85,7 @@ class UserController {
         const correctedSum = existingTransaction.sum;
 
         // Inform user about correction
-        await this.bot.sendMessage(
+        await bot.sendMessage(
           user.chatId,
           `${i18n.t("correction")}: ${correctedSum} 🔄 ${sum} ${i18n.t("$")}\n${i18n.t(
             "description",
@@ -91,14 +95,16 @@ class UserController {
         existingTransaction.sum = sum;
         existingTransaction.save();
 
-        return res.status(200).json({
+        res.status(200).json({
           error: false,
           message: "Transaction Corrected Successfully",
         });
+        return;
       } else if (existingTransaction && existingTransaction.sum === sum) {
         Logger.error("addMoney", "Transaction already exists with the same sum");
 
-        return res.status(409).json({ error: true, message: "Transaction already exists" });
+        res.status(409).json({ error: true, message: "Transaction already exists" });
+        return;
       } else {
         const transaction = await MoneyTransaction.create({
           userId: user.id,
@@ -116,7 +122,7 @@ class UserController {
       }
 
       // Inform user about balance update
-      await this.bot.sendMessage(
+      await bot.sendMessage(
         user.chatId,
         `${i18n.t("bonuses_addition")}: ${sum} ${i18n.t("$")}\n${i18n.t(
           "description",
@@ -124,17 +130,19 @@ class UserController {
       );
 
       Logger.end("addMoney", "Money added");
-      return res.status(200).json({ error: false, message: "Money added", agentId });
+      res.status(200).json({ error: false, message: "Money added", agentId });
+      return;
     } catch (error) {
       if (error instanceof Error) {
         Logger.error("addMoney", error.message);
-        return res.status(500).json({ error: true, message: "Internal server error" });
+        res.status(500).json({ error: true, message: "Internal server error" });
+        return;
       }
     }
   }
 
   // remove money
-  async removeMoney(req: Request, res: Response) {
+  static async removeMoney(req: Request, res: Response, bot: TelegramBot): Promise<void> {
     Logger.start("removeMoney");
 
     try {
@@ -142,7 +150,8 @@ class UserController {
 
       if (!phoneNumber || isNaN(sum) || !documentId || !agentId || !date) {
         Logger.error("removeMoney", "Invalid arguments provided");
-        return res.status(400).json({ error: true, message: "Invalid args provided" });
+        res.status(400).json({ error: true, message: "Invalid args provided" });
+        return;
       }
 
       // Validate date format (dd.mm.yyyy)
@@ -150,10 +159,11 @@ class UserController {
 
       if (!dateRegex.test(date)) {
         Logger.error("removeMoney", "Invalid date format");
-        return res.status(400).json({
+        res.status(400).json({
           error: true,
           message: "Invalid date format. Expected format: dd.mm.yyyy",
         });
+        return;
       }
 
       // Check if the date is valid
@@ -166,25 +176,28 @@ class UserController {
         parsedDate.getDate() !== day
       ) {
         Logger.error("removeMoney", "Invalid date value");
-        return res.status(400).json({
+        res.status(400).json({
           error: true,
           message: "Invalid date value. Please provide a valid date.",
         });
+        return;
       }
 
       if (sum < 0) {
         Logger.error("removeMoney", "sum cannot be negative");
-        return res.status(400).json({
+        res.status(400).json({
           error: true,
           message: "Invalid args provided. Sum cannot be negative",
         });
+        return;
       }
 
       const user = await UserService.findUserByPhoneNumber(phoneNumber);
 
       if (!user) {
         Logger.error("removeMoney", "User not found");
-        return res.status(404).json({ error: true, message: "User not found" });
+        res.status(404).json({ error: true, message: "User not found" });
+        return;
       }
 
       const existingTransaction = await MoneyTransaction.findOne({
@@ -197,7 +210,7 @@ class UserController {
         const correctedSum = existingTransaction.sum;
 
         // Inform user about correction
-        await this.bot.sendMessage(
+        await bot.sendMessage(
           user.chatId,
           `${i18n.t("correction")}: ${correctedSum} 🔄 -${sum} ${i18n.t("$")}\n${i18n.t(
             "description",
@@ -206,13 +219,15 @@ class UserController {
 
         existingTransaction.sum = sum;
 
-        return res.status(200).json({
+        res.status(200).json({
           error: false,
           message: "Transaction Corrected Successfully",
         });
+        return;
       } else if (existingTransaction && existingTransaction.sum === -sum) {
         Logger.error("removeMoney", "Transaction already exists with the same sum");
-        return res.status(409).json({ error: true, message: "Transaction already exists" });
+        res.status(409).json({ error: true, message: "Transaction already exists" });
+        return;
       } else {
         const transaction = await MoneyTransaction.create({
           userId: user.id,
@@ -230,7 +245,7 @@ class UserController {
       }
 
       // Inform user about balance update
-      await this.bot.sendMessage(
+      await bot.sendMessage(
         user.chatId,
         `${i18n.t("bonuses_removal")}: -${sum} ${i18n.t("$")}\n${i18n.t(
           "description",
@@ -238,20 +253,27 @@ class UserController {
       );
 
       Logger.end("removeMoney", "Money removed");
-      return res.status(200).json({ error: false, message: "Money removed", agentId });
+      res.status(200).json({ error: false, message: "Money removed", agentId });
+      return;
     } catch (error) {
       Logger.error("removeMoney", "Unhandled error occurred while removing money");
 
       if (error instanceof Error) {
-        return res.status(500).json({ error: true, message: error.message });
+        res.status(500).json({ error: true, message: error.message });
+        return;
       }
 
-      return res.status(500).json({ error: true, message: "Internal server error" });
+      res.status(500).json({ error: true, message: "Internal server error" });
+      return;
     }
   }
 
   // delete  money transactions
-  public async removeMoneyTransaction(req: Request, res: Response) {
+  static async removeMoneyTransaction(
+    req: Request,
+    res: Response,
+    bot: TelegramBot,
+  ): Promise<void> {
     Logger.start("removeMoneyTransaction");
 
     try {
@@ -259,7 +281,8 @@ class UserController {
 
       if (!documentId) {
         Logger.error("removeMoneyTransaction", "documentId is required");
-        return res.status(400).json({ error: true, message: "documentId is required" });
+        res.status(400).json({ error: true, message: "documentId is required" });
+        return;
       }
 
       // Define query for finding transactions
@@ -272,7 +295,8 @@ class UserController {
 
       if (transactions.length === 0) {
         Logger.error("removeMoneyTransaction", "No transactions found");
-        return res.status(404).json({ error: true, message: "No transactions found" });
+        res.status(404).json({ error: true, message: "No transactions found" });
+        return;
       }
 
       // Track user balance adjustments
@@ -309,7 +333,7 @@ class UserController {
 
           // Notify the user
           if (user.chatId) {
-            await this.bot.sendMessage(
+            await bot.sendMessage(
               user.chatId,
               `${adjustmentMessage}. ${i18n.t("new_balance")}: ${user.money} ${i18n.t("$")}.`,
             );
@@ -328,22 +352,24 @@ class UserController {
       await MoneyTransaction.deleteMany(query);
 
       Logger.end("removeMoneyTransaction");
-      return res.status(200).json({
+      res.status(200).json({
         error: false,
         message: "Transactions deleted, and users' balances updated.",
       });
+      return;
     } catch (error) {
       if (error instanceof Error) {
         Logger.error("removeMoneyTransaction", "Unhandled Error occurred: " + error.message);
       } else {
         Logger.error("removeMoneyTransaction", "Unhandled Error occurred");
       }
-      return res.status(500).json({ error: true, message: "Internal server error" });
+      res.status(500).json({ error: true, message: "Internal server error" });
+      return;
     }
   }
 
   // Add Bonuses
-  async addBonuses(req: Request, res: Response) {
+  static async addBonuses(req: Request, res: Response, bot: TelegramBot): Promise<void> {
     Logger.start("addBonuses");
 
     try {
@@ -351,12 +377,14 @@ class UserController {
 
       if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
         Logger.error("addBonuses", "Invalid arguments provided");
-        return res.status(400).json({ error: true, message: "Invalid args provided" });
+        res.status(400).json({ error: true, message: "Invalid args provided" });
+        return;
       }
 
       if (sum < 0) {
         Logger.error("addBonuses", "Sum cannot be negative");
-        return res.status(400).json({ error: true, message: "Sum cannot be negative" });
+        res.status(400).json({ error: true, message: "Sum cannot be negative" });
+        return;
       }
 
       // Find user by phoneNumber
@@ -365,7 +393,8 @@ class UserController {
       // If user not found return error
       if (!user) {
         Logger.error("addBonuses", "User not found");
-        return res.status(404).json({ error: true, message: "User not found" });
+        res.status(404).json({ error: true, message: "User not found" });
+        return;
       }
 
       // Check if a transaction with the same documentId and agentId already exists
@@ -400,7 +429,7 @@ class UserController {
 
       // Notify user of balance update
       if (user.chatId) {
-        await this.bot.sendMessage(
+        await bot.sendMessage(
           user.chatId,
           `${i18n.t("bonuses_addition")}: ${sum} ${i18n.t("coins")}\n${i18n.t(
             "description",
@@ -409,61 +438,69 @@ class UserController {
       }
 
       Logger.end("addBonuses", "Bonuses are added or updated");
-      return res.status(200).json({
+      res.status(200).json({
         error: false,
         message: transaction.isNew ? "Bonuses added" : "Bonuses updated",
         agentId,
       });
+      return;
     } catch (error) {
       Logger.error("addBonuses", "Unhandled error occurred while adding bonuses");
       if (error instanceof Error) {
-        return res.status(500).json({ error: true, message: error.message });
+        res.status(500).json({ error: true, message: error.message });
+        return;
       } else {
-        return res.status(500).json({
+        res.status(500).json({
           error: true,
           message: "Internal Server Error. Unknown error occurred",
         });
+        return;
       }
     }
   }
 
   // Remove Bonuses
-  public async removeBonuses(req: Request, res: Response) {
+  static async removeBonuses(req: Request, res: Response, bot: TelegramBot): Promise<void> {
     Logger.start("removeBonuses");
+
     try {
       const { phoneNumber, sum, description, documentId, agentId } = req.body;
 
       if (!phoneNumber || isNaN(sum) || !documentId || !agentId) {
         Logger.error("removeBonuses", "Invalid Arguments provided in request");
-        return res.status(400).json({
+        res.status(400).json({
           error: true,
           message: "Invalid args provided. phoneNumber, sum, documentId, and agentId are required.",
         });
+        return;
       }
 
       if (sum < 0) {
         Logger.error("removeBonuses", "sum cannot be negative");
-        return res.status(400).json({
+        res.status(400).json({
           error: true,
           message: "Invalid args provided. Sum cannot be negative",
         });
+        return;
       }
 
       // Find user by phoneNumber
       const user = await UserService.findUserByPhoneNumber(phoneNumber);
       if (!user) {
         Logger.error("removeBonuses", "User not found");
-        return res.status(404).json({ error: true, message: "User not found" });
+        res.status(404).json({ error: true, message: "User not found" });
+        return;
       }
 
       // If the user's bonuses balance is insufficient, return an error
       if ((user.bonuses || 0) < sum) {
         Logger.error("removeBonuses", "User has insufficient bonuses");
-        return res.status(400).json({
+        res.status(400).json({
           error: true,
           message: "Not enough sum",
           currentBalance: user.bonuses,
         });
+        return;
       }
 
       // Check if a transaction with the same documentId and agentId already exists
@@ -498,7 +535,7 @@ class UserController {
 
       // Notify user of balance deduction
       if (user.chatId) {
-        await this.bot.sendMessage(
+        await bot.sendMessage(
           user.chatId,
           `${i18n.t("bonuses_removal")}: ${sum} ${i18n.t("coins")}\n${i18n.t(
             "description",
@@ -507,27 +544,30 @@ class UserController {
       }
 
       Logger.end("removeBonuses", "Bonuses removed or updated");
-      return res.status(200).json({
+      res.status(200).json({
         error: false,
         message: transaction.isNew ? "Bonuses removed" : "Bonuses updated",
         newBalance: updatedBonuses,
         agentId,
       });
+      return;
     } catch (error) {
       Logger.error("removeBonuses", "Unhandled error occurred while removing bonuses");
       if (error instanceof Error) {
-        return res.status(500).json({ error: true, message: error.message });
+        res.status(500).json({ error: true, message: error.message });
+        return;
       } else {
-        return res.status(500).json({
+        res.status(500).json({
           error: true,
           message: "Internal server error. Unknown error occurred",
         });
+        return;
       }
     }
   }
 
   // Remove Admin by phoneNumber
-  async removeSudo(req: Request, res: Response) {
+  static async removeSudo(req: Request, res: Response, bot:TelegramBot): Promise<void> {
     Logger.start("removeSudo");
 
     try {
@@ -536,7 +576,8 @@ class UserController {
       //If phoneNumber is not provided return error
       if (!phoneNumber) {
         Logger.error("removeSudo", "Phone is required");
-        return res.status(400).json({ error: true, message: "Phone is required" });
+        res.status(400).json({ error: true, message: "Phone is required" });
+        return;
       }
 
       // Find user via phoneNumber
@@ -545,7 +586,8 @@ class UserController {
       //If user not found return error
       if (!user) {
         Logger.error("removeSudo", "User not found");
-        return res.status(404).json({ error: true, message: "user not found" });
+        res.status(404).json({ error: true, message: "user not found" });
+        return;
       }
 
       // init vars
@@ -568,27 +610,28 @@ class UserController {
         await UserService.updateUserSudoStatus(phoneNumber, false);
 
         // Send Message to restart bot
-        await this.bot.sendMessage(user.chatId, i18n.t("sudo_removed_notification"));
+        await bot.sendMessage(user.chatId, i18n.t("sudo_removed_notification"));
 
         Logger.end("removeSudo");
 
         // return status OK since isAdmin status is updated
-        return res.status(200).json({
+        res.status(200).json({
           error: false,
           message: "User sudo has been removed",
           username,
           isSudo: false,
         });
+        return;
       }
       // Update this code to return the ERROR itself
     } catch (error) {
       Logger.error("removeSudo", "Error occured while removing sudo");
-      console.error("ERROR: \n", error);
       res.status(500).json({ message: "Internal server error" });
+      return;
     }
   }
 
-  async removeAdmin(req: Request, res: Response) {
+  static async removeAdmin(req: Request, res: Response, bot:TelegramBot): Promise<void> {
     Logger.start("removeAdmin");
 
     try {
@@ -597,7 +640,8 @@ class UserController {
       //If phoneNumber is not provided return error
       if (!phoneNumber) {
         Logger.error("removeAdmin", "Phone is required");
-        return res.status(400).json({ error: true, message: "Phone is required" });
+        res.status(400).json({ error: true, message: "Phone is required" });
+        return;
       }
 
       // Find user via phoneNumber
@@ -606,7 +650,8 @@ class UserController {
       //If user not found return error
       if (!user) {
         Logger.error("removeAdmin", "User not found");
-        return res.status(404).json({ error: true, message: "user not found" });
+        res.status(404).json({ error: true, message: "user not found" });
+        return;
       }
 
       // init vars
@@ -630,27 +675,28 @@ class UserController {
         await UserService.updateUserAdminStatus(phoneNumber, false);
 
         // Send Message to restart bot
-        await this.bot.sendMessage(user.chatId, i18n.t("admin_removed_notification"));
+        await bot.sendMessage(user.chatId, i18n.t("admin_removed_notification"));
 
         Logger.end("removeAdmin");
 
         // return status OK since isAdmin status is updated
-        return res.status(200).json({
+        res.status(200).json({
           error: false,
           message: "User admin has been removed",
           username,
           isAdmin: false,
         });
+        return;
       }
       // Update this code to return the ERROR itself
     } catch (error) {
       Logger.error("removeAdmin", "Error occured while removing admin");
-      console.error("ERROR: \n", error);
       res.status(500).json({ message: "Internal server error" });
+      return;
     }
   }
 
-  async addSudo(req: Request, res: Response) {
+  static async addSudo(req: Request, res: Response, bot:TelegramBot): Promise<void> {
     Logger.start("addSudo");
 
     try {
@@ -658,8 +704,8 @@ class UserController {
 
       if (!phoneNumber) {
         Logger.error("addSudo", "Phone number is required");
-
-        return res.status(400).json({ error: true, message: "Phone number is required" });
+        res.status(400).json({ error: true, message: "Phone number is required" });
+        return;
       }
       // find user
       const user = await UserService.findUserByPhoneNumber(phoneNumber);
@@ -667,7 +713,8 @@ class UserController {
       // if user not found return status 404
       if (!user) {
         Logger.error("addAdmin", "User not found");
-        return res.status(404).json({ message: "user not found" });
+        res.status(404).json({ message: "user not found" });
+        return;
       }
 
       const username = user.name;
@@ -679,13 +726,13 @@ class UserController {
         Logger.end("addSudo");
 
         // Return status OK since user is already an admin
-        return res.status(200).json({
+        res.status(200).json({
           error: false,
           message: "User already sudo",
           username,
           isSudo: true,
         });
-
+        return;
         // Update user status and return status OK
       } else {
         await UserService.updateUserAdminStatus(phoneNumber, true);
@@ -693,31 +740,34 @@ class UserController {
         Logger.end("addSudo");
 
         // Notify to restart bot
-        await this.bot.sendMessage(user.chatId, i18n.t("sudo_granted_notification"));
+        await bot.sendMessage(user.chatId, i18n.t("sudo_granted_notification"));
 
         // return status OK when isAdin is updated to true
-        return res.status(200).json({
+        res.status(200).json({
           error: false,
           message: "User granted sudo privileges",
           username,
           isSudo: true,
         });
+        return;
       }
       // catch the unhadlned error during the code
     } catch (error) {
       // if error of type ERROR return the error itself
       if (error instanceof Error) {
         Logger.error("addSudo", "Could not update sudo status for the user");
-        return res.status(500).json({ error: true, message: error.message });
+        res.status(500).json({ error: true, message: error.message });
+        return;
       } else {
         Logger.error("addSudo", "Unknown Error occured while updating user isAdmin status");
-        return res.status(500).json({ error: true, message: "Internal Server Error" });
+        res.status(500).json({ error: true, message: "Internal Server Error" });
+        return;
       }
     }
   }
 
   // Add Admin by phoneNumber
-  async addAdmin(req: Request, res: Response) {
+  static async addAdmin(req: Request, res: Response, bot:TelegramBot): Promise<void> {
     Logger.start("addAdmin");
 
     try {
@@ -726,7 +776,8 @@ class UserController {
       if (!phoneNumber) {
         Logger.error("addAdmin", "Phone number is required");
 
-        return res.status(400).json({ error: true, message: "Phone number is required" });
+        res.status(400).json({ error: true, message: "Phone number is required" });
+        return;
       }
       // find user
       const user = await UserService.findUserByPhoneNumber(phoneNumber);
@@ -734,7 +785,8 @@ class UserController {
       // if user not found return status 404
       if (!user) {
         Logger.error("addAdmin", "User not found");
-        return res.status(404).json({ message: "user not found" });
+        res.status(404).json({ message: "user not found" });
+        return;
       }
 
       const username = user.name;
@@ -746,12 +798,13 @@ class UserController {
         Logger.end("addAdmin");
 
         // Return status OK since user is already an admin
-        return res.status(200).json({
+        res.status(200).json({
           error: false,
           message: "User is already an admin",
           username,
           isAdmin: true,
         });
+        return;
 
         // Update user status and return status OK
       } else {
@@ -759,31 +812,34 @@ class UserController {
         Logger.end("addAdmin");
 
         // Notify to restart bot
-        await this.bot.sendMessage(user.chatId, i18n.t("admin_granted_notification"));
+        await bot.sendMessage(user.chatId, i18n.t("admin_granted_notification"));
 
         // return status OK when isAdin is updated to true
-        return res.status(200).json({
+        res.status(200).json({
           error: false,
           message: "User granted admin privileges",
           username,
           isAdmin: true,
         });
+        return;
       }
       // catch the unhadlned error during the code
     } catch (error) {
       // if error of type ERROR return the error itself
       if (error instanceof Error) {
         Logger.error("addAdmin", "Could not admin status for the user");
-        return res.status(500).json({ error: true, message: error.message });
+        res.status(500).json({ error: true, message: error.message });
+        return;
       } else {
         Logger.error("addAdmin", "Unknown Error occured while updating user isAdmin status");
-        return res.status(500).json({ error: true, message: "Internal Server Error" });
+        res.status(500).json({ error: true, message: "Internal Server Error" });
+        return;
       }
     }
   }
 
   //Update isActive Request
-  async updateRequestStatus(req: Request, res: Response) {
+  static async updateRequestStatus(req: Request, res: Response, bot:TelegramBot): Promise<void> {
     Logger.start("updateRequestStatus");
     try {
       const { phoneNumber } = req.body;
@@ -791,12 +847,14 @@ class UserController {
 
       if (!phoneNumber) {
         Logger.error("updateRequestStatus", "phonenumbe is required to update request status");
-        return res.status(400).json({ error: true, message: "Phone number is required" });
+        res.status(400).json({ error: true, message: "Phone number is required" });
+        return;
       }
 
       if (!user) {
         Logger.error("updateRequestStatus", "User not found");
-        return res.status(400).json({ error: true, message: "User not found" });
+        res.status(400).json({ error: true, message: "User not found" });
+        return;
       }
 
       const purchaseRequest = await PurchaseRequest.findOneAndUpdate(
@@ -807,7 +865,8 @@ class UserController {
 
       if (!purchaseRequest) {
         Logger.error("updateRequestStatus", "Purchase Request is not found");
-        return res.status(404).json({ error: true, message: "Purchase request is not found" });
+        res.status(404).json({ error: true, message: "Purchase request is not found" });
+        return;
       }
 
       const username = purchaseRequest.username;
@@ -819,41 +878,46 @@ class UserController {
           "Tried to update purchase request status that is already NOT active",
         );
 
-        return res.status(200).json({
+        res.status(200).json({
           error: false,
           message: "Tried to update purchase request status that is already NOT active",
           username,
           isActive,
         });
+        return;
       }
-      await this.bot.sendMessage(user.chatId, i18n.t("request_status_update"));
+      await bot.sendMessage(user.chatId, i18n.t("request_status_update"));
       Logger.end("updatePurchaseRequeset");
-      return res.status(200).json({
+      res.status(200).json({
         error: false,
         message: "The Request status is updated",
         username,
         isActive: false,
       });
+      return;
     } catch (error) {
       if (error instanceof Error) {
         const msg = error.message.toString();
         Logger.error("updateRequestStatus", msg);
-        return res.status(500).json({ error: true, message: msg });
+        res.status(500).json({ error: true, message: msg });
+        return;
       }
       Logger.error("updateRequestStatus", "Could not update requets status due to unknown error");
-      return res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Internal server error" });
+      return;
     }
   }
 
   // Delete transactions by documentId and agentId
-  async removeBonusesTransaction(req: Request, res: Response) {
+  static async removeBonusesTransaction(req: Request, res: Response, bot:TelegramBot): Promise<void> {
     Logger.start("removeTransaction");
     try {
       const { documentId, agentId } = req.body;
 
       if (!documentId) {
         Logger.error("removeTransaction", "documentId is required");
-        return res.status(400).json({ error: true, message: "documentId is required" });
+        res.status(400).json({ error: true, message: "documentId is required" });
+        return;
       }
 
       // Find all transactions with the provided documentId (and agentId if available)
@@ -864,7 +928,8 @@ class UserController {
 
       if (transactions.length === 0) {
         Logger.error("removeTransaction", "No transactions found");
-        return res.status(404).json({ error: true, message: "No transactions found" });
+        res.status(404).json({ error: true, message: "No transactions found" });
+        return;
       }
 
       // Track user balances that need to be updated
@@ -886,7 +951,8 @@ class UserController {
 
         if (!user) {
           Logger.error("removeTransaction", "User not found");
-          return res.status(404).json({ error: true, message: "User not found" });
+          res.status(404).json({ error: true, message: "User not found" });
+          return;
         }
 
         user.bonuses = (user.bonuses || 0) - adjustment;
@@ -899,25 +965,28 @@ class UserController {
               ? `${i18n.t("bonuses_balance_positive_update")} ${Math.abs(adjustment)}`
               : `${i18n.t("bonuses_balance_negative_update")} ${adjustment}`;
 
-          await this.bot.sendMessage(user.chatId, adjustmentMessage);
+          await bot.sendMessage(user.chatId, adjustmentMessage);
         }
       }
 
       // Delete all found transactions
       await BonusesTransaction.deleteMany(query);
       Logger.end("removeTransaction");
-      return res.status(200).json({
+      res.status(200).json({
         error: false,
         message: "Transactions deleted and users' balances updated",
       });
+      return;
     } catch (error) {
       if (error instanceof Error) {
         const msg = error.message.toString();
         Logger.error("removeTransaction", msg);
-        return res.status(500).json({ error: true, message: msg });
+        res.status(500).json({ error: true, message: msg });
+        return;
       }
       Logger.error("removeTransaction", "Unhandled Error occured");
-      return res.status(500).json({ error: true, message: "Internal server error" });
+      res.status(500).json({ error: true, message: "Internal server error" });
+      return;
     }
   }
 }
