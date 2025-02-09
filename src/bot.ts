@@ -38,23 +38,29 @@ app.use(express.json());
 // -- ROUTES --
 // Bonuses
 app.post("/users/balance/bonuses/add", (req, res) => UserController.addBonuses(req, res, bot));
-app.post("/users/balance/bonuses/remove", (req, res) => UserController.removeBonuses(req, res, bot));
+app.post("/users/balance/bonuses/remove", (req, res) =>
+  UserController.removeBonuses(req, res, bot),
+);
 
 // Money
-app.post("/users/balance/money/add", (req, res) => UserController.addMoney(req, res,bot));
-app.post("/users/balance/money/remove", (req, res) => UserController.removeMoney(req, res,bot));
-app.post("/users/balance/money/refund-product", (req, res) => UserController.removeMoney(req, res,bot));
-app.post("/users/balance/money/refund-payment", (req, res) => UserController.removeMoney(req, res,bot));
+app.post("/users/balance/money/add", (req, res) => UserController.addMoney(req, res, bot));
+app.post("/users/balance/money/remove", (req, res) => UserController.removeMoney(req, res, bot));
+app.post("/users/balance/money/refund-product", (req, res) =>
+  UserController.removeMoney(req, res, bot),
+);
+app.post("/users/balance/money/refund-payment", (req, res) =>
+  UserController.removeMoney(req, res, bot),
+);
 
 // Admin privileges routes
-app.post("/users/admin-privileges/add", (req, res) => UserController.addAdmin(req, res,bot));
-app.post("/users/admin-privileges/remove", (req, res) => UserController.removeAdmin(req, res,bot));
-app.post("/users/sudo-privileges/add", (req, res) => UserController.addSudo(req, res,bot));
-app.post("/users/sudo-privileges/remove", (req, res) => UserController.removeSudo(req, res,bot));
+app.post("/users/admin-privileges/add", (req, res) => UserController.addAdmin(req, res, bot));
+app.post("/users/admin-privileges/remove", (req, res) => UserController.removeAdmin(req, res, bot));
+app.post("/users/sudo-privileges/add", (req, res) => UserController.addSudo(req, res, bot));
+app.post("/users/sudo-privileges/remove", (req, res) => UserController.removeSudo(req, res, bot));
 
 // Transactions routes
 app.post("/users/transactions/bonuses/remove", (req, res) =>
-  UserController.removeBonusesTransaction(req, res,bot),
+  UserController.removeBonusesTransaction(req, res, bot),
 );
 
 app.post("/users/transactions/money/remove", (req, res) =>
@@ -63,7 +69,7 @@ app.post("/users/transactions/money/remove", (req, res) =>
 
 // Purchase requests routes
 app.post("/users/purchase-requests/update", (req, res) =>
-  UserController.updateRequestStatus(req, res,bot),
+  UserController.updateRequestStatus(req, res, bot),
 );
 
 // Products routes

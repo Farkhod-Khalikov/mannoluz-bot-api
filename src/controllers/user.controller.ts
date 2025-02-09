@@ -567,7 +567,7 @@ class UserController {
   }
 
   // Remove Admin by phoneNumber
-  static async removeSudo(req: Request, res: Response, bot:TelegramBot): Promise<void> {
+  static async removeSudo(req: Request, res: Response, bot: TelegramBot): Promise<void> {
     Logger.start("removeSudo");
 
     try {
@@ -631,7 +631,7 @@ class UserController {
     }
   }
 
-  static async removeAdmin(req: Request, res: Response, bot:TelegramBot): Promise<void> {
+  static async removeAdmin(req: Request, res: Response, bot: TelegramBot): Promise<void> {
     Logger.start("removeAdmin");
 
     try {
@@ -696,7 +696,7 @@ class UserController {
     }
   }
 
-  static async addSudo(req: Request, res: Response, bot:TelegramBot): Promise<void> {
+  static async addSudo(req: Request, res: Response, bot: TelegramBot): Promise<void> {
     Logger.start("addSudo");
 
     try {
@@ -767,7 +767,7 @@ class UserController {
   }
 
   // Add Admin by phoneNumber
-  static async addAdmin(req: Request, res: Response, bot:TelegramBot): Promise<void> {
+  static async addAdmin(req: Request, res: Response, bot: TelegramBot): Promise<void> {
     Logger.start("addAdmin");
 
     try {
@@ -839,7 +839,7 @@ class UserController {
   }
 
   //Update isActive Request
-  static async updateRequestStatus(req: Request, res: Response, bot:TelegramBot): Promise<void> {
+  static async updateRequestStatus(req: Request, res: Response, bot: TelegramBot): Promise<void> {
     Logger.start("updateRequestStatus");
     try {
       const { phoneNumber } = req.body;
@@ -909,7 +909,11 @@ class UserController {
   }
 
   // Delete transactions by documentId and agentId
-  static async removeBonusesTransaction(req: Request, res: Response, bot:TelegramBot): Promise<void> {
+  static async removeBonusesTransaction(
+    req: Request,
+    res: Response,
+    bot: TelegramBot,
+  ): Promise<void> {
     Logger.start("removeTransaction");
     try {
       const { documentId, agentId } = req.body;

@@ -80,6 +80,7 @@ export default class UserHandler {
       }
     });
   }
+
   // Helper function to wait for a reply
   private awaitReply(chatId: number, messageId: number): Promise<TelegramBot.Message> {
     return new Promise((resolve) => {
@@ -193,7 +194,7 @@ export default class UserHandler {
     this.bot.on("message", changeLanguageListener);
   }
 
-  public async handleMyCreditCard(msg: TelegramBot.Message) {
+  async handleMyCreditCard(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
     const user = await UserService.findUserByChatId(chatId);
 
@@ -305,7 +306,7 @@ export default class UserHandler {
     }
   }
 
-  public async handleAddAdmin(msg: TelegramBot.Message) {
+  async handleAddAdmin(msg: TelegramBot.Message) {
     const chatId = msg.chat.id;
     try {
       const replyMessage = await this.bot.sendMessage(chatId, i18n.t("enter_phone_number"), {
